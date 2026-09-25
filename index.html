@@ -1,0 +1,280 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Franklin County Pioneer Cemeteries Archive</title>
+    
+    <!-- MapLibre GL CSS and JS -->
+    <link href="https://unpkg.com" rel="stylesheet" />
+    <script src="https://unpkg.com"></script>
+    
+    <!-- Protomaps PMTiles Plugin -->
+    <script src="https://unpkg.com"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            height: 100vh;
+            color: #333;
+        }
+
+        /* Sidebar Design */
+        #sidebar {
+            width: 380px;
+            background: #fafafa;
+            border-right: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+            z-index: 10;
+        }
+
+        .header-panel {
+            padding: 20px;
+            background: #1e293b;
+            color: white;
+        }
+
+        .header-panel h1 {
+            margin: 0 0 5px 0;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .header-panel p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+
+        .control-panel {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            background: white;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+        }
+
+        .slider-container {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .slider-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #475569;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        #timeline-slider {
+            width: 100%;
+            margin: 8px 0;
+        }
+
+        /* Info Display Panel */
+        #info-panel {
+            padding: 20px;
+            overflow-y: auto;
+            flex-grow: 1;
+            background: white;
+        }
+
+        .placeholder-text {
+            color: #94a3b8;
+            font-style: italic;
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        .grave-photo {
+            width: 100%;
+            max-height: 220px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            background: #e2e8f0;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .meta-item {
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #f1f5f9;
+        }
+
+        .meta-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .meta-value {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        /* Map Container */
+        #map {
+            flex-grow: 1;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Left Dashboard Control Panel -->
+    <div id="sidebar">
+        <div class="header-panel">
+            <h1>Franklin County Cemeteries</h1>
+            <p>Pioneer Graves & Records Archive</p>
+        </div>
+
+        <div class="control-panel">
+            <!-- Global Interactive Search -->
+            <input type="text" id="search-input" class="search-box" placeholder="Search by name, date, or row..." />
+            
+            <!-- Decade Visibility Slider -->
+            <div class="slider-container">
+                <div class="slider-label">
+                    <span>Filter by Decade:</span>
+                    <span id="slider-value">All Years</span>
+                </div>
+                <input type="range" id="timeline-slider" min="1800" max="1920" step="10" value="1800" />
+            </div>
+        </div>
+
+        <!-- Dynamic Content Injector -->
+        <div id="info-panel">
+            <div class="placeholder-text">Click a cemetery marker or individual grave plot on the map to inspect historical details and photo records.</div>
+        </div>
+    </div>
+
+    <!-- Right Side Map Window -->
+    <div id="map"></div>
+
+    <script>
+        // Initialize the PMTiles Protocol helper library for MapLibre
+        let protocol = new pmtiles.Protocol();
+        maplibregl.addProtocol("pmtiles", protocol.add);
+
+        // Define your regional custom map file path
+        const PMTILES_URL = "franklin_county.pmtiles"; 
+
+        // Set up MapLibre Map Canvas
+        const map = new maplibregl.Map({
+            container: 'map',
+            zoom: 11,
+            center: [-85.1394, 39.4214], // Coordinates centered directly over Franklin County, IN
+            maxZoom: 24, // UNLOCKED DEEP ZOOM for plot accuracy
+            pitchWithRotate: false,
+            dragRotate: false,
+            style: {
+                version: 8,
+                sources: {
+                    "basemap": {
+                        type: "vector",
+                        url: "pmtiles://" + PMTILES_URL,
+                        attribution: '© OpenStreetMap contributors, Protomaps'
+                    }
+                },
+                // Quick fallback styling layout layers for background map graphics
+                layers: [
+                    {
+                        "id": "background",
+                        "type": "background",
+                        "paint": { "background-color": "#f1f5f9" }
+                    },
+                    {
+                        "id": "roads",
+                        "type": "line",
+                        "source": "basemap",
+                        "source-layer": "roads",
+                        "paint": { "line-color": "#cbd5e1", "line-width": 1.5 }
+                    },
+                    {
+                        "id": "water",
+                        "type": "fill",
+                        "source": "basemap",
+                        "source-layer": "water",
+                        "paint": { "fill-color": "#bae6fd" }
+                    }
+                ]
+            }
+        });
+
+        map.on('load', () => {
+            // Add navigation control wheel buttons to map screen
+            map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+
+            // Load your dynamic GeoJSON data layer generated from your Epicollect5 / Gaia GPS pipeline
+            map.addSource('graves-data', {
+                type: 'geojson',
+                data: 'graves.geojson' // Target pointer to your flat file data repository
+            });
+
+            // Render individual grave coordinates as highly responsive map vector points
+            map.addLayer({
+                id: 'graves-layer',
+                type: 'circle',
+                source: 'graves-data',
+                paint: {
+                    'circle-radius': [
+                        'interpolate', ['linear'], ['zoom'],
+                        11, 4,
+                        20, 8,
+                        24, 14
+                    ],
+                    'circle-color': '#b91c1c', // Pioneer Red dot styling
+                    'circle-stroke-width': 1.5,
+                    'circle-stroke-color': '#ffffff'
+                }
+            });
+
+            // Attach interactive clicking engine listeners to map dots
+            map.on('click', 'graves-layer', (e) => {
+                const props = e.features[0].properties;
+                const infoPanel = document.getElementById('info-panel');
+
+                // Gracefully fallback to a generic asset image if an Epicollect photo url string is blank
+                const photoSrc = props.Photo_URL || "https://unsplash.com";
+
+                // Generate and inject structural content components directly to our sidebar container UI
+                infoPanel.innerHTML = `
+                    <img src="${photoSrc}" class="grave-photo" alt="Headstone Image Documentation" />
+                    <h2 style="margin:0 0 5px 0; font-size:1.4rem;">${props.First_Name || 'Unknown'} ${props.Last_Name || 'Individual'}</h2>
+                    <p style="margin:0; color:#64748b; font-size:0.9rem;">Cemetery: <strong>${props.Cemetery_Name || 'Unmarked Field Location'}</strong></p>
+                    
+                    <div class="meta-grid">
+                        <div class="meta-item"><div class="meta-label">Born</div><div class="meta-value">${props.Birth_Year || 'N/A'}</div></div>
+                        <div class="meta-item"><div class="meta-label">Died</div><div class="meta-value">${props.Death_Year || 'N/A'}</div></div>
+                        <div class="meta-item"><div class="meta-label">Row Log No.</div><div class="meta-value">${props.Row_Number || 'Unassigned'}</div></div>
+                        <div class="meta-item"><div class="meta-label">Plot ID</div><div class="meta-value">${props.Plot_Number || 'Unassigned'}</div></div>
+                    </div>
+
+                    <div style="margin-top:20px; padding-top:15px; border-top:1px solid #e2e8f0;">
+                        <h4 style="margin:0 0 5px 0; font-size:0.85rem; text-transform:uppercase; color:#64748b;">Field Condition Notes (Epicollect Branch Log)</h4>
+${props.Condition_Notes || 'Headstone documented stable. Engravings legible.'}`;});// Adjust crosshair pointer graphic style layout when hovering above dotsmap.on('mouseenter', 'graves-layer', () => map.getCanvas().style.cursor = 'pointer');map.on('mouseleave', 'graves-layer', () => map.getCanvas().style.cursor = '');// Link logic variables to trigger search filtering and decade slider componentsconst searchInput = document.getElementById('search-input');const timelineSlider = document.getElementById('timeline-slider');const sliderValueDisplay = document.getElementById('slider-value');function applyCombinedFilters() {const textSearchTerm = searchInput.value.toLowerCase().trim();const selectedDecade = parseInt(timelineSlider.value);// Base dynamic filtering matrix templatelet filters = ['all'];// 1. Text Filter: Scans names and fieldsif (textSearchTerm !== "") {filters.push(['any',['javascript-expression', String(properties.First_Name).toLowerCase().includes("${textSearchTerm}")],['javascript-expression', String(properties.Last_Name).toLowerCase().includes("${textSearchTerm}")],['javascript-expression', String(properties.Cemetery_Name).toLowerCase().includes("${textSearchTerm}")]]);}// 2. Timeline Decade Filter: Evaluates threshold boundsif (selectedDecade > 1800) {sliderValueDisplay.innerText = selectedDecade + "s";filters.push(['>=', ['number', ['get', 'Death_Year']], selectedDecade]);filters.push(['<', ['number', ['get', 'Death_Year']], selectedDecade + 10]);} else {sliderValueDisplay.innerText = "All Years";}// Execute evaluation engine array filter onto map layer markers directlyif (filters.length > 1) {map.setFilter('graves-layer', filters);} else {map.setFilter('graves-layer', null);}}// Bind update routine actions onto interactive screen component event listenerssearchInput.addEventListener('input', applyCombinedFilters);timelineSlider.addEventListener('input', applyCombinedFilters);});
