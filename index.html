@@ -4,161 +4,125 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Franklin County Pioneer Cemeteries Archive</title>
-    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
-    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    
+    <!-- MapLibre Core Stylesheet and Engine -->
+    <link href="https://unpkg.com" rel="stylesheet" />
     <script src="https://unpkg.com"></script>
+
     <style>
-        body { margin: 0; padding: 0; font-family: system-ui, sans-serif; display: flex; height: 100vh; color: #333; }
-        #sidebar { width: 380px; background: #fafafa; border-right: 1px solid #ddd; display: flex; flex-direction: column; z-index: 10; }
+        body { margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; display: flex; height: 100vh; color: #333; }
+        #sidebar { width: 380px; background: #fafafa; border-right: 1px solid #ddd; display: flex; flex-direction: column; z-index: 10; box-shadow: 2px 0 5px rgba(0,0,0,0.05); }
         .header-panel { padding: 20px; background: #1e293b; color: white; }
         .header-panel h1 { margin: 0 0 5px 0; font-size: 1.3rem; }
         .header-panel p { margin: 0; font-size: 0.85rem; color: #94a3b8; }
         .control-panel { padding: 15px 20px; border-bottom: 1px solid #e2e8f0; background: white; }
-        .search-box { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; margin-bottom: 15px; }
-        .slider-container { display: flex; flex-direction: column; gap: 5px; }
-        .slider-label { font-size: 0.85rem; font-weight: 600; display: flex; justify-content: space-between; }
-        #timeline-slider { width: 100%; margin: 8px 0; }
+        .search-box { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
         #info-panel { padding: 20px; overflow-y: auto; flex-grow: 1; background: white; }
         .placeholder-text { color: #94a3b8; font-style: italic; text-align: center; margin-top: 40px; }
-        .grave-photo { width: 100%; max-height: 220px; object-fit: cover; border-radius: 8px; margin-bottom: 15px; }
         .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .meta-item { background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #f1f5f9; }
-        .meta-label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; }
-        .meta-value { font-size: 0.95rem; font-weight: 600; }
-        #map { flex-grow: 1; height: 100%; background-color: #f1f5f9; }
+        .meta-label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 600; }
+        .meta-value { font-size: 0.95rem; font-weight: 600; color: #0f172a; }
+        #map { flex-grow: 1; height: 100%; background-color: #e2e8f0; }
     </style>
 </head>
 <body>
 
+    <!-- Left Controls Panel -->
     <div id="sidebar">
         <div class="header-panel">
             <h1>Franklin County Cemeteries</h1>
             <p>Pioneer Graves & Records Archive</p>
         </div>
         <div class="control-panel">
-            <input type="text" id="search-input" class="search-box" placeholder="Search by name, date, or row..." />
-            <div class="slider-container">
-                <div class="slider-label">
-                    <span>Filter by Decade:</span>
-                    <span id="slider-value">All Years</span>
-                </div>
-                <input type="range" id="timeline-slider" min="1800" max="1920" step="10" value="1800" />
-            </div>
+            <input type="text" id="search-input" class="search-box" placeholder="Search by cemetery name..." />
         </div>
         <div id="info-panel">
-            <div class="placeholder-text">Click a cemetery marker or individual grave plot on the map to inspect historical details and photo records.</div>
+            <div class="placeholder-text">Click a red cemetery marker on the map to inspect historical details and county commission notes.</div>
         </div>
     </div>
 
+    <!-- Right Map View Window -->
     <div id="map"></div>
 
     <script>
-        // Set up the PMTiles library helper protocol
-        let protocol = new pmtiles.Protocol();
-        maplibregl.addProtocol("pmtiles", protocol.add);
-
-        // Fallback cloud link so your basemap renders instantly even without a local pmtiles file loaded
-        const PMTILES_URL = "https://protomaps.com"; 
+        // Use a guaranteed, pre-styled open-source basemap style
+        const BASEMAP_STYLE = "https://cartocdn.com";
 
         const map = new maplibregl.Map({
             container: 'map',
+            style: BASEMAP_STYLE,
             zoom: 11,
-            center: [-85.0626, 39.3992], 
+            center: [-85.0626, 39.3992], // Perfect center coordinates for Franklin County, IN
             maxBounds: [
-                [-85.313644, 39.263095], 
-                [-84.811707, 39.535292]  
+                [-85.313644, 39.263095], // Safe rails bounding box limits
+                [-84.811707, 39.535292]
             ],
-            maxZoom: 24, 
-            pitchWithRotate: false,
-            dragRotate: false,
-            style: PMTILES_URL // Directly stream vector data safely from the cloud
+            maxZoom: 20
         });
 
         map.on('load', () => {
             map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
 
-            // Force a secure relative dot reference path for GitHub sub-directory mapping
-            map.addSource('graves-data', {
+            // Fetch the graves data file directly from your repository folder
+            map.addSource('cemeteries', {
                 type: 'geojson',
-                data: './graves.geojson' 
+                data: './graves.geojson'
             });
 
+            // Plot coordinates as clean interactive red dots
             map.addLayer({
-                id: 'graves-layer',
+                id: 'cemeteries-layer',
                 type: 'circle',
-                source: 'graves-data',
+                source: 'cemeteries',
                 paint: {
-                    'circle-radius': ['interpolate', ['linear'], ['zoom'], 11, 5, 20, 10, 24, 16],
-                    'circle-color': '#b91c1c', 
-                    'circle-stroke-width': 1.5,
+                    'circle-radius': 8,
+                    'circle-color': '#b91c1c',
+                    'circle-stroke-width': 2,
                     'circle-stroke-color': '#ffffff'
                 }
             });
 
-            map.on('click', 'graves-layer', (e) => {
+            // Click listener function to inject data properties into the sidebar panel
+            map.on('click', 'cemeteries-layer', (e) => {
                 const props = e.features[0].properties;
                 const infoPanel = document.getElementById('info-panel');
-                const photoSrc = props.Photo_URL || "https://unsplash.com";
 
                 infoPanel.innerHTML = `
-                    <img src="${photoSrc}" class="grave-photo" alt="Headstone Image Documentation" />
-                    <h2 style="margin:0 0 5px 0;">${props.Cemetery_Name || 'Unknown'}</h2>
-                    <p style="margin:0; color:#64748b; font-size:0.9rem;">Alternate: <strong>${props.Other_Names || 'None Recorded'}</strong></p>
-                    <p style="margin:5px 0 0 0; color:#64748b; font-size:0.9rem;">Township: <strong>${props.Township || 'Unknown'}</strong></p>
+                    <h2 style="margin:0 0 5px 0; font-size:1.4rem; color:#0f172a;">${props.Cemetery_Name || 'Unknown Site'}</h2>
+                    <p style="margin:0; color:#475569; font-size:0.9rem;">Alternate: <strong>${props.Other_Names || 'None'}</strong></p>
+                    <p style="margin:3px 0 0 0; color:#475569; font-size:0.9rem;">Township: <strong>${props.Township || 'Unknown'}</strong></p>
                     
                     <div class="meta-grid">
                         <div class="meta-item"><div class="meta-label">Est. Year</div><div class="meta-value">${props.Birth_Year || 'N/A'}</div></div>
                         <div class="meta-item"><div class="meta-label">Grid Log</div><div class="meta-value" style="font-size:0.75rem;">${props.Row_Number || 'N/A'}</div></div>
                     </div>
+
                     <div style="margin-top:20px; padding-top:15px; border-top:1px solid #e2e8f0;">
-                        <h4 style="margin:0 0 5px 0; font-size:0.85rem; text-transform:uppercase; color:#64748b;">Historical Commission Records</h4>
-                        <p style="margin:0; font-size:0.9rem; line-height:1.4; color:#334155;">${props.Condition_Notes || 'No notes loaded.'}</p>
+                        <h4 style="margin:0 0 5px 0; font-size:0.8rem; text-transform:uppercase; color:#64748b; letter-spacing:0.05em;">Commission Records & Notes</h4>
+                        <p style="margin:0; font-size:0.95rem; line-height:1.5; color:#334155;">${props.Condition_Notes || 'No notes on file.'}</p>
                     </div>
                 `;
             });
 
-            map.on('mouseenter', 'graves-layer', () => map.getCanvas().style.cursor = 'pointer');
-            map.on('mouseleave', 'graves-layer', () => map.getCanvas().style.cursor = '');
+            // Mouse hover handling adjustments
+            map.on('mouseenter', 'cemeteries-layer', () => map.getCanvas().style.cursor = 'pointer');
+            map.on('mouseleave', 'cemeteries-layer', () => map.getCanvas().style.cursor = '');
 
-            // Native MapLibre filtering arrays that won't trigger a browser crash
-            const searchInput = document.getElementById('search-input');
-            const timelineSlider = document.getElementById('timeline-slider');
-            const sliderValueDisplay = document.getElementById('slider-value');
-
-            function applyFilters() {
-                const text = searchInput.value.toLowerCase().trim();
-                const decade = parseInt(timelineSlider.value);
-                let filterExpression = ['all'];
-
-                if (decade > 1800) {
-                    sliderValueDisplay.innerText = decade + "s";
-                    filterExpression.push(['>=', ['number', ['get', 'Death_Year']], decade]);
-                    filterExpression.push(['<', ['number', ['get', 'Death_Year']], decade + 10]);
+            // Real-time search filter bar engine logic
+            document.getElementById('search-input').addEventListener('input', (e) => {
+                const value = e.target.value.toLowerCase().trim();
+                
+                if (value === "") {
+                    map.setFilter('cemeteries-layer', null);
                 } else {
-                    sliderValueDisplay.innerText = "All Years";
-                }
-
-                if (text !== "") {
-                    filterExpression.push([
+                    map.setFilter('cemeteries-layer', [
                         'any',
-                        ['id-like-filter', text] 
+                        ['like', ['downcase', ['get', 'Cemetery_Name']], value],
+                        ['like', ['downcase', ['get', 'Other_Names']], value]
                     ]);
                 }
-
-                // Simple fallback error protection layout handling
-                try {
-                    if (decade > 1800) {
-                        map.setFilter('graves-layer', filterExpression);
-                    } else {
-                        map.setFilter('graves-layer', null);
-                    }
-                } catch(err) {
-                    console.log("Filter match layout clearing...");
-                }
-            }
-
-            searchInput.addEventListener('input', applyFilters);
-            timelineSlider.addEventListener('input', applyFilters);
+            });
         });
     </script>
 </body>

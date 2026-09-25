@@ -8,11 +8,8 @@
         "Other_Names": "Hamburg Catholic",
         "Township": "Salt Creek Township",
         "Birth_Year": 1869,
-        "Death_Year": 1869,
         "Row_Number": "S24-T11N-R11E",
-        "Plot_Number": "N/A",
-        "Condition_Notes": "Excellent condition. Located on northside of Hilltop Road near intersection of Rail Fence Road, north of Hamburg.",
-        "Photo_URL": ""
+        "Condition_Notes": "Excellent condition. Located on northside of Hilltop Road near intersection of Rail Fence Road, north of Hamburg."
       },
       "geometry": {
         "type": "Point",
@@ -26,11 +23,8 @@
         "Other_Names": "Oak Forest Catholic",
         "Township": "Butler Township",
         "Birth_Year": 1873,
-        "Death_Year": 1873,
         "Row_Number": "S21-T11N-R13E",
-        "Plot_Number": "N/A",
-        "Condition_Notes": "Condition unknown. On east side of St Mary's Road at Oak Forest. PHOTOS BY CEMETERY COMMISSION.",
-        "Photo_URL": ""
+        "Condition_Notes": "Condition unknown. On east side of St Mary's Road at Oak Forest. PHOTOS BY CEMETERY COMMISSION."
       },
       "geometry": {
         "type": "Point",
@@ -44,11 +38,8 @@
         "Other_Names": "Blue Creek Catholic",
         "Township": "Dearborn Co (Adjacent)",
         "Birth_Year": 1838,
-        "Death_Year": 1838,
         "Row_Number": "S1-T7N-R3W",
-        "Plot_Number": "N/A",
-        "Condition_Notes": "Condition unknown. Located just south across the county line in Dearborn County on west side of Blue Creek Road.",
-        "Photo_URL": ""
+        "Condition_Notes": "Condition unknown. Located just south across the county line in Dearborn County on west side of Blue Creek Road."
       },
       "geometry": {
         "type": "Point",
