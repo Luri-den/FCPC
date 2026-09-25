@@ -4,35 +4,55 @@
     {
       "type": "Feature",
       "properties": {
-        "Cemetery_Name": "Big Cedar Cemetery",
-        "Township": "Whitewater Township",
-        "Birth_Year": 1810,
-        "Death_Year": 1845,
-        "Row_Number": "A-1",
-        "Plot_Number": "12",
-        "Condition_Notes": "Historic Pioneer Site. Main perimeter mapped via GaiaGPS tracker records.",
+        "Cemetery_Name": "St Ann's",
+        "Other_Names": "Hamburg Catholic",
+        "Township": "Salt Creek Township",
+        "Birth_Year": 1869,
+        "Death_Year": 1869,
+        "Row_Number": "S24-T11N-R11E",
+        "Plot_Number": "N/A",
+        "Condition_Notes": "Excellent condition. Located on northside of Hilltop Road near intersection of Rail Fence Road, north of Hamburg.",
         "Photo_URL": ""
       },
       "geometry": {
         "type": "Point",
-        "coordinates": [-84.9754, 39.3872]
+        "coordinates": [-85.2467, 39.3864]
       }
     },
     {
       "type": "Feature",
       "properties": {
-        "Cemetery_Name": "Sims-Brier Cemetery",
-        "Township": "Fairfield Township",
-        "Birth_Year": 1822,
-        "Death_Year": 1864,
-        "Row_Number": "B-4",
-        "Plot_Number": "03",
-        "Condition_Notes": "Pioneer burial grounds adjacent to Brookville Lake paths.",
+        "Cemetery_Name": "St Cecelia of Rome",
+        "Other_Names": "Oak Forest Catholic",
+        "Township": "Butler Township",
+        "Birth_Year": 1873,
+        "Death_Year": 1873,
+        "Row_Number": "S21-T11N-R13E",
+        "Plot_Number": "N/A",
+        "Condition_Notes": "Condition unknown. On east side of St Mary's Road at Oak Forest. PHOTOS BY CEMETERY COMMISSION.",
         "Photo_URL": ""
       },
       "geometry": {
         "type": "Point",
-        "coordinates": [-84.9921, 39.4611]
+        "coordinates": [-85.0842, 39.3858]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Cemetery_Name": "St Jacob",
+        "Other_Names": "Blue Creek Catholic",
+        "Township": "Dearborn Co (Adjacent)",
+        "Birth_Year": 1838,
+        "Death_Year": 1838,
+        "Row_Number": "S1-T7N-R3W",
+        "Plot_Number": "N/A",
+        "Condition_Notes": "Condition unknown. Located just south across the county line in Dearborn County on west side of Blue Creek Road.",
+        "Photo_URL": ""
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-85.0536, 39.3064]
       }
     }
   ]
