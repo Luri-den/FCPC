@@ -1,40 +1,56 @@
+﻿
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>Franklin County Pioneer Cemeteries Archive</title>
+
 
     <!-- ============================================================
          MAPLIBRE GL JS
          ============================================================ -->
-    <link
-        href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"
-        rel="stylesheet"
-    />
 
-    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"
+    >
+
+    <script
+        src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"
+    ></script>
 
 
     <!-- ============================================================
          PAGE STYLING
          ============================================================ -->
+
     <style>
 
         * {
             box-sizing: border-box;
         }
 
+
         html,
         body {
-            margin: 0;
-            padding: 0;
             width: 100%;
             height: 100%;
+            margin: 0;
+            padding: 0;
         }
 
+
         body {
+            display: flex;
+
             font-family:
                 system-ui,
                 -apple-system,
@@ -42,8 +58,8 @@
                 "Segoe UI",
                 sans-serif;
 
-            display: flex;
             color: #333;
+
             overflow: hidden;
         }
 
@@ -53,19 +69,23 @@
            ======================================================== */
 
         #sidebar {
+
             width: 380px;
             min-width: 380px;
+
+            height: 100%;
+
+            display: flex;
+            flex-direction: column;
 
             background: #fafafa;
 
             border-right: 1px solid #ddd;
 
-            display: flex;
-            flex-direction: column;
+            box-shadow:
+                2px 0 5px rgba(0, 0, 0, 0.05);
 
             z-index: 10;
-
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
         }
 
 
@@ -74,6 +94,7 @@
            ======================================================== */
 
         .header-panel {
+
             padding: 20px;
 
             background: #1e293b;
@@ -81,14 +102,19 @@
             color: white;
         }
 
+
         .header-panel h1 {
+
             margin: 0 0 5px 0;
 
             font-size: 1.3rem;
+
             line-height: 1.25;
         }
 
+
         .header-panel p {
+
             margin: 0;
 
             font-size: 0.85rem;
@@ -102,37 +128,46 @@
            ======================================================== */
 
         .control-panel {
+
             padding: 15px 20px;
 
-            border-bottom: 1px solid #e2e8f0;
-
             background: white;
+
+            border-bottom: 1px solid #e2e8f0;
         }
 
 
-        /* SEARCH */
+        /* ========================================================
+           SEARCH
+           ======================================================== */
 
         .search-box {
+
             width: 100%;
 
             padding: 10px;
+
+            margin-bottom: 15px;
 
             border: 1px solid #cbd5e1;
 
             border-radius: 6px;
 
-            margin-bottom: 15px;
-
             font-family: inherit;
+
             font-size: 0.95rem;
         }
 
+
         .search-box:focus {
+
             outline: none;
 
             border-color: #64748b;
 
-            box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.15);
+            box-shadow:
+                0 0 0 2px
+                rgba(100, 116, 139, 0.15);
         }
 
 
@@ -141,6 +176,7 @@
            ======================================================== */
 
         .slider-container {
+
             display: flex;
 
             flex-direction: column;
@@ -148,25 +184,31 @@
             gap: 5px;
         }
 
+
         .slider-label {
-            font-size: 0.85rem;
-
-            font-weight: 600;
-
-            color: #475569;
 
             display: flex;
 
             justify-content: space-between;
 
             gap: 10px;
+
+            font-size: 0.85rem;
+
+            font-weight: 600;
+
+            color: #475569;
         }
 
+
         #slider-value {
+
             white-space: nowrap;
         }
 
+
         #timeline-slider {
+
             width: 100%;
 
             margin: 8px 0;
@@ -178,23 +220,50 @@
            ======================================================== */
 
         #info-panel {
+
+            flex-grow: 1;
+
             padding: 20px;
 
             overflow-y: auto;
 
-            flex-grow: 1;
-
             background: white;
         }
 
+
         .placeholder-text {
+
+            margin-top: 40px;
+
             color: #94a3b8;
 
             font-style: italic;
 
             text-align: center;
 
-            margin-top: 40px;
+            line-height: 1.5;
+        }
+
+
+        /* ========================================================
+           ERROR MESSAGE
+           ======================================================== */
+
+        .error-message {
+
+            margin-top: 20px;
+
+            padding: 12px;
+
+            background: #fef2f2;
+
+            border: 1px solid #fecaca;
+
+            border-radius: 6px;
+
+            color: #991b1b;
+
+            font-size: 0.85rem;
 
             line-height: 1.5;
         }
@@ -205,6 +274,7 @@
            ======================================================== */
 
         .meta-grid {
+
             display: grid;
 
             grid-template-columns: 1fr 1fr;
@@ -214,17 +284,21 @@
             margin-top: 15px;
         }
 
+
         .meta-item {
-            background: #f8fafc;
 
             padding: 10px;
 
-            border-radius: 6px;
+            background: #f8fafc;
 
             border: 1px solid #f1f5f9;
+
+            border-radius: 6px;
         }
 
+
         .meta-label {
+
             font-size: 0.75rem;
 
             color: #64748b;
@@ -234,7 +308,9 @@
             font-weight: 600;
         }
 
+
         .meta-value {
+
             font-size: 0.95rem;
 
             font-weight: 600;
@@ -250,11 +326,12 @@
            ======================================================== */
 
         #map {
+
             flex-grow: 1;
 
             height: 100%;
 
-            background-color: #e2e8f0;
+            background: #e2e8f0;
         }
 
 
@@ -265,28 +342,38 @@
         @media (max-width: 700px) {
 
             body {
+
                 flex-direction: column;
+
                 overflow: auto;
             }
 
+
             #sidebar {
+
                 width: 100%;
+
                 min-width: 0;
 
                 height: 45vh;
 
                 border-right: none;
+
                 border-bottom: 1px solid #ddd;
             }
 
+
             #map {
+
                 height: 55vh;
 
                 min-height: 400px;
             }
+
         }
 
     </style>
+
 </head>
 
 
@@ -294,10 +381,15 @@
 
 
     <!-- ============================================================
-         LEFT SIDEBAR
+         SIDEBAR
          ============================================================ -->
 
     <div id="sidebar">
+
+
+        <!-- ========================================================
+             HEADER
+             ======================================================== -->
 
         <div class="header-panel">
 
@@ -318,18 +410,18 @@
 
         <div class="control-panel">
 
-            <!-- Cemetery name search -->
+
             <input
                 type="text"
                 id="search-input"
                 class="search-box"
                 placeholder="Search by cemetery name..."
                 autocomplete="off"
-            />
+            >
 
 
-            <!-- Establishment year slider -->
             <div class="slider-container">
+
 
                 <div class="slider-label">
 
@@ -351,7 +443,7 @@
                     max="1900"
                     step="5"
                     value="1900"
-                />
+                >
 
             </div>
 
@@ -365,8 +457,10 @@
         <div id="info-panel">
 
             <div class="placeholder-text">
+
                 Click a red cemetery marker on the map to inspect
                 historical details and county commission notes.
+
             </div>
 
         </div>
@@ -387,24 +481,58 @@
 
     <script>
 
+
         // ============================================================
-        // BASIC CONFIGURATION
+        // CONFIGURATION
         // ============================================================
 
-        const MAP_CENTER = [-85.0626, 39.3992];
+
+        const MAP_CENTER = [
+            -85.0626,
+            39.3992
+        ];
+
 
         const MAP_ZOOM = 11;
 
 
-        // Franklin County, Indiana approximate bounding box.
         const MAP_BOUNDS = [
+
             [-85.313644, 39.263095],
+
             [-84.811707, 39.535292]
+
         ];
 
 
-        // GeoJSON file expected in the same folder as this HTML file.
-        const GEOJSON_FILE = "./graves.geojson";
+        // ============================================================
+        // GITHUB PAGES DATA FILE
+        // ============================================================
+        //
+        // This automatically resolves graves.geojson relative to
+        // the current page.
+        //
+        // It works whether GitHub Pages is:
+        //
+        // https://username.github.io/
+        //
+        // or:
+        //
+        // https://username.github.io/repository-name/
+        //
+        // ============================================================
+
+        const GEOJSON_FILE =
+            new URL(
+                "graves.geojson",
+                document.baseURI
+            ).href;
+
+
+        console.log(
+            "GeoJSON URL:",
+            GEOJSON_FILE
+        );
 
 
         // ============================================================
@@ -415,22 +543,35 @@
 
             container: "map",
 
+            center: MAP_CENTER,
+
+            zoom: MAP_ZOOM,
+
+            maxBounds: MAP_BOUNDS,
+
+            maxZoom: 18,
+
+
+            // ========================================================
+            // MAP STYLE
+            // ========================================================
+
             style: {
 
                 version: 8,
 
+
                 sources: {
 
-                    // ------------------------------------------------
-                    // OpenStreetMap raster tiles
-                    // ------------------------------------------------
 
                     "osm-raster-tiles": {
 
                         type: "raster",
 
                         tiles: [
+
                             "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+
                         ],
 
                         tileSize: 256,
@@ -443,11 +584,8 @@
                 },
 
 
-                // ----------------------------------------------------
-                // Base map layer
-                // ----------------------------------------------------
-
                 layers: [
+
 
                     {
 
@@ -461,473 +599,18 @@
 
                 ]
 
-            },
-
-
-            center: MAP_CENTER,
-
-            zoom: MAP_ZOOM,
-
-            maxBounds: MAP_BOUNDS,
-
-            maxZoom: 18
-
-        });
-
-
-        // ============================================================
-        // MAP LOAD
-        // ============================================================
-
-        map.on("load", () => {
-
-
-            // ========================================================
-            // NAVIGATION CONTROL
-            // ========================================================
-
-            map.addControl(
-                new maplibregl.NavigationControl({
-                    showCompass: false
-                }),
-                "top-right"
-            );
-
-
-            // ========================================================
-            // LOAD CEMETERY GEOJSON
-            // ========================================================
-
-            map.addSource("cemeteries", {
-
-                type: "geojson",
-
-                data: GEOJSON_FILE
-
-            });
-
-
-            // ========================================================
-            // CEMETERY MARKERS
-            // ========================================================
-
-            map.addLayer({
-
-                id: "cemeteries-layer",
-
-                type: "circle",
-
-                source: "cemeteries",
-
-                paint: {
-
-                    "circle-radius": 10,
-
-                    "circle-color": "#b91c1c",
-
-                    "circle-stroke-width": 2.5,
-
-                    "circle-stroke-color": "#ffffff"
-
-                }
-
-            });
-
-
-            // ========================================================
-            // CLICK HANDLER
-            // ========================================================
-
-            map.on(
-                "click",
-                "cemeteries-layer",
-                (event) => {
-
-                    if (
-                        !event.features ||
-                        !event.features.length
-                    ) {
-                        return;
-                    }
-
-
-                    const props =
-                        event.features[0].properties || {};
-
-
-                    const infoPanel =
-                        document.getElementById("info-panel");
-
-
-                    // ------------------------------------------------
-                    // Safely retrieve properties
-                    // ------------------------------------------------
-
-                    const cemeteryName =
-                        props.Cemetery_Name ||
-                        "Unknown Site";
-
-                    const otherNames =
-                        props.Other_Names ||
-                        "None";
-
-                    const township =
-                        props.Township ||
-                        "Unknown";
-
-                    const birthYear =
-                        props.Birth_Year ||
-                        "N/A";
-
-                    const rowNumber =
-                        props.Row_Number ||
-                        "N/A";
-
-                    const conditionNotes =
-                        props.Condition_Notes ||
-                        "No notes on file.";
-
-
-                    // ------------------------------------------------
-                    // Populate information panel
-                    // ------------------------------------------------
-
-                    infoPanel.innerHTML = `
-
-                        <h2
-                            style="
-                                margin:0 0 5px 0;
-                                font-size:1.4rem;
-                                color:#0f172a;
-                            "
-                        >
-                            ${escapeHTML(cemeteryName)}
-                        </h2>
-
-
-                        <p
-                            style="
-                                margin:0;
-                                color:#475569;
-                                font-size:0.9rem;
-                            "
-                        >
-                            Alternate:
-                            <strong>
-                                ${escapeHTML(otherNames)}
-                            </strong>
-                        </p>
-
-
-                        <p
-                            style="
-                                margin:3px 0 0 0;
-                                color:#475569;
-                                font-size:0.9rem;
-                            "
-                        >
-                            Township:
-                            <strong>
-                                ${escapeHTML(township)}
-                            </strong>
-                        </p>
-
-
-                        <div class="meta-grid">
-
-                            <div class="meta-item">
-
-                                <div class="meta-label">
-                                    Est. Year
-                                </div>
-
-                                <div class="meta-value">
-                                    ${escapeHTML(birthYear)}
-                                </div>
-
-                            </div>
-
-
-                            <div class="meta-item">
-
-                                <div class="meta-label">
-                                    Grid Log
-                                </div>
-
-                                <div
-                                    class="meta-value"
-                                    style="font-size:0.75rem;"
-                                >
-                                    ${escapeHTML(rowNumber)}
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-                        <div
-                            style="
-                                margin-top:20px;
-                                padding-top:15px;
-                                border-top:1px solid #e2e8f0;
-                            "
-                        >
-
-                            <h4
-                                style="
-                                    margin:0 0 5px 0;
-                                    font-size:0.8rem;
-                                    text-transform:uppercase;
-                                    color:#64748b;
-                                    letter-spacing:0.05em;
-                                "
-                            >
-                                Commission Records &amp; Notes
-                            </h4>
-
-
-                            <p
-                                style="
-                                    margin:0;
-                                    font-size:0.95rem;
-                                    line-height:1.5;
-                                    color:#334155;
-                                "
-                            >
-                                ${escapeHTML(conditionNotes)}
-                            </p>
-
-                        </div>
-
-                    `;
-
-                }
-            );
-
-
-            // ========================================================
-            // MOUSE CURSOR
-            // ========================================================
-
-            map.on(
-                "mouseenter",
-                "cemeteries-layer",
-                () => {
-
-                    map.getCanvas().style.cursor =
-                        "pointer";
-
-                }
-            );
-
-
-            map.on(
-                "mouseleave",
-                "cemeteries-layer",
-                () => {
-
-                    map.getCanvas().style.cursor =
-                        "";
-
-                }
-            );
-
-
-            // ========================================================
-            // FILTER CONTROLS
-            // ========================================================
-
-            const searchInput =
-                document.getElementById(
-                    "search-input"
-                );
-
-
-            const timelineSlider =
-                document.getElementById(
-                    "timeline-slider"
-                );
-
-
-            const sliderValueDisplay =
-                document.getElementById(
-                    "slider-value"
-                );
-
-
-            // ========================================================
-            // APPLY MAP FILTERS
-            // ========================================================
-
-            function applyMapFilters() {
-
-                const text =
-                    searchInput.value
-                        .toLowerCase()
-                        .trim();
-
-
-                const year =
-                    parseInt(
-                        timelineSlider.value,
-                        10
-                    );
-
-
-                const filters = ["all"];
-
-
-                // ----------------------------------------------------
-                // YEAR FILTER
-                // ----------------------------------------------------
-
-                if (year < 1900) {
-
-                    sliderValueDisplay.textContent =
-                        "Before " + year;
-
-
-                    filters.push([
-                        "<=",
-
-                        [
-                            "to-number",
-
-                            [
-                                "get",
-                                "Birth_Year"
-                            ]
-                        ],
-
-                        year
-                    ]);
-
-                }
-
-                else {
-
-                    sliderValueDisplay.textContent =
-                        "All Years";
-
-                }
-
-
-                // ----------------------------------------------------
-                // TEXT FILTER
-                // ----------------------------------------------------
-
-                if (text !== "") {
-
-                    filters.push([
-
-                        "any",
-
-                        [
-                            "==",
-
-                            [
-                                "index-of",
-
-                                text,
-
-                                [
-                                    "downcase",
-
-                                    [
-                                        "coalesce",
-
-                                        [
-                                            "get",
-                                            "Cemetery_Name"
-                                        ],
-
-                                        ""
-                                    ]
-                                ]
-
-                            ],
-
-                            0
-                        ],
-
-                        [
-                            "==",
-
-                            [
-                                "index-of",
-
-                                text,
-
-                                [
-                                    "downcase",
-
-                                    [
-                                        "coalesce",
-
-                                        [
-                                            "get",
-                                            "Other_Names"
-                                        ],
-
-                                        ""
-                                    ]
-                                ]
-
-                            ],
-
-                            0
-                        ]
-
-                    ]);
-
-                }
-
-
-                // ----------------------------------------------------
-                // APPLY FILTER
-                // ----------------------------------------------------
-
-                map.setFilter(
-                    "cemeteries-layer",
-                    filters
-                );
-
             }
 
-
-            // ========================================================
-            // CONTROL EVENTS
-            // ========================================================
-
-            searchInput.addEventListener(
-                "input",
-                applyMapFilters
-            );
-
-
-            timelineSlider.addEventListener(
-                "input",
-                applyMapFilters
-            );
-
-
-            // ========================================================
-            // INITIAL FILTER STATE
-            // ========================================================
-
-            applyMapFilters();
-
         });
 
 
         // ============================================================
-        // GEOJSON ERROR HANDLING
+        // MAP ERROR HANDLING
         // ============================================================
 
         map.on(
             "error",
-            (event) => {
+            function(event) {
 
                 console.error(
                     "MapLibre error:",
@@ -939,29 +622,591 @@
 
 
         // ============================================================
-        // HTML ESCAPING
+        // MAP LOADED
+        // ============================================================
+
+        map.on(
+            "load",
+            function() {
+
+
+                // ====================================================
+                // NAVIGATION CONTROL
+                // ====================================================
+
+                map.addControl(
+
+                    new maplibregl.NavigationControl({
+
+                        showCompass: false
+
+                    }),
+
+                    "top-right"
+
+                );
+
+
+                // ====================================================
+                // GEOJSON SOURCE
+                // ====================================================
+
+                map.addSource(
+
+                    "cemeteries",
+
+                    {
+
+                        type: "geojson",
+
+                        data: GEOJSON_FILE
+
+                    }
+
+                );
+
+
+                // ====================================================
+                // CEMETERY MARKERS
+                // ====================================================
+
+                map.addLayer({
+
+                    id: "cemeteries-layer",
+
+                    type: "circle",
+
+                    source: "cemeteries",
+
+                    paint: {
+
+                        "circle-radius": 10,
+
+                        "circle-color": "#b91c1c",
+
+                        "circle-stroke-width": 2.5,
+
+                        "circle-stroke-color": "#ffffff"
+
+                    }
+
+                });
+
+
+                // ====================================================
+                // GEOJSON SOURCE ERROR DETECTION
+                // ====================================================
+
+                map.on(
+                    "error",
+                    function(event) {
+
+                        if (
+                            event &&
+                            event.error &&
+                            event.error.message
+                        ) {
+
+                            console.error(
+                                "GeoJSON / Map error:",
+                                event.error.message
+                            );
+
+                        }
+
+                    }
+                );
+
+
+                // ====================================================
+                // CLICK HANDLER
+                // ====================================================
+
+                map.on(
+
+                    "click",
+
+                    "cemeteries-layer",
+
+                    function(event) {
+
+
+                        if (
+                            !event.features ||
+                            event.features.length === 0
+                        ) {
+
+                            return;
+
+                        }
+
+
+                        const props =
+                            event.features[0].properties || {};
+
+
+                        const cemeteryName =
+                            props.Cemetery_Name ||
+                            "Unknown Site";
+
+
+                        const otherNames =
+                            props.Other_Names ||
+                            "None";
+
+
+                        const township =
+                            props.Township ||
+                            "Unknown";
+
+
+                        const birthYear =
+                            props.Birth_Year ||
+                            "N/A";
+
+
+                        const rowNumber =
+                            props.Row_Number ||
+                            "N/A";
+
+
+                        const conditionNotes =
+                            props.Condition_Notes ||
+                            "No notes on file.";
+
+
+                        const infoPanel =
+                            document.getElementById(
+                                "info-panel"
+                            );
+
+
+                        // =================================================
+                        // DISPLAY CEMETERY INFORMATION
+                        // =================================================
+
+                        infoPanel.innerHTML = `
+
+                            <h2
+                                style="
+                                    margin:0 0 5px 0;
+                                    font-size:1.4rem;
+                                    color:#0f172a;
+                                "
+                            >
+                                ${escapeHTML(cemeteryName)}
+                            </h2>
+
+
+                            <p
+                                style="
+                                    margin:0;
+                                    color:#475569;
+                                    font-size:0.9rem;
+                                "
+                            >
+
+                                Alternate:
+
+                                <strong>
+                                    ${escapeHTML(otherNames)}
+                                </strong>
+
+                            </p>
+
+
+                            <p
+                                style="
+                                    margin:3px 0 0 0;
+                                    color:#475569;
+                                    font-size:0.9rem;
+                                "
+                            >
+
+                                Township:
+
+                                <strong>
+                                    ${escapeHTML(township)}
+                                </strong>
+
+                            </p>
+
+
+                            <div class="meta-grid">
+
+
+                                <div class="meta-item">
+
+                                    <div class="meta-label">
+                                        Est. Year
+                                    </div>
+
+                                    <div class="meta-value">
+                                        ${escapeHTML(birthYear)}
+                                    </div>
+
+                                </div>
+
+
+                                <div class="meta-item">
+
+                                    <div class="meta-label">
+                                        Grid Log
+                                    </div>
+
+                                    <div
+                                        class="meta-value"
+                                        style="font-size:0.75rem;"
+                                    >
+                                        ${escapeHTML(rowNumber)}
+                                    </div>
+
+                                </div>
+
+
+                            </div>
+
+
+                            <div
+                                style="
+                                    margin-top:20px;
+                                    padding-top:15px;
+                                    border-top:1px solid #e2e8f0;
+                                "
+                            >
+
+                                <h4
+                                    style="
+                                        margin:0 0 5px 0;
+                                        font-size:0.8rem;
+                                        text-transform:uppercase;
+                                        color:#64748b;
+                                        letter-spacing:0.05em;
+                                    "
+                                >
+                                    Commission Records &amp; Notes
+                                </h4>
+
+
+                                <p
+                                    style="
+                                        margin:0;
+                                        font-size:0.95rem;
+                                        line-height:1.5;
+                                        color:#334155;
+                                    "
+                                >
+                                    ${escapeHTML(conditionNotes)}
+                                </p>
+
+                            </div>
+
+                        `;
+
+                    }
+
+                );
+
+
+                // ====================================================
+                // POINTER CURSOR
+                // ====================================================
+
+                map.on(
+
+                    "mouseenter",
+
+                    "cemeteries-layer",
+
+                    function() {
+
+                        map.getCanvas().style.cursor =
+                            "pointer";
+
+                    }
+
+                );
+
+
+                map.on(
+
+                    "mouseleave",
+
+                    "cemeteries-layer",
+
+                    function() {
+
+                        map.getCanvas().style.cursor =
+                            "";
+
+                    }
+
+                );
+
+
+                // ====================================================
+                // SEARCH / FILTER CONTROLS
+                // ====================================================
+
+                const searchInput =
+                    document.getElementById(
+                        "search-input"
+                    );
+
+
+                const timelineSlider =
+                    document.getElementById(
+                        "timeline-slider"
+                    );
+
+
+                const sliderValueDisplay =
+                    document.getElementById(
+                        "slider-value"
+                    );
+
+
+                // ====================================================
+                // APPLY FILTERS
+                // ====================================================
+
+                function applyMapFilters() {
+
+
+                    const text =
+                        searchInput.value
+                            .toLowerCase()
+                            .trim();
+
+
+                    const year =
+                        parseInt(
+                            timelineSlider.value,
+                            10
+                        );
+
+
+                    const filters = [
+                        "all"
+                    ];
+
+
+                    // =================================================
+                    // YEAR FILTER
+                    // =================================================
+
+                    if (year < 1900) {
+
+
+                        sliderValueDisplay.textContent =
+                            "Before " + year;
+
+
+                        filters.push([
+
+                            "<=",
+
+                            [
+
+                                "to-number",
+
+                                [
+
+                                    "get",
+
+                                    "Birth_Year"
+
+                                ]
+
+                            ],
+
+                            year
+
+                        ]);
+
+                    }
+
+                    else {
+
+
+                        sliderValueDisplay.textContent =
+                            "All Years";
+
+                    }
+
+
+                    // =================================================
+                    // TEXT SEARCH
+                    // =================================================
+
+                    if (text !== "") {
+
+
+                        filters.push([
+
+                            "any",
+
+
+                            // Cemetery name
+
+                            [
+
+                                "in",
+
+                                text,
+
+                                [
+
+                                    "downcase",
+
+                                    [
+
+                                        "coalesce",
+
+                                        [
+                                            "get",
+                                            "Cemetery_Name"
+                                        ],
+
+                                        ""
+
+                                    ]
+
+                                ]
+
+                            ],
+
+
+                            // Alternate name
+
+                            [
+
+                                "in",
+
+                                text,
+
+                                [
+
+                                    "downcase",
+
+                                    [
+
+                                        "coalesce",
+
+                                        [
+                                            "get",
+                                            "Other_Names"
+                                        ],
+
+                                        ""
+
+                                    ]
+
+                                ]
+
+                            ]
+
+                        ]);
+
+                    }
+
+
+                    // =================================================
+                    // APPLY FILTER
+                    // =================================================
+
+                    map.setFilter(
+
+                        "cemeteries-layer",
+
+                        filters
+
+                    );
+
+                }
+
+
+                // ====================================================
+                // SEARCH EVENT
+                // ====================================================
+
+                searchInput.addEventListener(
+
+                    "input",
+
+                    applyMapFilters
+
+                );
+
+
+                // ====================================================
+                // SLIDER EVENT
+                // ====================================================
+
+                timelineSlider.addEventListener(
+
+                    "input",
+
+                    applyMapFilters
+
+                );
+
+
+                // ====================================================
+                // INITIAL FILTER STATE
+                // ====================================================
+
+                applyMapFilters();
+
+            }
+
+        );
+
+
+        // ============================================================
+        // ESCAPE HTML
+        // ============================================================
         //
-        // Prevents text stored in the GeoJSON from being interpreted
-        // as HTML when inserted into the information panel.
+        // This prevents cemetery notes containing characters such as
+        // <, >, &, or quotes from being interpreted as HTML.
+        //
         // ============================================================
 
         function escapeHTML(value) {
 
             return String(value)
 
-                .replace(/&/g, "&amp;")
+                .replace(
+                    /&/g,
+                    "&amp;"
+                )
 
-                .replace(/</g, "&lt;")
+                .replace(
+                    /</g,
+                    "&lt;"
+                )
 
-                .replace(/>/g, "&gt;")
+                .replace(
+                    />/g,
+                    "&gt;"
+                )
 
-                .replace(/"/g, "&quot;")
+                .replace(
+                    /"/g,
+                    "&quot;"
+                )
 
-                .replace(/'/g, "&#039;");
+                .replace(
+                    /'/g,
+                    "&#039;"
+                );
 
         }
+
 
     </script>
 
 </body>
+
 </html>
+
