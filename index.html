@@ -23,7 +23,7 @@
         .meta-item { background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #f1f5f9; }
         .meta-label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 600; }
         .meta-value { font-size: 0.95rem; font-weight: 600; color: #0f172a; }
-        #map { flex-grow: 1; height: 100%; background-color: #e2e8f0; }
+        #map { flex-grow: 1; height: 100%; background-color: #cbd5e1; }
     </style>
 </head>
 <body>
@@ -46,19 +46,39 @@
     <div id="map"></div>
 
     <script>
-        // Use a guaranteed, pre-styled open-source basemap style
-        const BASEMAP_STYLE = "https://cartocdn.com";
-
         const map = new maplibregl.Map({
             container: 'map',
-            style: BASEMAP_STYLE,
             zoom: 11,
             center: [-85.0626, 39.3992], // Perfect center coordinates for Franklin County, IN
             maxBounds: [
                 [-85.313644, 39.263095], // Safe rails bounding box limits
                 [-84.811707, 39.535292]
             ],
-            maxZoom: 20
+            maxZoom: 20,
+            style: {
+                version: 8,
+                sources: {
+                    // OpenStreetMap open public base raster map tile servers
+                    "osm-raster-tiles": {
+                        type: "raster",
+                        tiles: [
+                            "https://openstreetmap.org{z}/{x}/{y}.png",
+                            "https://openstreetmap.org{z}/{x}/{y}.png"
+                        ],
+                        tileSize: 256,
+                        attribution: "© OpenStreetMap contributors"
+                    }
+                },
+                layers: [
+                    {
+                        id: "osm-raster-layer",
+                        type: "raster",
+                        source: "osm-raster-tiles",
+                        minzoom: 0,
+                        maxzoom: 19
+                    }
+                ]
+            }
         });
 
         map.on('load', () => {
@@ -76,16 +96,16 @@
                 type: 'circle',
                 source: 'cemeteries',
                 paint: {
-                    'circle-radius': 8,
+                    'circle-radius': 9,
                     'circle-color': '#b91c1c',
-                    'circle-stroke-width': 2,
+                    'circle-stroke-width': 2.5,
                     'circle-stroke-color': '#ffffff'
                 }
             });
 
             // Click listener function to inject data properties into the sidebar panel
             map.on('click', 'cemeteries-layer', (e) => {
-                const props = e.features[0].properties;
+                const props = e.features.properties;
                 const infoPanel = document.getElementById('info-panel');
 
                 infoPanel.innerHTML = `
@@ -118,8 +138,8 @@
                 } else {
                     map.setFilter('cemeteries-layer', [
                         'any',
-                        ['like', ['downcase', ['get', 'Cemetery_Name']], value],
-                        ['like', ['downcase', ['get', 'Other_Names']], value]
+                        ['like', ['downcase', ['to-string', ['get', 'Cemetery_Name']]], value],
+                        ['like', ['downcase', ['to-string', ['get', 'Other_Names']]], value]
                     ]);
                 }
             });
