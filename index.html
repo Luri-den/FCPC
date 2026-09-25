@@ -185,14 +185,26 @@
         const PMTILES_URL = "franklin_county.pmtiles"; 
 
         // Set up MapLibre Map Canvas
-        const map = new maplibregl.Map({
-            container: 'map',
-            zoom: 11,
-            center: [-85.1394, 39.4214], // Coordinates centered directly over Franklin County, IN
-            maxZoom: 24, // UNLOCKED DEEP ZOOM for plot accuracy
-            pitchWithRotate: false,
-            dragRotate: false,
-            style: {
+ // Set up MapLibre Map Canvas
+const map = new maplibregl.Map({
+    container: 'map',
+    zoom: 11,
+    
+    // 1. Center the camera right in the middle of Franklin County on load
+    center: [-85.0626, 39.3992], 
+    
+    // 2. Lock the map bounds using your exact coordinate box boundaries [1]
+    maxBounds: [
+        [-85.313644, 39.263095], // [West Longitude, South Latitude] [1]
+        [-84.811707, 39.535292]  // [East Longitude, North Latitude] [1]
+    ],
+    
+    maxZoom: 24, // UNLOCKED DEEP ZOOM for plot accuracy
+    pitchWithRotate: false,
+    dragRotate: false,
+    style: {
+        // ... (rest of the style code remains exactly the same)
+
                 version: 8,
                 sources: {
                     "basemap": {
@@ -260,7 +272,7 @@
                 const infoPanel = document.getElementById('info-panel');
 
                 // Gracefully fallback to a generic asset image if an Epicollect photo url string is blank
-                const photoSrc = props.Photo_URL || "https://unsplash.com";
+                const PMTILES_URL = "https://protomaps.com";
 
                 // Generate and inject structural content components directly to our sidebar container UI
                 infoPanel.innerHTML = `

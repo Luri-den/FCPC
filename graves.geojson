@@ -1,0 +1,39 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "Cemetery_Name": "Big Cedar Cemetery",
+        "Township": "Whitewater Township",
+        "Birth_Year": 1810,
+        "Death_Year": 1845,
+        "Row_Number": "A-1",
+        "Plot_Number": "12",
+        "Condition_Notes": "Historic Pioneer Site. Main perimeter mapped via GaiaGPS tracker records.",
+        "Photo_URL": ""
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-84.9754, 39.3872]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Cemetery_Name": "Sims-Brier Cemetery",
+        "Township": "Fairfield Township",
+        "Birth_Year": 1822,
+        "Death_Year": 1864,
+        "Row_Number": "B-4",
+        "Plot_Number": "03",
+        "Condition_Notes": "Pioneer burial grounds adjacent to Brookville Lake paths.",
+        "Photo_URL": ""
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-84.9921, 39.4611]
+      }
+    }
+  ]
+}
