@@ -26,28 +26,28 @@
         .meta-item { background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #f1f5f9; }
         .meta-label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 600; }
         .meta-value { font-size: 0.95rem; font-weight: 600; color: #0f172a; }
-        #map { flex-grow: 1; height: 100%; background-color: #cbd5e1; }
+        #map { flex-grow: 1; height: 100%; background-color: #e2e8f0; }
     </style>
 </head>
 <body>
 
-    <!-- Left Dashboard Control Panel -->
+    <!-- Left Controls Dashboard -->
     <div id="sidebar">
         <div class="header-panel">
             <h1>Franklin County Cemeteries</h1>
             <p>Pioneer Graves & Records Archive</p>
         </div>
         <div class="control-panel">
-            <!-- Cemetery Search Input Bar -->
+            <!-- Real-time Text Filter -->
             <input type="text" id="search-input" class="search-box" placeholder="Search by cemetery name..." />
             
-            <!-- Restored Decade Timeline Slider -->
+            <!-- Est. Year Timeline Slider -->
             <div class="slider-container">
                 <div class="slider-label">
                     <span>Show Sites Established Before:</span>
                     <span id="slider-value">All Years</span>
                 </div>
-                <input type="range" id="timeline-slider" min="1800" max="1900" step = "10" value="1900" />
+                <input type="range" id="timeline-slider" min="1800" max="1900" step="5" value="1900" />
             </div>
         </div>
         <div id="info-panel">
@@ -55,28 +55,19 @@
         </div>
     </div>
 
-    <!-- Right Interactive Map Element -->
+    <!-- Right Map Window -->
     <div id="map"></div>
 
     <script>
+        // Set up MapLibre with an explicit, secure public basemap configuration layout
         const map = new maplibregl.Map({
             container: 'map',
-            zoom: 11,
-            center: [-85.0626, 39.3992], // Centers view directly on Franklin County, IN
-            maxBounds: [
-                [-85.313644, 39.263095], // Safe-rail bounds derived from your custom coordinates box
-                [-84.811707, 39.535292]
-            ],
-            maxZoom: 20,
             style: {
                 version: 8,
                 sources: {
-                    "osm-tiles": {
+                    "osm-raster-tiles": {
                         type: "raster",
-                        tiles: [
-                            "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                            "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        ],
+                        tiles: ["https://openstreetmap.org{z}/{x}/{y}.png"],
                         tileSize: 256,
                         attribution: "© OpenStreetMap contributors"
                     }
@@ -85,37 +76,44 @@
                     {
                         id: "osm-layer",
                         type: "raster",
-                        source: "osm-tiles"
+                        source: "osm-raster-tiles"
                     }
                 ]
-            }
+            },
+            zoom: 11,
+            center: [-85.0626, 39.3992], // Perfect center coordinates for Franklin County, IN
+            maxBounds: [
+                [-85.313644, 39.263095], // Bounding Box constraints
+                [-84.811707, 39.535292]
+            ],
+            maxZoom: 18
         });
 
         map.on('load', () => {
             map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
 
-            // Hook up the graves.geojson dataset file 
-            map.addSource('cemeteries-source', {
+            // Securely load your local data file path
+            map.addSource('cemeteries', {
                 type: 'geojson',
                 data: './graves.geojson'
             });
 
-            // Map data layer to drop coordinates points down on our map grid landscape
+            // Add the pins graphic configuration layers
             map.addLayer({
                 id: 'cemeteries-layer',
                 type: 'circle',
-                source: 'cemeteries-source',
+                source: 'cemeteries',
                 paint: {
                     'circle-radius': 10,
-                    'circle-color': '#b91c1c', // Pioneer red dots markers
+                    'circle-color': '#b91c1c',
                     'circle-stroke-width': 2.5,
                     'circle-stroke-color': '#ffffff'
                 }
             });
 
-            // Handle map pin click events to update metadata elements inside the sidebar window panel
+            // Interactive Click Handler: Updates Left Panel with dynamic text injection
             map.on('click', 'cemeteries-layer', (e) => {
-                const props = e.features[properties];
+                const props = e.features[0].properties; // FIXED: Access properties index explicitly
                 const infoPanel = document.getElementById('info-panel');
 
                 infoPanel.innerHTML = `
@@ -138,44 +136,39 @@
             map.on('mouseenter', 'cemeteries-layer', () => map.getCanvas().style.cursor = 'pointer');
             map.on('mouseleave', 'cemeteries-layer', () => map.getCanvas().style.cursor = '');
 
-            // Interactive Search and Slider filtering framework engine routines
+            // Combined filtering using secure native MapLibre expressions
             const searchInput = document.getElementById('search-input');
             const timelineSlider = document.getElementById('timeline-slider');
             const sliderValueDisplay = document.getElementById('slider-value');
 
-            function applyFilters() {
+            function applyMapFilters() {
                 const text = searchInput.value.toLowerCase().trim();
-                const selectedYear = parseInt(timelineSlider.value);
+                const year = parseInt(timelineSlider.value);
                 
-                let expressionsStack = ['all'];
+                let filters = ['all'];
 
-                // 1. Evaluate Timeline Boundary threshold limits (Birth_Year column mapping)
-                if (selectedYear < 1900) {
-                    sliderValueDisplay.innerText = "Before " + selectedYear;
-                    expressionsStack.push(['<=', ['number', ['get', 'Birth_Year']], selectedYear]);
+                // 1. Establish the Timeline Filter bound (using the Birth_Year integer value)
+                if (year < 1900) {
+                    sliderValueDisplay.innerText = "Before " + year;
+                    filters.push(['<=', ['get', 'Birth_Year'], year]);
                 } else {
                     sliderValueDisplay.innerText = "All Years";
                 }
 
-                // 2. Evaluate String Pattern Text terms searches
+                // 2. Establish Text Pattern Matching (safe index-of array evaluation check)
                 if (text !== "") {
-                    expressionsStack.push([
+                    filters.push([
                         'any',
-                        ['like', ['downcase', ['to-string', ['get', 'Cemetery_Name']]], text],
-                        ['like', ['downcase', ['to-string', ['get', 'Other_Names']]], text]
+                        ['>=', ['index-of', text, ['downcase', ['get', 'Cemetery_Name']]], 0],
+                        ['>=', ['index-of', text, ['downcase', ['get', 'Other_Names']]], 0]
                     ]);
                 }
 
-                // Apply conditions layers
-                if (expressionsStack.length > 1) {
-                    map.setFilter('cemeteries-layer', expressionsStack);
-                } else {
-                    map.setFilter('cemeteries-layer', null);
-                }
+                map.setFilter('cemeteries-layer', filters);
             }
 
-            searchInput.addEventListener('input', applyFilters);
-            timelineSlider.addEventListener('input', applyFilters);
+            searchInput.addEventListener('input', applyMapFilters);
+            timelineSlider.addEventListener('input', applyMapFilters);
         });
     </script>
 </body>
