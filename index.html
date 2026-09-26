@@ -1,740 +1,836 @@
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Franklin County Indiana Pioneer Cemeteries Archive Prototype</title>
+```
+<meta charset="UTF-8">
 
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
 
-    <!-- =========================================================
-         MAPLIBRE
-         ========================================================= -->
-
-    <link
-        rel="stylesheet"
-        href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"
-    >
-
-    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<title>
+    Franklin County Indiana Pioneer Cemeteries Archive Prototype
+</title>
 
 
-    <!-- =========================================================
-         PAPAPARSE
-         ========================================================= -->
+<!-- =========================================================
+     MAPLIBRE
+     ========================================================= -->
 
-    <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
+<link
+    rel="stylesheet"
+    href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"
+>
 
-
-    <!-- =========================================================
-         STYLE
-         ========================================================= -->
-
-    <style>
-
-        * {
-            box-sizing: border-box;
-        }
+<script
+    src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"
+></script>
 
 
-        html,
-        body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            font-family: Arial, Helvetica, sans-serif;
-        }
+<!-- =========================================================
+     PAPAPARSE
+     ========================================================= -->
+
+<script
+    src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"
+></script>
 
 
-        body {
-            display: flex;
-            flex-direction: column;
-            background: #f4f1e8;
-        }
+<!-- =========================================================
+     STYLE
+     ========================================================= -->
+
+<style>
+
+    * {
+        box-sizing: border-box;
+    }
 
 
-        /* =====================================================
-           HEADER
-           ===================================================== */
+    html,
+    body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+
+    body {
+        display: flex;
+        flex-direction: column;
+        background: #f4f1e8;
+    }
+
+
+    /* =====================================================
+       HEADER
+       ===================================================== */
+
+    header {
+        background: #01796F;
+        color: white;
+        padding: 14px 18px;
+        z-index: 10;
+    }
+
+
+    header h1 {
+        margin: 0 0 5px 0;
+        font-size: 22px;
+    }
+
+
+    header p {
+        margin: 0;
+        font-size: 14px;
+        opacity: 0.9;
+    }
+
+
+    /* =====================================================
+       CONTROLS
+       ===================================================== */
+
+    #controls {
+        background: #eee9dc;
+        border-bottom: 1px solid #c9c1b2;
+        padding: 10px;
+
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+
+        z-index: 5;
+    }
+
+
+    /* =====================================================
+       SEARCH
+       ===================================================== */
+
+    #search-wrapper {
+        position: relative;
+
+        flex: 1 1 220px;
+        min-width: 180px;
+    }
+
+
+    #search {
+        width: 100%;
+
+        padding: 9px 34px 9px 10px;
+
+        border: 1px solid #aaa;
+        border-radius: 4px;
+
+        font-size: 15px;
+    }
+
+
+    #clear-search {
+        position: absolute;
+
+        top: 50%;
+        right: 5px;
+
+        transform: translateY(-50%);
+
+        width: 26px;
+        height: 26px;
+
+        padding: 0;
+
+        border: none;
+        border-radius: 50%;
+
+        background: transparent;
+        color: #777;
+
+        font-size: 20px;
+        line-height: 26px;
+
+        cursor: pointer;
+
+        display: none;
+    }
+
+
+    #clear-search:hover {
+        background: #e5e0d5;
+        color: #333;
+    }
+
+
+    /* =====================================================
+       SEARCH TOGGLES
+       ===================================================== */
+
+    #search-toggles {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+    }
+
+
+    .search-toggle {
+        padding: 8px 11px;
+
+        border: 1px solid #aaa;
+        border-radius: 4px;
+
+        background: #ddd8cc;
+        color: #463a2d;
+
+        font-size: 13px;
+        font-weight: normal;
+
+        cursor: pointer;
+    }
+
+
+    .search-toggle:hover {
+        background: #cfc8bb;
+    }
+
+
+    .search-toggle.active {
+        background: #01796F;
+        border-color: #01796F;
+        color: white;
+    }
+
+
+    .search-toggle.active:hover {
+        background: #463a2d;
+        border-color: #463a2d;
+    }
+
+
+    /* =====================================================
+       YEAR FILTER
+       ===================================================== */
+
+    #year-filter-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        padding: 0 4px;
+    }
+
+
+    #year-filter-label {
+        font-size: 14px;
+        white-space: nowrap;
+        color: #3f3528;
+    }
+
+
+    #year-filter {
+        width: 150px;
+        cursor: pointer;
+    }
+
+
+    #year-value {
+        min-width: 42px;
+
+        font-weight: bold;
+        font-size: 14px;
+
+        color: #3f3528;
+
+        text-align: center;
+    }
+
+
+    /* =====================================================
+       GENERAL BUTTONS
+       ===================================================== */
+
+    button {
+        padding: 9px 14px;
+
+        border: 1px solid #8d8375;
+        border-radius: 4px;
+
+        background: #01796F;
+        color: white;
+
+        font-size: 14px;
+
+        cursor: pointer;
+    }
+
+
+    button:hover {
+        background: #463a2d;
+    }
+
+
+    /* =====================================================
+       SEE MORE BUTTON
+       ===================================================== */
+
+    .see-more-button {
+        display: block;
+
+        width: 100%;
+
+        padding: 10px 14px;
+
+        border: 1px solid #8d8375;
+        border-radius: 4px;
+
+        background: #01796F;
+        color: white;
+
+        font-size: 14px;
+        font-weight: bold;
+
+        text-align: center;
+
+        cursor: pointer;
+    }
+
+
+    .see-more-button:hover {
+        background: #463a2d;
+    }
+
+
+    /* =====================================================
+       CEMETERY POPUP PHOTO
+       ===================================================== */
+
+    .cemetery-popup-photo {
+        display: block;
+
+        width: 100%;
+        height: auto;
+
+        max-height: 220px;
+
+        object-fit: contain;
+
+        margin: 0 0 12px 0;
+
+        border-radius: 4px;
+    }
+
+
+    /* =====================================================
+       POPUP LABEL / VALUE FIELDS
+       ===================================================== */
+
+    .popup-field {
+        display: grid;
+
+        grid-template-columns: 130px 1fr;
+
+        column-gap: 10px;
+
+        margin-bottom: 8px;
+    }
+
+
+    .popup-label {
+        font-weight: bold;
+    }
+
+
+    /* =====================================================
+       HISTORICAL CEMETERY LIST
+       ===================================================== */
+
+    .lake-cemetery {
+        border-top: 1px solid #ddd;
+
+        padding: 12px 0;
+    }
+
+
+    .lake-cemetery:first-child {
+        border-top: none;
+    }
+
+
+    .lake-cemetery h3 {
+        margin: 0 0 10px 0;
+
+        font-size: 16px;
+
+        color: #463a2d;
+    }
+
+
+    .lake-introduction {
+        margin: 0 0 12px 0;
+
+        line-height: 1.4;
+        font-size: 14px;
+    }
+
+
+    /* =====================================================
+       MAP
+       ===================================================== */
+
+    #map {
+        flex: 1;
+
+        min-height: 0;
+
+        width: 100%;
+
+        position: relative;
+    }
+
+
+    /* =====================================================
+       INFO PANEL
+       ===================================================== */
+
+    #info-panel {
+        position: absolute;
+
+        top: 10px;
+        right: 10px;
+
+        width: 310px;
+
+        max-width: calc(100% - 20px);
+        max-height: calc(100% - 20px);
+
+        overflow-y: auto;
+
+        background: rgba(255, 255, 255, 0.96);
+
+        border: 1px solid #aaa;
+        border-radius: 5px;
+
+        box-shadow:
+            0 2px 8px rgba(0, 0, 0, 0.25);
+
+        padding: 14px;
+
+        z-index: 4;
+    }
+
+
+    #close-info {
+        position: absolute;
+
+        top: 5px;
+        right: 7px;
+
+        width: 28px;
+        height: 28px;
+
+        padding: 0;
+
+        border: none;
+        border-radius: 50%;
+
+        background: transparent;
+
+        color: #5a4b3a;
+
+        font-size: 23px;
+        line-height: 28px;
+
+        cursor: pointer;
+    }
+
+
+    #close-info:hover {
+        background: #e5e0d5;
+        color: #2f281f;
+    }
+
+
+    #info-content {
+        padding-right: 24px;
+    }
+
+
+    #info-panel h2 {
+        margin: 0 0 6px 0;
+
+        font-size: 20px;
+
+        color: #3f3528;
+    }
+
+
+    #info-panel h3 {
+        margin: 12px 0 3px 0;
+
+        font-size: 13px;
+
+        color: #6b6258;
+
+        text-transform: uppercase;
+    }
+
+
+    #info-panel p {
+        margin: 0;
+
+        line-height: 1.4;
+
+        font-size: 14px;
+    }
+
+
+    .placeholder {
+        color: #666;
+
+        font-size: 14px;
+
+        line-height: 1.4;
+    }
+
+
+    .error-message {
+        color: #8b0000;
+
+        font-size: 14px;
+
+        line-height: 1.45;
+    }
+
+
+    /* =====================================================
+       CEMETERY LIGHTBOX
+       ===================================================== */
+
+    #cemetery-lightbox {
+        display: none;
+
+        position: absolute;
+
+        inset: 0;
+
+        background: rgba(0, 0, 0, 0.78);
+
+        z-index: 20;
+
+        align-items: center;
+        justify-content: center;
+
+        padding: 20px;
+    }
+
+
+    #cemetery-lightbox-frame {
+        width: min(1100px, 95%);
+        height: min(850px, 92%);
+
+        border: none;
+
+        border-radius: 5px;
+
+        background: white;
+
+        box-shadow:
+            0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+
+    #close-cemetery-lightbox {
+        position: absolute;
+
+        top: 15px;
+        right: 20px;
+
+        width: 38px;
+        height: 38px;
+
+        padding: 0;
+
+        border: none;
+        border-radius: 50%;
+
+        background: rgba(255, 255, 255, 0.92);
+
+        color: #3f3528;
+
+        font-size: 28px;
+        line-height: 38px;
+
+        cursor: pointer;
+
+        z-index: 21;
+    }
+
+
+    #close-cemetery-lightbox:hover {
+        background: white;
+        color: #01796F;
+    }
+
+
+    /* =====================================================
+       MOBILE
+       ===================================================== */
+
+    @media (max-width: 700px) {
 
         header {
-            background: #01796F;
-            color: white;
-            padding: 14px 18px;
-            z-index: 10;
+            padding: 11px 13px;
         }
 
 
         header h1 {
-            margin: 0 0 5px 0;
-            font-size: 22px;
+            font-size: 18px;
         }
 
 
         header p {
-            margin: 0;
-            font-size: 14px;
-            opacity: 0.9;
+            font-size: 12px;
         }
 
-
-        /* =====================================================
-           CONTROLS
-           ===================================================== */
 
         #controls {
-            background: #eee9dc;
-            border-bottom: 1px solid #c9c1b2;
-            padding: 10px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            align-items: center;
-            z-index: 5;
+            padding: 8px;
         }
 
 
-                /* =====================================================
-           SEARCH
-           ===================================================== */
-
-        #search-wrapper {
-            position: relative;
-            flex: 1 1 220px;
-            min-width: 180px;
-        }
-
-
-        #search {
+        #search,
+        #controls > button {
             width: 100%;
-            padding: 9px 34px 9px 10px;
-            border: 1px solid #aaa;
-            border-radius: 4px;
-            font-size: 15px;
+            flex: 1 1 100%;
         }
 
-
-        #clear-search {
-            position: absolute;
-            top: 50%;
-            right: 5px;
-
-            transform: translateY(-50%);
-
-            width: 26px;
-            height: 26px;
-
-            padding: 0;
-
-            border: none;
-            border-radius: 50%;
-
-            background: transparent;
-            color: #777;
-
-            font-size: 20px;
-            line-height: 26px;
-
-            cursor: pointer;
-
-            display: none;
-        }
-
-
-        #clear-search:hover {
-            background: #e5e0d5;
-            color: #333;
-        }
-
-
-        /* =====================================================
-           SEARCH TOGGLES
-           ===================================================== */
 
         #search-toggles {
-            display: flex;
-            gap: 4px;
-            align-items: center;
+            width: 100%;
+            flex: 1 1 100%;
         }
 
 
         .search-toggle {
-            padding: 8px 11px;
-
-            border: 1px solid #aaa;
-            border-radius: 4px;
-
-            background: #ddd8cc;
-            color: #463a2d;
-
-            font-size: 13px;
-            font-weight: normal;
-
-            cursor: pointer;
-        }
-
-
-        .search-toggle:hover {
-            background: #cfc8bb;
-        }
-
-
-        .search-toggle.active {
-            background: #01796F;
-            border-color: #01796F;
-            color: white;
-        }
-
-
-        .search-toggle.active:hover {
-            background: #463a2d;
-            border-color: #463a2d;
-        }
-
-           /* =====================================================
-           SEARCH RESULT HIGHLIGHT
-           ===================================================== */
-
-        .search-result-marker {
-            pointer-events: none;
+            flex: 1;
         }
 
 
         #year-filter-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 0 4px;
-        }
-
-
-        #year-filter-label {
-            font-size: 14px;
-            white-space: nowrap;
-            color: #3f3528;
+            width: 100%;
+            flex: 1 1 100%;
         }
 
 
         #year-filter {
-            width: 150px;
-            cursor: pointer;
-        }
-
-
-        #year-value {
-            min-width: 42px;
-            font-weight: bold;
-            font-size: 14px;
-            color: #3f3528;
-            text-align: center;
-        }
-
-
-        button {
-            padding: 9px 14px;
-            border: 1px solid #8d8375;
-            border-radius: 4px;
-            background: #01796F;
-            color: white;
-            font-size: 14px;
-            cursor: pointer;
-        }
-
-
-        button:hover {
-            background: #463a2d;
-        }
-
-
-        /* =====================================================
-           SEE MORE BUTTON
-           ===================================================== */
-
-        .see-more-button {
-            display: block;
-            width: 100%;
-            padding: 10px 14px;
-            border: 1px solid #8d8375;
-            border-radius: 4px;
-            background: #01796F;
-            color: white;
-            font-size: 14px;
-            font-weight: bold;
-            text-align: center;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-
-        .see-more-button:hover {
-            background: #463a2d;
-        }
-
-
-        /* =====================================================
-           CEMETERY POPUP PHOTO
-           ===================================================== */
-
-        .cemetery-popup-photo {
-            display: block;
-            width: 100%;
-            height: auto;
-            max-height: 220px;
-            object-fit: contain;
-            margin: 0 0 12px 0;
-            border-radius: 4px;
-        }
-
-
-        /* =====================================================
-           POPUP LABEL / VALUE FIELDS
-           ===================================================== */
-
-        .popup-field {
-            display: grid;
-            grid-template-columns: 130px 1fr;
-            column-gap: 10px;
-            margin-bottom: 8px;
-        }
-
-
-        .popup-label {
-            font-weight: bold;
-        }
-
-
-        /* =====================================================
-           HISTORICAL CEMETERY LIST
-           ===================================================== */
-
-        .lake-cemetery {
-            border-top: 1px solid #ddd;
-            padding: 12px 0;
-        }
-
-
-        .lake-cemetery:first-child {
-            border-top: none;
-        }
-
-
-        .lake-cemetery h3 {
-            margin: 0 0 10px 0;
-            font-size: 16px;
-            color: #463a2d;
-        }
-
-
-        .lake-introduction {
-            margin: 0 0 12px 0;
-            line-height: 1.4;
-            font-size: 14px;
-        }
-
-
-        /* =====================================================
-           MAP
-           ===================================================== */
-
-        #map {
             flex: 1;
-            min-height: 0;
-            width: 100%;
-            position: relative;
+            width: auto;
         }
 
-
-        /* =====================================================
-           INFO PANEL
-           ===================================================== */
 
         #info-panel {
             position: absolute;
-            top: 10px;
-            right: 10px;
 
-            width: 310px;
-            max-width: calc(100% - 20px);
-            max-height: calc(100% - 20px);
+            top: auto;
+            right: 8px;
+            bottom: 8px;
+            left: 8px;
 
-            overflow-y: auto;
+            width: auto;
 
-            background: rgba(255, 255, 255, 0.96);
-
-            border: 1px solid #aaa;
-            border-radius: 5px;
-
-            box-shadow:
-                0 2px 8px rgba(0, 0, 0, 0.25);
-
-            padding: 14px;
-
-            z-index: 4;
+            max-width: none;
+            max-height: 38%;
         }
 
 
-        #close-info {
-            position: absolute;
+        .popup-field {
+            grid-template-columns: 120px 1fr;
+        }
 
+
+        #cemetery-lightbox {
+            padding: 10px;
+        }
+
+
+        #cemetery-lightbox-frame {
+            width: 100%;
+            height: 90%;
+        }
+
+
+        #close-cemetery-lightbox {
             top: 5px;
-            right: 7px;
-
-            width: 28px;
-            height: 28px;
-
-            padding: 0;
-
-            border: none;
-            border-radius: 50%;
-
-            background: transparent;
-
-            color: #5a4b3a;
-
-            font-size: 23px;
-            line-height: 28px;
-
-            cursor: pointer;
+            right: 8px;
         }
 
+    }
 
-        #close-info:hover {
-            background: #e5e0d5;
-            color: #2f281f;
-        }
-        // ========================================================
-        // CEMETERY LIGHTBOX
-        // ========================================================
-
-        const cemeteryLightbox =
-            document.getElementById(
-                "cemetery-lightbox"
-            );
-
-
-        const cemeteryLightboxFrame =
-            document.getElementById(
-                "cemetery-lightbox-frame"
-            );
-
-
-        const closeCemeteryLightbox =
-            document.getElementById(
-                "close-cemetery-lightbox"
-            );
-
-
-        closeCemeteryLightbox.addEventListener(
-
-            "click",
-
-            function () {
-
-                cemeteryLightbox.style.display =
-                    "none";
-
-
-                cemeteryLightboxFrame.src =
-                    "";
-
-            }
-
-        );
-
-
-        document.addEventListener(
-
-            "keydown",
-
-            function (event) {
-
-                if (
-                    event.key === "Escape" &&
-                    cemeteryLightbox.style.display === "flex"
-                ) {
-
-                    cemeteryLightbox.style.display =
-                        "none";
-
-
-                    cemeteryLightboxFrame.src =
-                        "";
-
-                }
-
-            }
-
-        );
-
-        #info-content {
-            padding-right: 24px;
-        }
-
-
-        #info-panel h2 {
-            margin: 0 0 6px 0;
-            font-size: 20px;
-            color: #3f3528;
-        }
-
-
-        #info-panel h3 {
-            margin: 12px 0 3px 0;
-            font-size: 13px;
-            color: #6b6258;
-            text-transform: uppercase;
-        }
-
-
-        #info-panel p {
-            margin: 0;
-            line-height: 1.4;
-            font-size: 14px;
-        }
-
-
-        .placeholder {
-            color: #666;
-            font-size: 14px;
-            line-height: 1.4;
-        }
-
-
-        .error-message {
-            color: #8b0000;
-            font-size: 14px;
-            line-height: 1.45;
-        }
-
-
-        /* =====================================================
-           MOBILE
-           ===================================================== */
-
-        @media (max-width: 700px) {
-
-            header {
-                padding: 11px 13px;
-            }
-
-
-            header h1 {
-                font-size: 18px;
-            }
-
-
-            header p {
-                font-size: 12px;
-            }
-
-
-            #controls {
-                padding: 8px;
-            }
-
-
-            #search,
-            button {
-                width: 100%;
-                flex: 1 1 100%;
-            }
-
-
-            #year-filter-container {
-                width: 100%;
-                flex: 1 1 100%;
-            }
-
-
-            #year-filter {
-                flex: 1;
-                width: auto;
-            }
-
-
-            #info-panel {
-                position: absolute;
-
-                top: auto;
-                right: 8px;
-                bottom: 8px;
-                left: 8px;
-
-                width: auto;
-                max-width: none;
-                max-height: 38%;
-            }
-
-
-            .popup-field {
-                grid-template-columns: 120px 1fr;
-            }
-
-        }
-
-    </style>
+</style>
+```
 
 </head>
 
-
 <body>
 
+```
+<!-- =========================================================
+     HEADER
+     ========================================================= -->
 
-    <!-- =========================================================
-         HEADER
-         ========================================================= -->
+<header>
 
-    <header>
+    <h1>
+        Franklin County Indiana Pioneer Cemeteries Archive Prototype
+    </h1>
 
-        <h1>
-            Franklin County Indiana Pioneer Cemeteries Archive Prototype
-        </h1>
+    <p>
+        Historic Cemetery Locations and Associated Records
+    </p>
 
-        <p>
-            Historic Cemetery Locations and Associated Records
-        </p>
-
-    </header>
-
-
-    <!-- =========================================================
-         CONTROLS
-         ========================================================= -->
-
-    <div id="controls">
-
-               <div id="search-wrapper">
-
-            <input
-                type="text"
-                id="search"
-                placeholder="Search cemeteries or people..."
-            >
-
-            <button
-                id="clear-search"
-                type="button"
-                title="Clear search"
-            >
-                &times;
-            </button>
-
-        </div>
+</header>
 
 
-        <div id="search-toggles">
+<!-- =========================================================
+     CONTROLS
+     ========================================================= -->
 
-            <button
-                type="button"
-                class="search-toggle active"
-                id="search-cemetery"
-            >
-                Cemetery
-            </button>
+<div id="controls">
 
 
-            <button
-                type="button"
-                class="search-toggle active"
-                id="search-person"
-            >
-                Person
-            </button>
+    <!-- =====================================================
+         SEARCH
+         ===================================================== -->
+
+    <div id="search-wrapper">
+
+        <input
+            type="text"
+            id="search"
+            placeholder="Search cemeteries or people..."
+        >
 
 
-            <button
-                type="button"
-                class="search-toggle"
-                id="search-veterans"
-            >
-                Veterans Only
-            </button>
-
-        </div>
-
-
-        <div id="year-filter-container">
-
-            <span id="year-filter-label">
-                Established Before:
-            </span>
-
-
-            <input
-                type="range"
-                id="year-filter"
-                min="1800"
-                max="1900"
-                step="5"
-                value="1900"
-            >
-
-
-            <span id="year-value">
-                All
-            </span>
-
-        </div>
-
-
-        <button id="reset-btn">
-            Reset Filters
+        <button
+            id="clear-search"
+            type="button"
+            title="Clear search"
+        >
+            &times;
         </button>
 
     </div>
 
 
-    <!-- =========================================================
-         MAP
-         ========================================================= -->
+    <!-- =====================================================
+         SEARCH TOGGLES
+         ===================================================== -->
 
-    <div id="map">
+    <div id="search-toggles">
 
-
-        <!-- =====================================================
-             FLOATING INFORMATION PANEL
-             ===================================================== -->
-
-        <div id="info-panel">
-
-
-            <button
-                id="close-info"
-                title="Close Panel"
-            >
-                &times;
-            </button>
+        <button
+            type="button"
+            class="search-toggle active"
+            id="search-cemetery"
+        >
+            Cemetery
+        </button>
 
 
-            <div id="info-content">
-
-                <div class="placeholder">
-
-                    Click a cemetery marker on the map
-                    to inspect historic records and notes.
-        <!-- =====================================================
-             CEMETERY PAGE LIGHTBOX
-             ===================================================== -->
-
-        <div id="cemetery-lightbox">
-
-            <button
-                id="close-cemetery-lightbox"
-                title="Close Cemetery Record"
-            >
-                &times;
-            </button>
+        <button
+            type="button"
+            class="search-toggle active"
+            id="search-person"
+        >
+            Person
+        </button>
 
 
-            <iframe
-                id="cemetery-lightbox-frame"
-                title="Cemetery Record"
-            ></iframe>
+        <button
+            type="button"
+            class="search-toggle"
+            id="search-veterans"
+        >
+            Veterans Only
+        </button>
 
-        </div>
-                </div>
+    </div>
+
+
+    <!-- =====================================================
+         YEAR FILTER
+         ===================================================== -->
+
+    <div id="year-filter-container">
+
+        <span id="year-filter-label">
+            Established Before:
+        </span>
+
+
+        <input
+            type="range"
+            id="year-filter"
+            min="1800"
+            max="1900"
+            step="5"
+            value="1900"
+        >
+
+
+        <span id="year-value">
+            All
+        </span>
+
+    </div>
+
+
+    <!-- =====================================================
+         RESET
+         ===================================================== -->
+
+    <button id="reset-btn">
+        Reset Filters
+    </button>
+
+</div>
+
+
+<!-- =========================================================
+     MAP
+     ========================================================= -->
+
+<div id="map">
+
+
+    <!-- =====================================================
+         FLOATING INFORMATION PANEL
+         ===================================================== -->
+
+    <div id="info-panel">
+
+
+        <button
+            id="close-info"
+            title="Close Panel"
+        >
+            &times;
+        </button>
+
+
+        <div id="info-content">
+
+            <div class="placeholder">
+
+                Click a cemetery marker on the map
+                to inspect historic records and notes.
 
             </div>
 
@@ -743,18 +839,44 @@
     </div>
 
 
-    <!-- =========================================================
-         JAVASCRIPT
-         ========================================================= -->
+    <!-- =====================================================
+         CEMETERY PAGE LIGHTBOX
+         ===================================================== -->
 
-    <script>
+    <div id="cemetery-lightbox">
 
 
-        // ========================================================
-        // MAP SETUP
-        // ========================================================
+        <button
+            id="close-cemetery-lightbox"
+            title="Close Cemetery Record"
+        >
+            &times;
+        </button>
 
-        const map = new maplibregl.Map({
+
+        <iframe
+            id="cemetery-lightbox-frame"
+            title="Cemetery Record"
+        ></iframe>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     JAVASCRIPT
+     ========================================================= -->
+
+<script>
+
+
+    // ========================================================
+    // MAP SETUP
+    // ========================================================
+
+    const map =
+        new maplibregl.Map({
 
             container: "map",
 
@@ -784,88 +906,247 @@
                 layers: [
 
                     {
+
                         id: "osm-layer",
 
                         type: "raster",
 
                         source: "osm-tiles"
+
                     }
 
                 ]
 
             },
 
-
             zoom: 11,
-
 
             center: [
                 -85.0626,
                 39.3992
             ],
 
-
             maxBounds: [
                 [-85.50, 39.10],
                 [-84.65, 39.70]
             ],
-
 
             maxZoom: 18
 
         });
 
 
-        // ========================================================
-        // INFO PANEL REFERENCES
-        // ========================================================
+    // ========================================================
+    // DOM REFERENCES
+    // ========================================================
 
-        const infoPanel =
-            document.getElementById("info-panel");
+    const infoPanel =
+        document.getElementById("info-panel");
 
 
-        const infoContent =
-            document.getElementById("info-content");
-            
-        // ========================================================
-        // SEARCH DATA
-        // ========================================================
+    const infoContent =
+        document.getElementById("info-content");
 
-        let cemeteryFeatures = [];
 
-        let intermentsByCemetery = {};
+    const searchBox =
+        document.getElementById("search");
 
-        let intermentsLoaded = false;
-            
 
-        // ========================================================
-        // CLOSE INFO PANEL
-        // ========================================================
+    const clearSearch =
+        document.getElementById("clear-search");
 
-        document
-            .getElementById("close-info")
-            .addEventListener("click", function () {
+
+    const cemeteryToggle =
+        document.getElementById("search-cemetery");
+
+
+    const personToggle =
+        document.getElementById("search-person");
+
+
+    const veteransToggle =
+        document.getElementById("search-veterans");
+
+
+    const yearSlider =
+        document.getElementById("year-filter");
+
+
+    const yearVal =
+        document.getElementById("year-value");
+
+
+    const resetButton =
+        document.getElementById("reset-btn");
+
+
+    const cemeteryLightbox =
+        document.getElementById(
+            "cemetery-lightbox"
+        );
+
+
+    const cemeteryLightboxFrame =
+        document.getElementById(
+            "cemetery-lightbox-frame"
+        );
+
+
+    const closeCemeteryLightbox =
+        document.getElementById(
+            "close-cemetery-lightbox"
+        );
+
+
+    // ========================================================
+    // APPLICATION STATE
+    // ========================================================
+
+    let cemeteryFeatures = [];
+
+    let intermentsByCemetery = {};
+
+    let intermentsLoaded = false;
+
+    let searchCemetery = true;
+
+    let searchPerson = true;
+
+    let veteransOnly = false;
+
+
+    // ========================================================
+    // DEFAULT INFORMATION PANEL
+    // ========================================================
+
+    function showDefaultInfo() {
+
+        infoContent.innerHTML = `
+
+            <div class="placeholder">
+
+                Click a cemetery marker
+                on the map to inspect
+                historic records and notes.
+
+            </div>
+
+        `;
+
+    }
+
+
+    // ========================================================
+    // CLOSE INFORMATION PANEL
+    // ========================================================
+
+    document
+        .getElementById("close-info")
+        .addEventListener(
+            "click",
+            function () {
 
                 infoPanel.style.display = "none";
 
-            });
+            }
+        );
 
 
-        // ========================================================
-        // MAP LOAD
-        // ========================================================
+    // ========================================================
+    // CLOSE CEMETERY LIGHTBOX
+    // ========================================================
 
-        map.on("load", function () {
+    function closeCemeteryRecord() {
+
+        cemeteryLightbox.style.display = "none";
+
+        cemeteryLightboxFrame.src = "";
+
+    }
 
 
-            // ====================================================
+    closeCemeteryLightbox.addEventListener(
+        "click",
+        closeCemeteryRecord
+    );
+
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+
+            if (
+                event.key === "Escape" &&
+                cemeteryLightbox.style.display === "flex"
+            ) {
+
+                closeCemeteryRecord();
+
+            }
+
+        }
+    );
+
+
+    // ========================================================
+    // SEE MORE BUTTON
+    //
+    // EVENT DELEGATION IS USED SO THIS CONTINUES TO WORK
+    // EVEN THOUGH THE INFO PANEL CONTENT IS REBUILT.
+    // ========================================================
+
+    infoContent.addEventListener(
+        "click",
+        function (event) {
+
+            const button =
+                event.target.closest(
+                    ".see-more-button"
+                );
+
+
+            if (!button) {
+                return;
+            }
+
+
+            const cemeteryID =
+                button.dataset.cemeteryId;
+
+
+            cemeteryLightboxFrame.src =
+                "cemetery.html?id=" +
+                encodeURIComponent(
+                    cemeteryID
+                );
+
+
+            cemeteryLightbox.style.display =
+                "flex";
+
+        }
+    );
+
+
+    // ========================================================
+    // MAP LOAD
+    // ========================================================
+
+    map.on(
+        "load",
+        function () {
+
+
+            // =================================================
             // NAVIGATION CONTROL
-            // ====================================================
+            // =================================================
 
             map.addControl(
 
                 new maplibregl.NavigationControl({
+
                     showCompass: false
+
                 }),
 
                 "top-right"
@@ -873,9 +1154,9 @@
             );
 
 
-            // ====================================================
-            // CSV LOCATION
-            // ====================================================
+            // =================================================
+            // CSV LOCATIONS
+            // =================================================
 
             const CSV_PATH =
                 new URL(
@@ -889,1731 +1170,1858 @@
                     "lakecems.csv",
                     document.baseURI
                 ).href;
-                
+
+
             const INTERMENTS_CSV_PATH =
                 new URL(
                     "interments.csv",
                     document.baseURI
                 ).href;
 
-            // ====================================================
+
+            // =================================================
             // LOAD MAIN CEMETERY CSV
-            // ====================================================
+            // =================================================
 
-            Papa.parse(CSV_PATH, {
+            Papa.parse(
+                CSV_PATH,
+                {
 
-                download: true,
+                    download: true,
 
-                header: true,
+                    header: true,
 
-                skipEmptyLines: true,
+                    skipEmptyLines: true,
 
 
-                complete: function (results) {
+                    complete:
+                        function (results) {
 
 
-                    // ============================================
-                    // STORAGE FOR MAP FEATURES
-                    // ============================================
+                            // =================================
+                            // STORAGE FOR MAP FEATURES
+                            // =================================
 
-                    const mapFeatures = [];
+                            const mapFeatures = [];
 
 
-                    // ============================================
-                    // PROCESS EVERY CSV ROW
-                    // ============================================
+                            // =================================
+                            // PROCESS EVERY CSV ROW
+                            // =================================
 
-                    results.data.forEach(function (row) {
+                            results.data.forEach(
+                                function (row) {
 
 
-                        // ----------------------------------------
-                        // READ COORDINATES
-                        // ----------------------------------------
+                                    // -----------------------------
+                                    // COORDINATES
+                                    // -----------------------------
 
-                        const lat =
-                            parseFloat(row.LAT);
+                                    const lat =
+                                        parseFloat(
+                                            row.LAT
+                                        );
 
 
-                        const lon =
-                            parseFloat(row.LONG);
+                                    const lon =
+                                        parseFloat(
+                                            row.LONG
+                                        );
 
 
-                        // ----------------------------------------
-                        // READ GRAVE COUNT
-                        // ----------------------------------------
-
-                        const graveCount =
-                            row["COUNT"] === undefined ||
-                            row["COUNT"].trim() === ""
-                                ? -1
-                                : parseInt(row["COUNT"]);
-
-
-                        // ----------------------------------------
-                        // READ ACCESSIBILITY
-                        // ----------------------------------------
-
-                        const access =
-                            parseInt(row.ACCESS);
-
-
-                        // ----------------------------------------
-                        // READ APPROXIMATE SIZE
-                        // ----------------------------------------
-
-                        const approximateSize =
-                            row["APPROXIMATE SIZE"] || "";
-
-
-                        // ----------------------------------------
-                        // READ STATUS
-                        // ----------------------------------------
-
-                        const status =
-                            parseInt(row.STATUS);
-
-
-                        // ----------------------------------------
-                        // READ VETERAN INFORMATION
-                        // ----------------------------------------
-
-                        const vets =
-                            parseInt(row.VETS);
-
-
-                        // ----------------------------------------
-                        // ONLY CREATE A MARKER IF BOTH
-                        // COORDINATES ARE VALID
-                        // ----------------------------------------
-
-                        if (
-                            !isNaN(lat) &&
-                            !isNaN(lon)
-                        ) {
-
-
-                            mapFeatures.push({
-
-                                type: "Feature",
-
-
-                                properties: {
-
-
-                                    // ==========================
-                                    // CEMETERY ID
-                                    // ==========================
-
-                                    Cemetery_ID:
-                                        row.ID || "",
-
-
-                                    // ==========================
-                                    // CEMETERY NAME
-                                    // ==========================
-
-                                    Cemetery_Name:
-                                        row.NAME || "",
-
-
-                                    // ==========================
-                                    // OTHER NAMES
-                                    // ==========================
-
-                                    Other_Names:
-                                        row["OTHER NAMES"] || "",
-
-
-                                    // ==========================
-                                    // TOWNSHIP
-                                    // ==========================
-
-                                    Township:
-                                        row.TOWNSHIP || "",
-
-
-                                    // ==========================
-                                    // ESTABLISHED
-                                    // ==========================
-
-                                    Birth_Year:
-                                        parseInt(
-                                            row["EST."]
-                                        ) || 0,
-
-
-                                    // ==========================
-                                    // SURVEY / GRID LOCATION
-                                    // ==========================
-
-                                    Grid_Index:
-                                        row["MAP LOCATION"] || "",
-
-
-                                    // ==========================
-                                    // NOTES
-                                    // ==========================
-
-                                    General_Notes:
-                                        row.NOTES || "",
-
-
-                                    // ==========================
-                                    // CONDITION
-                                    // ==========================
-
-                                    Condition_Notes:
-                                        row.CONDITION || "",
-
-
-                                    // ==========================
+                                    // -----------------------------
                                     // GRAVE COUNT
-                                    // ==========================
+                                    // -----------------------------
 
-                                    Grave_Count:
-                                        graveCount,
+                                    const graveCount =
+                                        row["COUNT"] === undefined ||
+                                        String(
+                                            row["COUNT"]
+                                        ).trim() === ""
+                                            ? -1
+                                            : parseInt(
+                                                row["COUNT"],
+                                                10
+                                            );
 
 
-                                    // ==========================
+                                    // -----------------------------
                                     // ACCESSIBILITY
-                                    // ==========================
+                                    // -----------------------------
 
-                                    Access:
-                                        isNaN(access)
-                                            ? -1
-                                            : access,
+                                    const access =
+                                        parseInt(
+                                            row.ACCESS,
+                                            10
+                                        );
 
 
-                                    // ==========================
+                                    // -----------------------------
                                     // APPROXIMATE SIZE
-                                    // ==========================
+                                    // -----------------------------
 
-                                    Approximate_Size:
-                                        approximateSize,
+                                    const approximateSize =
+                                        row[
+                                            "APPROXIMATE SIZE"
+                                        ] || "";
 
 
-                                    // ==========================
+                                    // -----------------------------
                                     // STATUS
-                                    // ==========================
+                                    // -----------------------------
 
-                                    Status:
-                                        isNaN(status)
-                                            ? -1
-                                            : status,
+                                    const status =
+                                        parseInt(
+                                            row.STATUS,
+                                            10
+                                        );
 
 
-                                    // ==========================
+                                    // -----------------------------
                                     // VETERANS
-                                    // ==========================
+                                    // -----------------------------
 
-                                    Vets:
-                                        isNaN(vets)
-                                            ? -1
-                                            : vets
+                                    const vets =
+                                        parseInt(
+                                            row.VETS,
+                                            10
+                                        );
 
-                                },
+
+                                    // -----------------------------
+                                    // ONLY CREATE MARKER
+                                    // IF COORDINATES ARE VALID
+                                    // -----------------------------
+
+                                    if (
+                                        !isNaN(lat) &&
+                                        !isNaN(lon)
+                                    ) {
 
 
-                                geometry: {
+                                        mapFeatures.push({
 
-                                    type: "Point",
+                                            type: "Feature",
 
-                                    coordinates: [
-                                        lon,
-                                        lat
-                                    ]
+
+                                            properties: {
+
+                                                Cemetery_ID:
+                                                    row.ID || "",
+
+
+                                                Cemetery_Name:
+                                                    row.NAME || "",
+
+
+                                                Other_Names:
+                                                    row[
+                                                        "OTHER NAMES"
+                                                    ] || "",
+
+
+                                                Township:
+                                                    row.TOWNSHIP || "",
+
+
+                                                Established_Year:
+                                                    parseInt(
+                                                        row["EST."],
+                                                        10
+                                                    ) || 0,
+
+
+                                                Grid_Index:
+                                                    row[
+                                                        "MAP LOCATION"
+                                                    ] || "",
+
+
+                                                General_Notes:
+                                                    row.NOTES || "",
+
+
+                                                Condition_Notes:
+                                                    row.CONDITION || "",
+
+
+                                                Grave_Count:
+                                                    graveCount,
+
+
+                                                Access:
+                                                    isNaN(access)
+                                                        ? -1
+                                                        : access,
+
+
+                                                Approximate_Size:
+                                                    approximateSize,
+
+
+                                                Status:
+                                                    isNaN(status)
+                                                        ? -1
+                                                        : status,
+
+
+                                                Vets:
+                                                    isNaN(vets)
+                                                        ? -1
+                                                        : vets,
+
+
+                                                Search_Match:
+                                                    false,
+
+
+                                                Search_Active:
+                                                    false
+
+                                            },
+
+
+                                            geometry: {
+
+                                                type: "Point",
+
+                                                coordinates: [
+                                                    lon,
+                                                    lat
+                                                ]
+
+                                            }
+
+                                        });
+
+                                    }
+
+                                }
+                            );
+
+
+                            // =================================
+                            // SAVE FEATURES FOR SEARCH
+                            // =================================
+
+                            cemeteryFeatures =
+                                mapFeatures;
+
+
+                            // =================================
+                            // ADD CEMETERY DATA SOURCE
+                            // =================================
+
+                            map.addSource(
+
+                                "cemeteries-data",
+
+                                {
+
+                                    type: "geojson",
+
+                                    data: {
+
+                                        type:
+                                            "FeatureCollection",
+
+                                        features:
+                                            mapFeatures
+
+                                    }
+
+                                }
+
+                            );
+
+
+                            // =================================
+                            // MAIN CEMETERY MARKER LAYER
+                            // =================================
+
+                            map.addLayer({
+
+                                id:
+                                    "cemeteries-layer",
+
+                                type:
+                                    "circle",
+
+                                source:
+                                    "cemeteries-data",
+
+                                paint: {
+
+                                    "circle-radius": [
+
+                                        "case",
+
+                                        [
+                                            "<",
+                                            [
+                                                "get",
+                                                "Grave_Count"
+                                            ],
+                                            0
+                                        ],
+
+                                        8,
+
+
+                                        [
+                                            "step",
+
+                                            [
+                                                "get",
+                                                "Grave_Count"
+                                            ],
+
+                                            6,
+
+                                            25,
+                                            8,
+
+                                            100,
+                                            11,
+
+                                            250,
+                                            14,
+
+                                            500,
+                                            18
+
+                                        ]
+
+                                    ],
+
+
+                                    "circle-color": [
+
+                                        "case",
+
+                                        [
+                                            "<",
+                                            [
+                                                "get",
+                                                "Grave_Count"
+                                            ],
+                                            0
+                                        ],
+
+                                        "#777777",
+
+
+                                        [
+                                            "match",
+
+                                            [
+                                                "get",
+                                                "Access"
+                                            ],
+
+                                            0,
+                                            "#8B0000",
+
+                                            1,
+                                            "#D2691E",
+
+                                            2,
+                                            "#C9A227",
+
+                                            3,
+                                            "#01796F",
+
+                                            "#777777"
+
+                                        ]
+
+                                    ],
+
+
+                                    "circle-stroke-width":
+                                        2,
+
+
+                                    "circle-stroke-color":
+                                        "#ffffff"
 
                                 }
 
                             });
 
-                        }
 
-                    });
+                            // =================================
+                            // SEARCH HIGHLIGHT LAYER
+                            // =================================
 
+                            map.addLayer({
 
-                    // =================================================
-                    // ADD CEMETERY DATA SOURCE
-                    // =================================================
+                                id:
+                                    "cemeteries-highlight-layer",
 
-                    map.addSource(
+                                type:
+                                    "circle",
 
-                        "cemeteries-data",
+                                source:
+                                    "cemeteries-data",
 
-                        {
+                                filter: [
 
-                            type: "geojson",
+                                    "all",
 
-                            data: {
+                                    [
+                                        "==",
 
-                                type: "FeatureCollection",
+                                        [
+                                            "get",
+                                            "Search_Active"
+                                        ],
 
-                                features: mapFeatures
+                                        true
 
-                            }
+                                    ],
 
-                        }
+                                    [
+                                        "==",
 
-                    );
+                                        [
+                                            "get",
+                                            "Search_Match"
+                                        ],
 
+                                        true
 
-                    // =================================================
-                    // ADD CEMETERY MARKER LAYER
-                    // =================================================
+                                    ]
 
-                    map.addLayer({
+                                ],
 
-                        id: "cemeteries-layer",
+                                paint: {
 
-                        type: "circle",
+                                    "circle-radius":
+                                        12,
 
-                        source: "cemeteries-data",
+                                    "circle-color":
+                                        "#ffffff",
 
-                        paint: {
+                                    "circle-opacity":
+                                        0,
 
+                                    "circle-stroke-width":
+                                        4,
 
-                    // =================================================
-                    // SEARCH RESULT HIGHLIGHT LAYER
-                    // =================================================
+                                    "circle-stroke-color":
+                                        "#FFD700",
 
-                    map.addLayer({
+                                    "circle-stroke-opacity":
+                                        0.95
 
-                        id: "cemeteries-highlight-layer",
+                                }
 
-                        type: "circle",
-
-                        source: "cemeteries-data",
-
-                        filter: [
-                            "all",
-
-                            [
-                                "==",
-                                ["get", "Search_Active"],
-                                true
-                            ],
-
-                            [
-                                "==",
-                                ["get", "Search_Match"],
-                                true
-                            ]
-
-                        ],
-
-                        paint: {
-
-                            "circle-radius": 12,
-
-                            "circle-color": "#ffffff",
-
-                            "circle-opacity": 0,
-
-                            "circle-stroke-width": 4,
-
-                            "circle-stroke-color": "#FFD700",
-
-                            "circle-stroke-opacity": 0.95
-
-                        }
-
-                    });
-
-                         // =================================================
-                    // SAVE FEATURES FOR SEARCH
-                    // =================================================
-
-                    cemeteryFeatures =
-                        mapFeatures;
-
-                                            // =================================================
-                    // LOAD INTERMENTS FOR PERSON SEARCH
-                    // =================================================
-
-                    Papa.parse(
-
-                        INTERMENTS_CSV_PATH,
-
-                        {
-
-                            download: true,
-
-                            header: true,
-
-                            skipEmptyLines: true,
+                            });
 
 
-                            complete: function (intermentResults) {
+                            // =================================
+                            // MAIN MARKER CLICK
+                            // =================================
 
-                                intermentsByCemetery = {};
-
-
-                                intermentResults.data.forEach(
-                                    function (row) {
-
-                                        const cemeteryID =
-                                            String(
-                                                row.CEMETERY_ID || ""
-                                            ).trim();
+                            map.on(
+                                "click",
+                                "cemeteries-layer",
+                                handleCemeteryClick
+                            );
 
 
-                                        if (!cemeteryID) {
-                                            return;
-                                        }
+                            // =================================
+                            // MAIN MARKER CURSOR
+                            // =================================
+
+                            map.on(
+                                "mouseenter",
+                                "cemeteries-layer",
+                                function () {
+
+                                    map.getCanvas()
+                                        .style.cursor =
+                                        "pointer";
+
+                                }
+                            );
 
 
-                                        if (
-                                            !intermentsByCemetery[
-                                                cemeteryID
-                                            ]
+                            map.on(
+                                "mouseleave",
+                                "cemeteries-layer",
+                                function () {
+
+                                    map.getCanvas()
+                                        .style.cursor =
+                                        "";
+
+                                }
+                            );
+
+
+                            // =================================
+                            // LOAD INTERMENTS
+                            // =================================
+
+                            Papa.parse(
+
+                                INTERMENTS_CSV_PATH,
+
+                                {
+
+                                    download: true,
+
+                                    header: true,
+
+                                    skipEmptyLines: true,
+
+
+                                    complete:
+                                        function (
+                                            intermentResults
                                         ) {
 
-                                            intermentsByCemetery[
-                                                cemeteryID
-                                            ] = {
 
-                                                people: [],
-
-                                                veteran: false
-
-                                            };
-
-                                        }
+                                            intermentsByCemetery =
+                                                {};
 
 
-                                        const firstName =
-                                            String(
-                                                row["FIRST NAME"] || ""
-                                            ).trim();
+                                            intermentResults.data.forEach(
+                                                function (row) {
 
 
-                                        const lastName =
-                                            String(
-                                                row["LAST NAME"] || ""
-                                            ).trim();
+                                                    const cemeteryID =
+                                                        String(
+                                                            row.CEMETERY_ID ||
+                                                            ""
+                                                        ).trim();
 
 
-                                        const fullName =
-                                            `${firstName} ${lastName}`
-                                                .trim();
+                                                    if (
+                                                        !cemeteryID
+                                                    ) {
+
+                                                        return;
+
+                                                    }
 
 
-                                        if (fullName) {
+                                                    if (
+                                                        !intermentsByCemetery[
+                                                            cemeteryID
+                                                        ]
+                                                    ) {
 
-                                            intermentsByCemetery[
-                                                cemeteryID
-                                            ].people.push(
-                                                fullName
+                                                        intermentsByCemetery[
+                                                            cemeteryID
+                                                        ] = {
+
+                                                            people:
+                                                                [],
+
+                                                            veteran:
+                                                                false
+
+                                                        };
+
+                                                    }
+
+
+                                                    const firstName =
+                                                        String(
+                                                            row[
+                                                                "FIRST NAME"
+                                                            ] || ""
+                                                        ).trim();
+
+
+                                                    const lastName =
+                                                        String(
+                                                            row[
+                                                                "LAST NAME"
+                                                            ] || ""
+                                                        ).trim();
+
+
+                                                    const fullName =
+                                                        (
+                                                            firstName +
+                                                            " " +
+                                                            lastName
+                                                        ).trim();
+
+
+                                                    if (
+                                                        fullName
+                                                    ) {
+
+                                                        intermentsByCemetery[
+                                                            cemeteryID
+                                                        ].people.push(
+                                                            fullName
+                                                        );
+
+                                                    }
+
+
+                                                    if (
+                                                        String(
+                                                            row.VETERAN ||
+                                                            ""
+                                                        ).trim() ===
+                                                        "1"
+                                                    ) {
+
+                                                        intermentsByCemetery[
+                                                            cemeteryID
+                                                        ].veteran =
+                                                            true;
+
+                                                    }
+
+                                                }
+                                            );
+
+
+                                            intermentsLoaded =
+                                                true;
+
+
+                                            // Refresh search
+                                            // now that people
+                                            // are available.
+
+                                            processMapFilters();
+
+                                        },
+
+
+                                    error:
+                                        function (error) {
+
+                                            console.error(
+                                                "interments.csv loading error:",
+                                                error
                                             );
 
                                         }
 
+                                }
 
-                                        if (
-                                            String(
-                                                row.VETERAN || ""
-                                            ).trim() === "1"
+                            );
+
+
+                            // =================================
+                            // LOAD HISTORIC CEMETERIES
+                            // =================================
+
+                            Papa.parse(
+
+                                LAKE_CSV_PATH,
+
+                                {
+
+                                    download: true,
+
+                                    header: true,
+
+                                    skipEmptyLines: true,
+
+
+                                    complete:
+                                        function (
+                                            lakeResults
                                         ) {
 
-                                            intermentsByCemetery[
-                                                cemeteryID
-                                            ].veteran = true;
 
-                                        }
+                                            const lakeCemeteries =
+                                                lakeResults.data.filter(
+                                                    function (row) {
 
-                                    }
-                                );
+                                                        return String(
+                                                            row.NAME ||
+                                                            ""
+                                                        ).trim() !== "";
 
+                                                    }
+                                                );
 
-                                intermentsLoaded = true;
 
+                                            // =========================
+                                            // NO HISTORIC RECORDS
+                                            // =========================
 
-                                // Refresh the search if the
-                                // controls are already active.
+                                            if (
+                                                lakeCemeteries.length ===
+                                                0
+                                            ) {
 
-                                if (
-                                    typeof window.refreshCemeterySearch ===
-                                    "function"
-                                ) {
+                                                processMapFilters();
 
-                                    window.refreshCemeterySearch();
+                                                return;
 
-                                }
+                                            }
 
-                            },
 
+                                            // =========================
+                                            // REPRESENTATIVE LOCATION
+                                            // =========================
 
-                            error: function (error) {
+                                            const lakeLocation = [
 
-                                console.error(
-                                    "interments.csv loading error:",
-                                    error
-                                );
+                                                -84.99056446430546,
 
-                            }
+                                                39.471294950413316
 
-                        }
+                                            ];
 
-                    );
-                                
-                            // ========================================
-                            // MARKER SIZE
-                            // ========================================
 
-                            "circle-radius": [
+                                            // =========================
+                                            // HISTORIC DATA SOURCE
+                                            // =========================
 
-                                "case",
+                                            map.addSource(
 
-                                ["<", ["get", "Grave_Count"], 0],
-
-                                8,
-
-
-                                [
-                                    "step",
-
-                                    ["get", "Grave_Count"],
-
-                                    6,
-
-                                    25, 8,
-                                    100, 11,
-                                    250, 14,
-                                    500, 18
-                                ]
-
-                            ],
-
-
-                            // ========================================
-                            // MARKER COLOR
-                            // ========================================
-
-                            "circle-color": [
-
-                                "case",
-
-                                ["<", ["get", "Grave_Count"], 0],
-
-                                "#777777",
-
-
-                                [
-                                    "match",
-
-                                    ["get", "Access"],
-
-                                    0, "#8B0000",
-                                    1, "#D2691E",
-                                    2, "#C9A227",
-                                    3, "#01796F",
-
-                                    "#777777"
-                                ]
-
-                            ],
-
-
-                            "circle-stroke-width": 2,
-
-                            "circle-stroke-color": "#ffffff"
-
-                        }
-
-                    });
-
-
-                    // =================================================
-                    // LOAD HISTORIC / INUNDATED CEMETERIES
-                    // =================================================
-
-                    Papa.parse(
-
-                        LAKE_CSV_PATH,
-
-                        {
-
-                            download: true,
-
-                            header: true,
-
-                            skipEmptyLines: true,
-
-
-                            complete: function (lakeResults) {
-
-
-                                // =====================================
-                                // REMOVE COMPLETELY EMPTY ROWS
-                                // =====================================
-
-                                const lakeCemeteries =
-                                    lakeResults.data.filter(
-
-                                        function (row) {
-
-                                            return String(
-                                                row.NAME || ""
-                                            ).trim() !== "";
-
-                                        }
-
-                                    );
-
-
-                                // =====================================
-                                // NO HISTORIC RECORDS
-                                // =====================================
-
-                                if (
-                                    lakeCemeteries.length === 0
-                                ) {
-
-                                    activateInteractions();
-
-                                    return;
-
-                                }
-
-
-                                // =====================================
-                                // REPRESENTATIVE HISTORICAL LOCATION
-                                //
-                                // IMPORTANT:
-                                // This point represents the group
-                                // of historical cemeteries only.
-                                // It does NOT represent the actual
-                                // location of any individual cemetery.
-                                // =====================================
-
-                                const lakeLocation = [
-                                    -84.99056446430546, 
-                                    39.471294950413316 
-                                    
-                                ];
-
-
-                                // =====================================
-                                // ADD HISTORIC CEMETERY SOURCE
-                                // =====================================
-
-                                map.addSource(
-
-                                    "lake-cemeteries-data",
-
-                                    {
-
-                                        type: "geojson",
-
-                                        data: {
-
-                                            type: "FeatureCollection",
-
-                                            features: [
+                                                "lake-cemeteries-data",
 
                                                 {
 
-                                                    type: "Feature",
+                                                    type:
+                                                        "geojson",
 
-                                                    properties: {
+                                                    data: {
 
-                                                        Cemetery_Count:
-                                                            lakeCemeteries.length
+                                                        type:
+                                                            "FeatureCollection",
 
-                                                    },
+                                                        features: [
 
-                                                    geometry: {
+                                                            {
 
-                                                        type: "Point",
+                                                                type:
+                                                                    "Feature",
 
-                                                        coordinates:
-                                                            lakeLocation
+                                                                properties: {
+
+                                                                    Cemetery_Count:
+                                                                        lakeCemeteries.length
+
+                                                                },
+
+                                                                geometry: {
+
+                                                                    type:
+                                                                        "Point",
+
+                                                                    coordinates:
+                                                                        lakeLocation
+
+                                                                }
+
+                                                            }
+
+                                                        ]
 
                                                     }
 
                                                 }
 
-                                            ]
+                                            );
+
+
+                                            // =========================
+                                            // HISTORIC MARKER
+                                            // =========================
+
+                                            map.addLayer({
+
+                                                id:
+                                                    "lake-cemeteries-layer",
+
+                                                type:
+                                                    "circle",
+
+                                                source:
+                                                    "lake-cemeteries-data",
+
+                                                paint: {
+
+                                                    "circle-radius":
+                                                        16,
+
+                                                    "circle-color":
+                                                        "#555555",
+
+                                                    "circle-opacity":
+                                                        0.65,
+
+                                                    "circle-stroke-width":
+                                                        3,
+
+                                                    "circle-stroke-color":
+                                                        "#222222",
+
+                                                    "circle-stroke-opacity":
+                                                        0.8
+
+                                                }
+
+                                            });
+
+
+                                            // =========================
+                                            // HISTORIC MARKER CLICK
+                                            // =========================
+
+                                            map.on(
+
+                                                "click",
+
+                                                "lake-cemeteries-layer",
+
+                                                function () {
+
+
+                                                    infoPanel.style.display =
+                                                        "block";
+
+
+                                                    let cemeteryList =
+                                                        "";
+
+
+                                                    lakeCemeteries.forEach(
+                                                        function (row) {
+
+
+                                                            cemeteryList += `
+
+                                                                <div class="lake-cemetery">
+
+                                                                    <h3>
+                                                                        ${
+                                                                            row.NAME ||
+                                                                            "Unnamed Cemetery"
+                                                                        }
+                                                                    </h3>
+
+
+                                                                    ${
+                                                                        row[
+                                                                            "ALTERNATE NAME"
+                                                                        ]
+                                                                            ? `
+
+                                                                                <div class="popup-field">
+
+                                                                                    <span class="popup-label">
+                                                                                        Alternate Name:
+                                                                                    </span>
+
+                                                                                    <span>
+                                                                                        ${
+                                                                                            row[
+                                                                                                "ALTERNATE NAME"
+                                                                                            ]
+                                                                                        }
+                                                                                    </span>
+
+                                                                                </div>
+
+                                                                            `
+                                                                            : ""
+                                                                    }
+
+
+                                                                    ${
+                                                                        row.DESIGNATION
+                                                                            ? `
+
+                                                                                <div class="popup-field">
+
+                                                                                    <span class="popup-label">
+                                                                                        Designation:
+                                                                                    </span>
+
+                                                                                    <span>
+                                                                                        ${
+                                                                                            row.DESIGNATION
+                                                                                        }
+                                                                                    </span>
+
+                                                                                </div>
+
+                                                                            `
+                                                                            : ""
+                                                                    }
+
+
+                                                                    ${
+                                                                        row[
+                                                                            "ORIGINAL LOCATION"
+                                                                        ]
+                                                                            ? `
+
+                                                                                <div class="popup-field">
+
+                                                                                    <span class="popup-label">
+                                                                                        Original Location:
+                                                                                    </span>
+
+                                                                                    <span>
+                                                                                        ${
+                                                                                            row[
+                                                                                                "ORIGINAL LOCATION"
+                                                                                            ]
+                                                                                        }
+                                                                                    </span>
+
+                                                                                </div>
+
+                                                                            `
+                                                                            : ""
+                                                                    }
+
+
+                                                                    ${
+                                                                        row.TOWNSHIP
+                                                                            ? `
+
+                                                                                <div class="popup-field">
+
+                                                                                    <span class="popup-label">
+                                                                                        Township:
+                                                                                    </span>
+
+                                                                                    <span>
+                                                                                        ${
+                                                                                            row.TOWNSHIP
+                                                                                        }
+                                                                                    </span>
+
+                                                                                </div>
+
+                                                                            `
+                                                                            : ""
+                                                                    }
+
+
+                                                                    ${
+                                                                        row[
+                                                                            "MOVED TO"
+                                                                        ]
+                                                                            ? `
+
+                                                                                <div class="popup-field">
+
+                                                                                    <span class="popup-label">
+                                                                                        Moved To:
+                                                                                    </span>
+
+                                                                                    <span>
+                                                                                        ${
+                                                                                            row[
+                                                                                                "MOVED TO"
+                                                                                            ]
+                                                                                        }
+                                                                                    </span>
+
+                                                                                </div>
+
+                                                                            `
+                                                                            : ""
+                                                                    }
+
+
+                                                                    ${
+                                                                        row.NOTES
+                                                                            ? `
+
+                                                                                <div class="popup-field">
+
+                                                                                    <span class="popup-label">
+                                                                                        Notes:
+                                                                                    </span>
+
+                                                                                    <span>
+                                                                                        ${
+                                                                                            row.NOTES
+                                                                                        }
+                                                                                    </span>
+
+                                                                                </div>
+
+                                                                            `
+                                                                            : ""
+                                                                    }
+
+                                                                </div>
+
+                                                            `;
+
+                                                        }
+                                                    );
+
+
+                                                    infoContent.innerHTML = `
+
+                                                        <h2>
+                                                            Historic Fairfield Cemeteries
+                                                        </h2>
+
+
+                                                        <p class="lake-introduction">
+
+                                                            Cemeteries affected by
+                                                            the construction of
+                                                            Brookville Lake.
+
+                                                            Individual former
+                                                            cemetery locations are
+                                                            not currently mapped.
+
+                                                        </p>
+
+
+                                                        <p class="lake-introduction">
+
+                                                            <strong>
+                                                                ${
+                                                                    lakeCemeteries.length
+                                                                }
+                                                            </strong>
+
+                                                            documented
+                                                            ${
+                                                                lakeCemeteries.length ===
+                                                                1
+                                                                    ? "cemetery"
+                                                                    : "cemeteries"
+                                                            }.
+
+                                                        </p>
+
+
+                                                        ${cemeteryList}
+
+                                                    `;
+
+                                                }
+
+                                            );
+
+
+                                            // =========================
+                                            // HISTORIC MARKER CURSOR
+                                            // =========================
+
+                                            map.on(
+
+                                                "mouseenter",
+
+                                                "lake-cemeteries-layer",
+
+                                                function () {
+
+                                                    map.getCanvas()
+                                                        .style.cursor =
+                                                        "pointer";
+
+                                                }
+
+                                            );
+
+
+                                            map.on(
+
+                                                "mouseleave",
+
+                                                "lake-cemeteries-layer",
+
+                                                function () {
+
+                                                    map.getCanvas()
+                                                        .style.cursor =
+                                                        "";
+
+                                                }
+
+                                            );
+
+
+                                            processMapFilters();
+
+                                        },
+
+
+                                    error:
+                                        function (error) {
+
+                                            console.error(
+                                                "lakecems.csv loading error:",
+                                                error
+                                            );
+
+
+                                            processMapFilters();
 
                                         }
 
-                                    }
+                                }
 
-                                );
+                            );
 
+                        },
 
-                                // =====================================
-                                // ADD HISTORIC CEMETERY MARKER
-                                // =====================================
 
-                                map.addLayer({
+                    error:
+                        function (error) {
 
-                                    id: "lake-cemeteries-layer",
+                            console.error(
+                                "cemlist.csv loading error:",
+                                error
+                            );
 
-                                    type: "circle",
 
-                                    source:
-                                        "lake-cemeteries-data",
+                            infoContent.innerHTML = `
 
-                                    paint: {
+                                <div class="error-message">
 
-                                        "circle-radius": 16,
+                                    <strong>Error:</strong>
 
-                                        "circle-color":
-                                            "#555555",
+                                    Unable to load
+                                    cemlist.csv.
 
-                                        "circle-opacity":
-                                            0.65,
+                                    <br><br>
 
-                                        "circle-stroke-width":
-                                            3,
+                                    Make sure the file is uploaded
+                                    to the same repository folder
+                                    as index.html.
 
-                                        "circle-stroke-color":
-                                            "#222222",
+                                </div>
 
-                                        "circle-stroke-opacity":
-                                            0.8
-
-                                    }
-
-                                });
-
-
-                                // =====================================
-                                // HISTORIC MARKER CLICK
-                                // =====================================
-
-                                map.on(
-
-                                    "click",
-
-                                    "lake-cemeteries-layer",
-
-                                    function () {
-
-
-                                        infoPanel.style.display =
-                                            "block";
-
-
-                                        let cemeteryList =
-                                            "";
-
-
-                                        lakeCemeteries.forEach(
-
-                                            function (row) {
-
-
-                                                cemeteryList += `
-
-                                                    <div
-                                                        class="lake-cemetery"
-                                                    >
-
-                                                        <h3>
-                                                            ${
-                                                                row.NAME ||
-                                                                "Unnamed Cemetery"
-                                                            }
-                                                        </h3>
-
-
-                                                        ${
-                                                            row[
-                                                                "ALTERNATE NAME"
-                                                            ]
-                                                                ? `
-                                                                    <div
-                                                                        class="popup-field"
-                                                                    >
-
-                                                                        <span
-                                                                            class="popup-label"
-                                                                        >
-                                                                            Alternate Name:
-                                                                        </span>
-
-                                                                        <span>
-                                                                            ${
-                                                                                row[
-                                                                                    "ALTERNATE NAME"
-                                                                                ]
-                                                                            }
-                                                                        </span>
-
-                                                                    </div>
-                                                                  `
-                                                                : ""
-                                                        }
-
-
-                                                        ${
-                                                            row.DESIGNATION
-                                                                ? `
-                                                                    <div
-                                                                        class="popup-field"
-                                                                    >
-
-                                                                        <span
-                                                                            class="popup-label"
-                                                                        >
-                                                                            Designation:
-                                                                        </span>
-
-                                                                        <span>
-                                                                            ${
-                                                                                row.DESIGNATION
-                                                                            }
-                                                                        </span>
-
-                                                                    </div>
-                                                                  `
-                                                                : ""
-                                                        }
-
-
-                                                        ${
-                                                            row[
-                                                                "ORIGINAL LOCATION"
-                                                            ]
-                                                                ? `
-                                                                    <div
-                                                                        class="popup-field"
-                                                                    >
-
-                                                                        <span
-                                                                            class="popup-label"
-                                                                        >
-                                                                            Original Location:
-                                                                        </span>
-
-                                                                        <span>
-                                                                            ${
-                                                                                row[
-                                                                                    "ORIGINAL LOCATION"
-                                                                                ]
-                                                                            }
-                                                                        </span>
-
-                                                                    </div>
-                                                                  `
-                                                                : ""
-                                                        }
-
-
-                                                        ${
-                                                            row.TOWNSHIP
-                                                                ? `
-                                                                    <div
-                                                                        class="popup-field"
-                                                                    >
-
-                                                                        <span
-                                                                            class="popup-label"
-                                                                        >
-                                                                            Township:
-                                                                        </span>
-
-                                                                        <span>
-                                                                            ${
-                                                                                row.TOWNSHIP
-                                                                            }
-                                                                        </span>
-
-                                                                    </div>
-                                                                  `
-                                                                : ""
-                                                        }
-
-
-                                                        ${
-                                                            row["MOVED TO"]
-                                                                ? `
-                                                                    <div
-                                                                        class="popup-field"
-                                                                    >
-
-                                                                        <span
-                                                                            class="popup-label"
-                                                                        >
-                                                                            Moved To:
-                                                                        </span>
-
-                                                                        <span>
-                                                                            ${
-                                                                                row[
-                                                                                    "MOVED TO"
-                                                                                ]
-                                                                            }
-                                                                        </span>
-
-                                                                    </div>
-                                                                  `
-                                                                : ""
-                                                        }
-
-
-                                                        ${
-                                                            row.NOTES
-                                                                ? `
-                                                                    <div
-                                                                        class="popup-field"
-                                                                    >
-
-                                                                        <span
-                                                                            class="popup-label"
-                                                                        >
-                                                                            Notes:
-                                                                        </span>
-
-                                                                        <span>
-                                                                            ${
-                                                                                row.NOTES
-                                                                            }
-                                                                        </span>
-
-                                                                    </div>
-                                                                  `
-                                                                : ""
-                                                        }
-
-                                                    </div>
-
-                                                `;
-
-                                            }
-
-                                        );
-
-
-                                        // =================================
-                                        // BUILD HISTORIC INFORMATION PANEL
-                                        // =================================
-
-                                        infoContent.innerHTML = `
-
-                                            <h2>
-                                                Historic Fairfield Cemeteries
-                                            </h2>
-
-
-                                            <p
-                                                class="lake-introduction"
-                                            >
-
-                                                Cemeteries affected by
-                                                the construction of
-                                                Brookville Lake.
-
-                                                Individual former
-                                                cemetery locations are
-                                                not currently mapped.
-
-                                            </p>
-
-
-                                            <p
-                                                class="lake-introduction"
-                                            >
-
-                                                <strong>
-                                                    ${
-                                                        lakeCemeteries.length
-                                                    }
-                                                </strong>
-
-                                                documented
-                                                ${
-                                                    lakeCemeteries.length === 1
-                                                        ? "cemetery"
-                                                        : "cemeteries"
-                                                }.
-
-                                            </p>
-
-
-                                            ${cemeteryList}
-
-                                        `;
-
-                                    }
-
-                                );
-
-
-                                // =====================================
-                                // HISTORIC MARKER POINTER
-                                // =====================================
-
-                                map.on(
-
-                                    "mouseenter",
-
-                                    "lake-cemeteries-layer",
-
-                                    function () {
-
-                                        map.getCanvas().style.cursor =
-                                            "pointer";
-
-                                    }
-
-                                );
-
-
-                                map.on(
-
-                                    "mouseleave",
-
-                                    "lake-cemeteries-layer",
-
-                                    function () {
-
-                                        map.getCanvas().style.cursor =
-                                            "";
-
-                                    }
-
-                                );
-
-
-                                // =====================================
-                                // ACTIVATE NORMAL MAP INTERACTIONS
-                                // =====================================
-
-                                activateInteractions();
-
-                            },
-
-
-                            // =========================================
-                            // HISTORIC CSV ERROR
-                            // =========================================
-
-                            error: function (error) {
-
-                                console.error(
-                                    "lakecems.csv loading error:",
-                                    error
-                                );
-
-
-                                activateInteractions();
-
-                            }
+                            `;
 
                         }
 
-                    );
+                }
 
-                },
+            );
 
-
-                // ====================================================
-                // MAIN CSV ERROR
-                // ====================================================
-
-                error: function (error) {
-
-                    console.error(
-                        "CSV loading error:",
-                        error
-                    );
+        }
 
 
-                    infoContent.innerHTML = `
+    );
 
-                        <div class="error-message">
 
-                            <strong>Error:</strong>
-                            Unable to load cemlist.csv.
+    // ========================================================
+    // CEMETERY MARKER CLICK HANDLER
+    // ========================================================
 
-                            <br><br>
+    function handleCemeteryClick(event) {
 
-                            Make sure the file is uploaded
-                            to the same repository folder
-                            as index.html.
 
-                        </div>
+        if (
+            !event.features ||
+            !event.features.length
+        ) {
 
-                    `;
+            return;
+
+        }
+
+
+        const props =
+            event.features[0].properties;
+
+
+        infoPanel.style.display =
+            "block";
+
+
+        // ====================================================
+        // ACCESSIBILITY
+        // ====================================================
+
+        let accessText =
+            "Unknown";
+
+
+        if (
+            Number(props.Access) === 0
+        ) {
+
+            accessText =
+                "Inaccessible";
+
+        }
+
+        else if (
+            Number(props.Access) === 1
+        ) {
+
+            accessText =
+                "Private Land";
+
+        }
+
+        else if (
+            Number(props.Access) === 2
+        ) {
+
+            accessText =
+                "With Permission";
+
+        }
+
+        else if (
+            Number(props.Access) === 3
+        ) {
+
+            accessText =
+                "Public";
+
+        }
+
+
+        // ====================================================
+        // STATUS
+        // ====================================================
+
+        let statusText =
+            "Unknown";
+
+
+        if (
+            Number(props.Status) === 1
+        ) {
+
+            statusText =
+                "Inactive";
+
+        }
+
+        else if (
+            Number(props.Status) === 2
+        ) {
+
+            statusText =
+                "Active";
+
+        }
+
+
+        // ====================================================
+        // VETERAN INFORMATION
+        // ====================================================
+
+        let vetsText =
+            "Unknown";
+
+
+        if (
+            Number(props.Vets) === 1
+        ) {
+
+            vetsText =
+                "Yes";
+
+        }
+
+        else if (
+            Number(props.Vets) === 2
+        ) {
+
+            vetsText =
+                "No";
+
+        }
+
+
+        // ====================================================
+        // GRAVE COUNT
+        // ====================================================
+
+        const graveCountText =
+            Number(props.Grave_Count) >= 0
+                ? `${props.Grave_Count} Visible`
+                : "Unknown";
+
+
+        // ====================================================
+        // BUILD INFORMATION PANEL
+        // ====================================================
+
+        infoContent.innerHTML = `
+
+            <img
+                src="photos/${encodeURIComponent(
+                    props.Cemetery_ID
+                )}.jpg"
+                alt="${
+                    props.Cemetery_Name ||
+                    "Cemetery"
+                }"
+                class="cemetery-popup-photo"
+                onerror="this.style.display='none';"
+            >
+
+
+            <h2>
+                ${
+                    props.Cemetery_Name ||
+                    "Unknown Site"
+                }
+            </h2>
+
+
+            <h3>
+                Alternate Name
+            </h3>
+
+
+            <p>
+                ${
+                    props.Other_Names ||
+                    "None Recorded"
+                }
+            </p>
+
+
+            <h3>
+                Location Metadata
+            </h3>
+
+
+            <div class="popup-field">
+
+                <span class="popup-label">
+                    Township:
+                </span>
+
+                <span>
+                    ${
+                        props.Township ||
+                        "Unlisted"
+                    }
+                </span>
+
+            </div>
+
+
+            <div class="popup-field">
+
+                <span class="popup-label">
+                    Map Location/Grid:
+                </span>
+
+                <span>
+                    ${
+                        props.Grid_Index ||
+                        "N/A"
+                    }
+                </span>
+
+            </div>
+
+
+            <h3>
+                Established
+            </h3>
+
+
+            <div class="popup-field">
+
+                <span class="popup-label">
+                    Year:
+                </span>
+
+                <span>
+                    ${
+                        Number(
+                            props.Established_Year
+                        ) > 0
+                            ? props.Established_Year
+                            : "Unknown"
+                    }
+                </span>
+
+            </div>
+
+
+            <h3>
+                Cemetery Information
+            </h3>
+
+
+            <div class="popup-field">
+
+                <span class="popup-label">
+                    Grave Count:
+                </span>
+
+                <span>
+                    ${graveCountText}
+                </span>
+
+            </div>
+
+
+            <div class="popup-field">
+
+                <span class="popup-label">
+                    Approximate Size:
+                </span>
+
+                <span>
+                    ${
+                        props.Approximate_Size ||
+                        "Unknown"
+                    }
+                </span>
+
+            </div>
+
+
+            <div class="popup-field">
+
+                <span class="popup-label">
+                    Status:
+                </span>
+
+                <span>
+                    ${statusText}
+                </span>
+
+            </div>
+
+
+            <div class="popup-field">
+
+                <span class="popup-label">
+                    Accessibility:
+                </span>
+
+                <span>
+                    ${accessText}
+                </span>
+
+            </div>
+
+
+            <div class="popup-field">
+
+                <span class="popup-label">
+                    Veterans:
+                </span>
+
+                <span>
+                    ${vetsText}
+                </span>
+
+            </div>
+
+
+            <h3>
+                Condition Status
+            </h3>
+
+
+            <p>
+                ${
+                    props.Condition_Notes ||
+                    "No condition information on file."
+                }
+            </p>
+
+
+            <h3>
+                Location Notes
+            </h3>
+
+
+            <p>
+                ${
+                    props.General_Notes ||
+                    "No notes currently recorded."
+                }
+            </p>
+
+
+            <h3>
+                Records Status
+            </h3>
+
+
+            <p>
+
+                <button
+                    type="button"
+                    class="see-more-button"
+                    data-cemetery-id="${encodeURIComponent(
+                        props.Cemetery_ID
+                    )}"
+                >
+                    SEE MORE
+                </button>
+
+            </p>
+
+        `;
+
+    }
+
+
+    // ========================================================
+    // SEARCH / FILTER PROCESSOR
+    // ========================================================
+
+    function processMapFilters() {
+
+
+        // ====================================================
+        // READ SEARCH
+        // ====================================================
+
+        const searchStr =
+            searchBox.value
+                .toLowerCase()
+                .trim();
+
+
+        const filterYear =
+            parseInt(
+                yearSlider.value,
+                10
+            );
+
+
+        const searchIsActive =
+            searchStr !== "" ||
+            veteransOnly;
+
+
+        // ====================================================
+        // CLEAR BUTTON
+        // ====================================================
+
+        clearSearch.style.display =
+            searchBox.value !== ""
+                ? "block"
+                : "none";
+
+
+        // ====================================================
+        // YEAR DISPLAY
+        // ====================================================
+
+        if (
+            filterYear < 1900
+        ) {
+
+            yearVal.innerText =
+                filterYear;
+
+        }
+
+        else {
+
+            yearVal.innerText =
+                "All";
+
+        }
+
+
+        // ====================================================
+        // CALCULATE SEARCH MATCHES
+        // ====================================================
+
+        cemeteryFeatures.forEach(
+            function (feature) {
+
+
+                const props =
+                    feature.properties;
+
+
+                const cemeteryID =
+                    String(
+                        props.Cemetery_ID || ""
+                    ).trim();
+
+
+                const cemeteryText =
+                    (
+                        String(
+                            props.Cemetery_Name ||
+                            ""
+                        ) +
+                        " " +
+                        String(
+                            props.Other_Names ||
+                            ""
+                        )
+                    )
+                        .toLowerCase();
+
+
+                const intermentData =
+                    intermentsByCemetery[
+                        cemeteryID
+                    ] || {
+
+                        people: [],
+
+                        veteran: false
+
+                    };
+
+
+                const personText =
+                    intermentData.people
+                        .join(" ")
+                        .toLowerCase();
+
+
+                // ==========================================
+                // TEXT MATCH
+                // ==========================================
+
+                let textMatch =
+                    searchStr === "";
+
+
+                if (
+                    searchStr !== ""
+                ) {
+
+                    textMatch =
+                        false;
+
+
+                    if (
+                        searchCemetery &&
+                        cemeteryText.includes(
+                            searchStr
+                        )
+                    ) {
+
+                        textMatch =
+                            true;
+
+                    }
+
+
+                    if (
+                        searchPerson &&
+                        personText.includes(
+                            searchStr
+                        )
+                    ) {
+
+                        textMatch =
+                            true;
+
+                    }
 
                 }
+
+
+                // ==========================================
+                // VETERAN MATCH
+                //
+                // Either:
+                // cemlist.csv VETS = 1
+                //
+                // OR:
+                // interments.csv VETERAN = 1
+                // ==========================================
+
+                const hasVeteran =
+                    Number(props.Vets) === 1 ||
+                    intermentData.veteran;
+
+
+                const veteranMatch =
+                    !veteransOnly ||
+                    hasVeteran;
+
+
+                // ==========================================
+                // FINAL SEARCH MATCH
+                // ==========================================
+
+                const finalMatch =
+                    textMatch &&
+                    veteranMatch;
+
+
+                props.Search_Match =
+                    finalMatch;
+
+
+                props.Search_Active =
+                    searchIsActive;
+
+            }
+        );
+
+
+        // ====================================================
+        // UPDATE MAP SOURCE
+        // ====================================================
+
+        const source =
+            map.getSource(
+                "cemeteries-data"
+            );
+
+
+        if (source) {
+
+            source.setData({
+
+                type:
+                    "FeatureCollection",
+
+                features:
+                    cemeteryFeatures
 
             });
 
-        });
+        }
 
 
-        // ========================================================
-        // MAP INTERACTIONS
-        // ========================================================
+        // ====================================================
+        // BUILD MAP FILTER
+        // ====================================================
 
-        function activateInteractions() {
+        const activeFilters = [
+            "all"
+        ];
 
 
-            // ====================================================
-            // MARKER CLICK
-            // ====================================================
+        // ====================================================
+        // YEAR FILTER
+        // ====================================================
 
-            map.on(
-                "click",
+        if (
+            filterYear < 1900
+        ) {
+
+            activeFilters.push([
+
+                "all",
+
+                [
+                    ">",
+                    [
+                        "get",
+                        "Established_Year"
+                    ],
+                    0
+                ],
+
+                [
+                    "<=",
+                    [
+                        "get",
+                        "Established_Year"
+                    ],
+                    filterYear
+                ]
+
+            ]);
+
+        }
+
+
+        // ====================================================
+        // SEARCH FILTER
+        // ====================================================
+
+        if (
+            searchIsActive
+        ) {
+
+            activeFilters.push([
+
+                "==",
+
+                [
+                    "get",
+                    "Search_Match"
+                ],
+
+                true
+
+            ]);
+
+        }
+
+
+        // ====================================================
+        // APPLY MAIN CEMETERY FILTER
+        // ====================================================
+
+        if (
+            activeFilters.length > 1
+        ) {
+
+            map.setFilter(
+
                 "cemeteries-layer",
-                function (event) {
 
-
-                    const props =
-                        event.features[0].properties;
-
-
-                    // --------------------------------------------
-                    // MAKE PANEL VISIBLE
-                    // --------------------------------------------
-
-                    infoPanel.style.display =
-                        "block";
-
-
-                    // --------------------------------------------
-                    // CONVERT ACCESS CODE TO TEXT
-                    // --------------------------------------------
-
-                    let accessText =
-                        "Unknown";
-
-
-                    if (
-                        Number(props.Access) === 0
-                    ) {
-
-                        accessText =
-                            "Inaccessible";
-
-                    }
-
-                    else if (
-                        Number(props.Access) === 1
-                    ) {
-
-                        accessText =
-                            "Private Land";
-
-                    }
-
-                    else if (
-                        Number(props.Access) === 2
-                    ) {
-
-                        accessText =
-                            "With Permission";
-
-                    }
-
-                    else if (
-                        Number(props.Access) === 3
-                    ) {
-
-                        accessText =
-                            "Public";
-
-                    }
-
-
-                    // --------------------------------------------
-                    // CONVERT STATUS CODE TO TEXT
-                    // --------------------------------------------
-
-                    let statusText =
-                        "Unknown";
-
-
-                    if (
-                        Number(props.Status) === 1
-                    ) {
-
-                        statusText =
-                            "Inactive";
-
-                    }
-
-                    else if (
-                        Number(props.Status) === 2
-                    ) {
-
-                        statusText =
-                            "Active";
-
-                    }
-
-
-                    // --------------------------------------------
-                    // CONVERT VETERAN CODE TO TEXT
-                    // --------------------------------------------
-
-                    let vetsText =
-                        "Unknown";
-
-
-                    if (
-                        Number(props.Vets) === 1
-                    ) {
-
-                        vetsText =
-                            "Yes";
-
-                    }
-
-                    else if (
-                        Number(props.Vets) === 2
-                    ) {
-
-                        vetsText =
-                            "No";
-
-                    }
-
-
-                    // --------------------------------------------
-                    // GRAVE COUNT DISPLAY
-                    // --------------------------------------------
-
-                    const graveCountText =
-                        Number(props.Grave_Count) >= 0
-                            ? `${props.Grave_Count} Visible`
-                            : "Unknown";
-
-
-                    // --------------------------------------------
-                    // BUILD INFORMATION PANEL
-                    // --------------------------------------------
-
-                    infoContent.innerHTML = `
-
-                        <img
-                            src="photos/${encodeURIComponent(props.Cemetery_ID)}.jpg"
-                            alt="${props.Cemetery_Name || "Cemetery"}"
-                            class="cemetery-popup-photo"
-                            onerror="this.style.display='none';"
-                        >
-
-
-                        <h2>
-                            ${
-                                props.Cemetery_Name ||
-                                "Unknown Site"
-                            }
-                        </h2>
-
-
-                        <h3>
-                            Alternate Name
-                        </h3>
-
-
-                        <p>
-                            ${
-                                props.Other_Names ||
-                                "None Recorded"
-                            }
-                        </p>
-
-
-                        <h3>
-                            Location Metadata
-                        </h3>
-
-
-                        <div class="popup-field">
-                            <span class="popup-label">
-                                Township:
-                            </span>
-
-                            <span>
-                                ${
-                                    props.Township ||
-                                    "Unlisted"
-                                }
-                            </span>
-                        </div>
-
-
-                        <div class="popup-field">
-                            <span class="popup-label">
-                                Map Location/Grid:
-                            </span>
-
-                            <span>
-                                ${
-                                    props.Grid_Index ||
-                                    "N/A"
-                                }
-                            </span>
-                        </div>
-
-
-                        <h3>
-                            Established
-                        </h3>
-
-
-                        <div class="popup-field">
-                            <span class="popup-label">
-                                Year:
-                            </span>
-
-                            <span>
-                                ${
-                                    props.Birth_Year > 0
-                                        ? props.Birth_Year
-                                        : "Unknown"
-                                }
-                            </span>
-                        </div>
-
-
-                        <h3>
-                            Cemetery Information
-                        </h3>
-
-
-                        <div class="popup-field">
-                            <span class="popup-label">
-                                Grave Count:
-                            </span>
-
-                            <span>
-                                ${graveCountText}
-                            </span>
-                        </div>
-
-
-                        <div class="popup-field">
-                            <span class="popup-label">
-                                Approximate Size:
-                            </span>
-
-                            <span>
-                                ${
-                                    props.Approximate_Size ||
-                                    "Unknown"
-                                }
-                            </span>
-                        </div>
-
-
-                        <div class="popup-field">
-                            <span class="popup-label">
-                                Status:
-                            </span>
-
-                            <span>
-                                ${statusText}
-                            </span>
-                        </div>
-
-
-                        <div class="popup-field">
-                            <span class="popup-label">
-                                Accessibility:
-                            </span>
-
-                            <span>
-                                ${accessText}
-                            </span>
-                        </div>
-
-
-                        <div class="popup-field">
-                            <span class="popup-label">
-                                Veterans:
-                            </span>
-
-                            <span>
-                                ${vetsText}
-                            </span>
-                        </div>
-
-
-                        <h3>
-                            Condition Status
-                        </h3>
-
-
-                        <p>
-                            ${
-                                props.Condition_Notes ||
-                                "No condition information on file."
-                            }
-                        </p>
-
-
-                        <h3>
-                            Location Notes
-                        </h3>
-
-
-                        <p>
-                            ${
-                                props.General_Notes ||
-                                "No notes currently recorded."
-                            }
-                        </p>
-
-
-                        <h3>
-                            RECORDS STATUS
-                        </h3>
-
-
-                        <p>
-
-                            <button
-    type="button"
-    class="see-more-button"
-    data-cemetery-id="${encodeURIComponent(props.Cemetery_ID)}"
->
-    SEE MORE
-</button>
-                        </p>
-
-                    `;
-
-                }
+                activeFilters
 
             );
 
+        }
 
-            // ====================================================
-            // POINTER CURSOR
-            // ====================================================
+        else {
 
-            map.on(
-                "mouseenter",
+            map.setFilter(
+
                 "cemeteries-layer",
-                function () {
 
-                    map.getCanvas().style.cursor =
-                        "pointer";
+                null
 
-                }
             );
 
-
-            map.on(
-                "mouseleave",
-                "cemeteries-layer",
-                function () {
-
-                    map.getCanvas().style.cursor =
-                        "";
-
-                }
-            );
+        }
 
 
-                        // ====================================================
-            // SEARCH / FILTER REFERENCES
-            // ====================================================
+        // ====================================================
+        // APPLY HIGHLIGHT FILTER
+        // ====================================================
 
-            const searchBox =
-                document.getElementById("search");
+        if (
+            searchIsActive
+        ) {
 
+            map.setFilter(
 
-            const clearSearch =
-                document.getElementById("clear-search");
+                "cemeteries-highlight-layer",
 
+                [
 
-            const cemeteryToggle =
-                document.getElementById("search-cemetery");
+                    "all",
 
-
-            const personToggle =
-                document.getElementById("search-person");
-
-
-            const veteransToggle =
-                document.getElementById("search-veterans");
-
-
-            const yearSlider =
-                document.getElementById("year-filter");
-
-
-            const yearVal =
-                document.getElementById("year-value");
-
-
-            // ====================================================
-            // SEARCH STATE
-            // ====================================================
-
-            let searchCemetery = true;
-
-            let searchPerson = true;
-
-            let veteransOnly = false;
-
-
-            // ====================================================
-            // FILTER PROCESSOR
-            // ====================================================
-
-            function processMapFilters() {
-
-
-                const searchStr =
-                    searchBox.value
-                        .toLowerCase()
-                        .trim();
-
-
-                const filterYear =
-                    parseInt(yearSlider.value);
-
-
-                const searchIsActive =
-                    searchStr !== "" ||
-                    veteransOnly;
-
-
-                // ================================================
-                // UPDATE CLEAR BUTTON
-                // ================================================
-
-                clearSearch.style.display =
-                    searchBox.value !== ""
-                        ? "block"
-                        : "none";
-
-
-                // ================================================
-                // YEAR FILTER
-                // ================================================
-
-                const filterParts = [];
-
-
-                if (
-                    filterYear < 1900
-                ) {
-
-                    yearVal.innerText =
-                        filterYear;
-
-
-                    filterParts.push([
-
-                        "<=",
+                    [
+                        "==",
 
                         [
                             "get",
-                            "Birth_Year"
+                            "Search_Active"
                         ],
 
-                        filterYear
+                        true
 
-                    ]);
+                    ],
 
-                }
-
-                else {
-
-                    yearVal.innerText =
-                        "All";
-
-                }
-
-
-                // ================================================
-                // CALCULATE SEARCH MATCH FOR EVERY CEMETERY
-                // ================================================
-
-                cemeteryFeatures.forEach(
-
-                    function (feature) {
-
-
-                        const props =
-                            feature.properties;
-
-
-                        const cemeteryID =
-                            String(
-                                props.Cemetery_ID || ""
-                            ).trim();
-
-
-                        const cemeteryText =
-                            (
-                                String(
-                                    props.Cemetery_Name || ""
-                                ) +
-                                " " +
-                                String(
-                                    props.Other_Names || ""
-                                )
-                            )
-                                .toLowerCase();
-
-
-                        const intermentData =
-                            intermentsByCemetery[
-                                cemeteryID
-                            ] || {
-
-                                people: [],
-
-                                veteran: false
-
-                            };
-
-
-                        const personText =
-                            intermentData.people
-                                .join(" ")
-                                .toLowerCase();
-
-
-                        // --------------------------------------------
-                        // TEXT MATCH
-                        // --------------------------------------------
-
-                        let textMatch =
-                            searchStr === "";
-
-
-                        if (
-                            searchStr !== ""
-                        ) {
-
-                            textMatch = false;
-
-
-                            if (
-                                searchCemetery &&
-                                cemeteryText.includes(
-                                    searchStr
-                                )
-                            ) {
-
-                                textMatch = true;
-
-                            }
-
-
-                            if (
-                                searchPerson &&
-                                personText.includes(
-                                    searchStr
-                                )
-                            ) {
-
-                                textMatch = true;
-
-                            }
-
-                        }
-
-
-                        // --------------------------------------------
-                        // VETERAN MATCH
-                        //
-                        // Match either:
-                        //   cemlist.csv VETS = 1
-                        // OR
-                        //   interments.csv VETERAN = 1
-                        // --------------------------------------------
-
-                        const hasVeteran =
-                            Number(props.Vets) === 1 ||
-                            intermentData.veteran;
-
-
-                        const veteranMatch =
-                            !veteransOnly ||
-                            hasVeteran;
-
-
-                        // --------------------------------------------
-                        // FINAL MATCH
-                        // --------------------------------------------
-
-                        const finalMatch =
-                            textMatch &&
-                            veteranMatch;
-
-
-                        props.Search_Match =
-                            finalMatch;
-
-
-                        props.Search_Active =
-                            searchIsActive;
-
-                    }
-
-                );
-
-
-                // ================================================
-                // UPDATE MAP DATA
-                // ================================================
-
-                const source =
-                    map.getSource(
-                        "cemeteries-data"
-                    );
-
-
-                if (source) {
-
-                    source.setData({
-
-                        type: "FeatureCollection",
-
-                        features:
-                            cemeteryFeatures
-
-                    });
-
-                }
-
-
-                // ================================================
-                // BUILD MAP FILTER
-                // ================================================
-
-                const activeFilters = [
-                    "all"
-                ];
-
-
-                // --------------------------------------------
-                // YEAR
-                // --------------------------------------------
-
-                filterParts.forEach(
-
-                    function (part) {
-
-                        activeFilters.push(part);
-
-                    }
-
-                );
-
-
-                // --------------------------------------------
-                // SEARCH
-                // --------------------------------------------
-
-                if (
-                    searchIsActive
-                ) {
-
-                    activeFilters.push([
-
+                    [
                         "==",
 
                         [
@@ -2623,622 +3031,233 @@
 
                         true
 
-                    ]);
+                    ]
 
-                }
-
-
-                // ================================================
-                // APPLY MAIN CEMETERY FILTER
-                // ================================================
-
-                if (
-                    activeFilters.length > 1
-                ) {
-
-                    map.setFilter(
-
-                        "cemeteries-layer",
-
-                        activeFilters
-
-                    );
-
-                }
-
-                else {
-
-                    map.setFilter(
-
-                        "cemeteries-layer",
-
-                        null
-
-                    );
-
-                }
-
-
-                // ================================================
-                // APPLY HIGHLIGHT FILTER
-                // ================================================
-
-                if (
-                    searchIsActive
-                ) {
-
-                    map.setFilter(
-
-                        "cemeteries-highlight-layer",
-
-                        [
-
-                            "all",
-
-                            [
-                                "==",
-                                [
-                                    "get",
-                                    "Search_Active"
-                                ],
-                                true
-                            ],
-
-                            [
-                                "==",
-                                [
-                                    "get",
-                                    "Search_Match"
-                                ],
-                                true
-                            ]
-
-                        ]
-
-                    );
-
-                }
-
-                else {
-
-                    map.setFilter(
-
-                        "cemeteries-highlight-layer",
-
-                        [
-
-                            "==",
-
-                            [
-                                "get",
-                                "Search_Active"
-                            ],
-
-                            true
-
-                        ]
-
-                    );
-
-                }
-
-            }
-
-
-            // ====================================================
-            // MAKE SEARCH FUNCTION AVAILABLE TO INTERMENT LOADER
-            // ====================================================
-
-            window.refreshCemeterySearch =
-                processMapFilters;
-
-
-            // ====================================================
-            // SEARCH EVENT
-            // ====================================================
-
-            searchBox.addEventListener(
-
-                "input",
-
-                processMapFilters
+                ]
 
             );
 
+        }
 
-            // ====================================================
-            // CLEAR SEARCH
-            // ====================================================
+        else {
 
-            clearSearch.addEventListener(
+            map.setFilter(
 
-                "click",
+                "cemeteries-highlight-layer",
 
-                function () {
+                [
 
-                    searchBox.value = "";
+                    "==",
 
-                    processMapFilters();
+                    [
+                        "get",
+                        "Search_Active"
+                    ],
 
-                    searchBox.focus();
+                    true
 
-                }
-
-            );
-
-
-            // ====================================================
-            // CEMETERY TOGGLE
-            // ====================================================
-
-            cemeteryToggle.addEventListener(
-
-                "click",
-
-                function () {
-
-                    searchCemetery =
-                        !searchCemetery;
-
-
-                    cemeteryToggle.classList.toggle(
-                        "active",
-                        searchCemetery
-                    );
-
-
-                    processMapFilters();
-
-                }
+                ]
 
             );
 
+        }
 
-            // ====================================================
-            // PERSON TOGGLE
-            // ====================================================
-
-            personToggle.addEventListener(
-
-                "click",
-
-                function () {
-
-                    searchPerson =
-                        !searchPerson;
+    }
 
 
-                    personToggle.classList.toggle(
-                        "active",
-                        searchPerson
-                    );
+    // ========================================================
+    // SEARCH INPUT
+    // ========================================================
+
+    searchBox.addEventListener(
+        "input",
+        processMapFilters
+    );
 
 
-                    processMapFilters();
+    // ========================================================
+    // CLEAR SEARCH
+    // ========================================================
 
-                }
+    clearSearch.addEventListener(
+        "click",
+        function () {
 
+            searchBox.value = "";
+
+            processMapFilters();
+
+            searchBox.focus();
+
+        }
+    );
+
+
+    // ========================================================
+    // CEMETERY SEARCH TOGGLE
+    // ========================================================
+
+    cemeteryToggle.addEventListener(
+        "click",
+        function () {
+
+            searchCemetery =
+                !searchCemetery;
+
+
+            cemeteryToggle.classList.toggle(
+                "active",
+                searchCemetery
             );
 
 
-            // ====================================================
-            // VETERAN TOGGLE
-            // ====================================================
+            processMapFilters();
 
-            veteransToggle.addEventListener(
-
-                "click",
-
-                function () {
-
-                    veteransOnly =
-                        !veteransOnly;
+        }
+    );
 
 
-                    veteransToggle.classList.toggle(
-                        "active",
-                        veteransOnly
-                    );
+    // ========================================================
+    // PERSON SEARCH TOGGLE
+    // ========================================================
+
+    personToggle.addEventListener(
+        "click",
+        function () {
+
+            searchPerson =
+                !searchPerson;
 
 
-                    processMapFilters();
-
-                }
-
+            personToggle.classList.toggle(
+                "active",
+                searchPerson
             );
 
 
-            // ====================================================
-            // SLIDER EVENT
-            // ====================================================
+            processMapFilters();
 
-            yearSlider.addEventListener(
+        }
+    );
 
-                "input",
 
-                processMapFilters
+    // ========================================================
+    // VETERAN TOGGLE
+    // ========================================================
 
+    veteransToggle.addEventListener(
+        "click",
+        function () {
+
+            veteransOnly =
+                !veteransOnly;
+
+
+            veteransToggle.classList.toggle(
+                "active",
+                veteransOnly
             );
 
 
-            // ====================================================
-            // RESET BUTTON
-            // ====================================================
+            processMapFilters();
 
-            document
-                .getElementById("reset-btn")
-                .addEventListener(
-
-                    "click",
-
-                    function () {
+        }
+    );
 
 
-                        searchBox.value =
-                            "";
+    // ========================================================
+    // YEAR SLIDER
+    // ========================================================
+
+    yearSlider.addEventListener(
+        "input",
+        processMapFilters
+    );
 
 
-                        searchCemetery =
-                            true;
+    // ========================================================
+    // RESET FILTERS
+    // ========================================================
+
+    resetButton.addEventListener(
+        "click",
+        function () {
 
 
-                        searchPerson =
-                            true;
+            // -----------------------------------------------
+            // SEARCH
+            // -----------------------------------------------
+
+            searchBox.value =
+                "";
 
 
-                        veteransOnly =
-                            false;
+            searchCemetery =
+                true;
 
 
-                        cemeteryToggle.classList.add(
-                            "active"
-                        );
+            searchPerson =
+                true;
 
 
-                        personToggle.classList.add(
-                            "active"
-                        );
+            veteransOnly =
+                false;
 
 
-                        veteransToggle.classList.remove(
-                            "active"
-                        );
+            // -----------------------------------------------
+            // TOGGLE VISUAL STATE
+            // -----------------------------------------------
+
+            cemeteryToggle.classList.add(
+                "active"
+            );
 
 
-                        yearSlider.value =
-                            1900;
+            personToggle.classList.add(
+                "active"
+            );
 
 
-                        yearVal.innerText =
-                            "All";
+            veteransToggle.classList.remove(
+                "active"
+            );
 
 
-                        processMapFilters();
+            // -----------------------------------------------
+            // YEAR
+            // -----------------------------------------------
+
+            yearSlider.value =
+                1900;
 
 
-                        infoPanel.style.display =
-                            "block";
+            yearVal.innerText =
+                "All";
 
 
-                        infoContent.innerHTML = `
-
-                            <div class="placeholder">
-
-                                Click a cemetery marker
-                                on the map to inspect
-                                historic records and notes.
-
-                            </div>
-                    // =============================================
-                    // SEE MORE -> CEMETERY LIGHTBOX
-                    // =============================================
-
-                    const seeMoreButton =
-                        infoContent.querySelector(
-                            ".see-more-button"
-                        );
-
-
-                    if (seeMoreButton) {
-
-                        seeMoreButton.addEventListener(
-
-                            "click",
-
-                            function () {
-
-                                const cemeteryID =
-                                    this.dataset.cemeteryId;
-
-
-                                const lightbox =
-                                    document.getElementById(
-                                        "cemetery-lightbox"
-                                    );
-
-
-                                const frame =
-                                    document.getElementById(
-                                        "cemetery-lightbox-frame"
-                                    );
-
-
-                                frame.src =
-                                    "cemetery.html?id=" +
-                                    encodeURIComponent(
-                                        cemeteryID
-                                    );
-
-
-                                lightbox.style.display =
-                                    "flex";
-
-                            }
-
-                        );
-
-                    }
-                        `;
-
-                    }
-
-                );
-
-
-            // ====================================================
-            // INITIAL SEARCH STATE
-            // ====================================================
+            // -----------------------------------------------
+            // REPROCESS FILTERS
+            // -----------------------------------------------
 
             processMapFilters();
 
 
-            // ====================================================
-            // FILTER PROCESSOR
-            // ====================================================
+            // -----------------------------------------------
+            // RESTORE INFO PANEL
+            // -----------------------------------------------
 
-            function processMapFilters() {
+            infoPanel.style.display =
+                "block";
 
 
-                const searchStr =
-                    searchBox.value
-                        .toLowerCase()
-                        .trim();
-
-
-                const filterYear =
-                    parseInt(yearSlider.value);
-
-
-                const activeFilters = [
-                    "all"
-                ];
-
-
-                // ================================================
-                // YEAR FILTER
-                // ================================================
-
-                if (
-                    filterYear < 1900
-                ) {
-
-                    yearVal.innerText =
-                        filterYear;
-
-
-                    activeFilters.push([
-
-                        "<=",
-
-                        [
-                            "get",
-                            "Birth_Year"
-                        ],
-
-                        filterYear
-
-                    ]);
-
-                }
-
-                else {
-
-                    yearVal.innerText =
-                        "All";
-
-                }
-
-
-                // ================================================
-                // NAME SEARCH
-                // ================================================
-
-                if (
-                    searchStr !== ""
-                ) {
-
-
-                    activeFilters.push([
-
-                        "any",
-
-
-                        [
-                            ">=",
-
-                            [
-                                "index-of",
-
-                                searchStr,
-
-                                [
-                                    "downcase",
-
-                                    [
-                                        "to-string",
-
-                                        [
-                                            "get",
-                                            "Cemetery_Name"
-                                        ]
-
-                                    ]
-
-                                ]
-
-                            ],
-
-                            0
-
-                        ],
-
-
-                        [
-                            ">=",
-
-                            [
-
-                                "index-of",
-
-                                searchStr,
-
-                                [
-
-                                    "downcase",
-
-                                    [
-
-                                        "to-string",
-
-                                        [
-
-                                            "get",
-
-                                            "Other_Names"
-
-                                        ]
-
-                                    ]
-
-                                ]
-
-                            ],
-
-                            0
-
-                        ]
-
-                    ]);
-
-                }
-
-
-                // ================================================
-                // APPLY FILTER
-                // ================================================
-
-                if (
-                    activeFilters.length > 1
-                ) {
-
-
-                    map.setFilter(
-
-                        "cemeteries-layer",
-
-                        activeFilters
-
-                    );
-
-                }
-
-                else {
-
-
-                    map.setFilter(
-
-                        "cemeteries-layer",
-
-                        null
-
-                    );
-
-                }
-
-            }
-
-
-            // ====================================================
-            // SEARCH EVENT
-            // ====================================================
-
-            searchBox.addEventListener(
-                "input",
-                processMapFilters
-            );
-
-
-            // ====================================================
-            // SLIDER EVENT
-            // ====================================================
-
-            yearSlider.addEventListener(
-                "input",
-                processMapFilters
-            );
-
-
-            // ====================================================
-            // RESET BUTTON
-            // ====================================================
-
-            document
-                .getElementById("reset-btn")
-                .addEventListener(
-                    "click",
-                    function () {
-
-
-                        searchBox.value =
-                            "";
-
-
-                        yearSlider.value =
-                            1900;
-
-
-                        yearVal.innerText =
-                            "All";
-
-
-                        map.setFilter(
-                            "cemeteries-layer",
-                            null
-                        );
-
-
-                        infoPanel.style.display =
-                            "block";
-
-
-                        infoContent.innerHTML = `
-
-                            <div class="placeholder">
-
-                                Click a cemetery marker
-                                on the map to inspect
-                                historic records and notes.
-
-                            </div>
-
-                        `;
-
-                    }
-                );
+            showDefaultInfo();
 
         }
+    );
 
-    </script>
+
+</script>
+```
 
 </body>
 
