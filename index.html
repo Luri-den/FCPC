@@ -37,31 +37,19 @@
             box-sizing: border-box;
         }
 
-
         html,
         body {
-
             margin: 0;
             padding: 0;
-
             width: 100%;
             height: 100%;
-
-            font-family:
-                Arial,
-                Helvetica,
-                sans-serif;
-
+            font-family: Arial, Helvetica, sans-serif;
         }
 
-
         body {
-
             display: flex;
             flex-direction: column;
-
             background: #f4f1e8;
-
         }
 
 
@@ -70,36 +58,21 @@
            ===================================================== */
 
         header {
-
             background: #3f3528;
-
             color: white;
-
             padding: 14px 18px;
-
             z-index: 10;
-
         }
-
 
         header h1 {
-
-            margin:
-                0 0 5px 0;
-
+            margin: 0 0 5px 0;
             font-size: 22px;
-
         }
 
-
         header p {
-
             margin: 0;
-
             font-size: 14px;
-
             opacity: 0.9;
-
         }
 
 
@@ -108,91 +81,46 @@
            ===================================================== */
 
         #controls {
-
             background: #eee9dc;
-
-            border-bottom:
-                1px solid #c9c1b2;
-
+            border-bottom: 1px solid #c9c1b2;
             padding: 10px;
-
             display: flex;
-
             flex-wrap: wrap;
-
             gap: 8px;
-
             align-items: center;
-
             z-index: 5;
-
         }
-
 
         #search {
-
-            flex:
-                1 1 220px;
-
+            flex: 1 1 220px;
             min-width: 180px;
-
-            padding:
-                9px 10px;
-
-            border:
-                1px solid #aaa;
-
+            padding: 9px 10px;
+            border: 1px solid #aaa;
             border-radius: 4px;
-
             font-size: 15px;
-
         }
-
 
         #year-filter {
-
             width: 150px;
-
-            padding:
-                9px 10px;
-
-            border:
-                1px solid #aaa;
-
+            padding: 9px 10px;
+            border: 1px solid #aaa;
             border-radius: 4px;
-
             font-size: 15px;
-
             background: white;
-
         }
-
 
         button {
-
-            padding:
-                9px 14px;
-
-            border:
-                1px solid #8d8375;
-
+            padding: 9px 14px;
+            border: 1px solid #8d8375;
             border-radius: 4px;
-
             background: #5a4b3a;
-
             color: white;
-
             font-size: 14px;
-
             cursor: pointer;
-
         }
 
-
         button:hover {
-
             background: #463a2d;
-
         }
 
 
@@ -201,15 +129,10 @@
            ===================================================== */
 
         #map {
-
             flex: 1;
-
             min-height: 0;
-
             width: 100%;
-
             position: relative;
-
         }
 
 
@@ -218,134 +141,56 @@
            ===================================================== */
 
         #info-panel {
-
             position: absolute;
-
             top: 10px;
             right: 10px;
-
             width: 310px;
-
-            max-width:
-                calc(100% - 20px);
-
-            max-height:
-                calc(100% - 20px);
-
+            max-width: calc(100% - 20px);
+            max-height: calc(100% - 20px);
             overflow-y: auto;
 
-            background:
-                rgba(255, 255, 255, 0.96);
+            background: rgba(255, 255, 255, 0.96);
 
-            border:
-                1px solid #aaa;
-
+            border: 1px solid #aaa;
             border-radius: 5px;
 
             box-shadow:
-                0 2px 8px
-                rgba(0, 0, 0, 0.25);
+                0 2px 8px rgba(0, 0, 0, 0.25);
 
             padding: 14px;
 
             z-index: 4;
-
         }
-
 
         #info-panel h2 {
-
-            margin:
-                0 0 6px 0;
-
+            margin: 0 0 6px 0;
             font-size: 20px;
-
             color: #3f3528;
-
         }
-
 
         #info-panel h3 {
-
-            margin:
-                12px 0 3px 0;
-
+            margin: 12px 0 3px 0;
             font-size: 13px;
-
             color: #6b6258;
-
-            text-transform:
-                uppercase;
-
+            text-transform: uppercase;
         }
-
 
         #info-panel p {
-
             margin: 0;
-
             line-height: 1.4;
-
             font-size: 14px;
-
         }
-
 
         .placeholder {
-
             color: #666;
-
             font-size: 14px;
-
             line-height: 1.4;
-
         }
-
 
         .error-message {
-
             color: #8b0000;
-
             font-size: 14px;
-
             line-height: 1.45;
-
-        }
-
-
-        .success-message {
-
-            color: #315d35;
-
-            font-size: 14px;
-
-            line-height: 1.45;
-
-        }
-
-
-        .debug-box {
-
-            margin-top: 10px;
-
-            padding: 8px;
-
-            background: #f1f1f1;
-
-            border:
-                1px solid #ccc;
-
-            border-radius: 3px;
-
-            font-family:
-                monospace;
-
-            font-size: 11px;
-
-            word-break: break-word;
-
-            white-space: pre-wrap;
-
         }
 
 
@@ -354,33 +199,20 @@
            ===================================================== */
 
         .popup-title {
-
             font-size: 17px;
-
             font-weight: bold;
-
             margin-bottom: 5px;
-
             color: #3f3528;
-
         }
-
 
         .popup-subtitle {
-
             font-size: 13px;
-
             color: #666;
-
             margin-bottom: 8px;
-
         }
 
-
         .popup-label {
-
             font-weight: bold;
-
         }
 
 
@@ -391,62 +223,38 @@
         @media (max-width: 700px) {
 
             header {
-
-                padding:
-                    11px 13px;
-
+                padding: 11px 13px;
             }
-
 
             header h1 {
-
                 font-size: 18px;
-
             }
-
 
             header p {
-
                 font-size: 12px;
-
             }
-
 
             #controls {
-
                 padding: 8px;
-
             }
-
 
             #search,
             #year-filter,
             button {
-
                 width: 100%;
-
-                flex:
-                    1 1 100%;
-
+                flex: 1 1 100%;
             }
 
-
             #info-panel {
-
                 position: absolute;
-
                 top: auto;
-
                 right: 8px;
                 bottom: 8px;
                 left: 8px;
 
                 width: auto;
-
                 max-width: none;
-
                 max-height: 38%;
-
             }
 
         }
@@ -511,7 +319,7 @@
 
             <div class="placeholder">
 
-                Loading map...
+                Loading cemetery data...
 
             </div>
 
@@ -569,8 +377,7 @@
 
         const map = new maplibregl.Map({
 
-            container:
-                "map",
+            container: "map",
 
             style: {
 
@@ -580,8 +387,7 @@
 
                     osm: {
 
-                        type:
-                            "raster",
+                        type: "raster",
 
                         tiles: [
 
@@ -589,8 +395,7 @@
 
                         ],
 
-                        tileSize:
-                            256,
+                        tileSize: 256,
 
                         attribution:
                             "© OpenStreetMap contributors"
@@ -603,14 +408,11 @@
 
                     {
 
-                        id:
-                            "osm",
+                        id: "osm",
 
-                        type:
-                            "raster",
+                        type: "raster",
 
-                        source:
-                            "osm"
+                        source: "osm"
 
                     }
 
@@ -618,20 +420,17 @@
 
             },
 
-            center:
-                MAP_CENTER,
+            center: MAP_CENTER,
 
-            zoom:
-                10,
+            zoom: 10,
 
-            maxBounds:
-                MAP_BOUNDS
+            maxBounds: MAP_BOUNDS
 
         });
 
 
         // ========================================================
-        // NAVIGATION CONTROL
+        // NAVIGATION
         // ========================================================
 
         map.addControl(
@@ -644,7 +443,7 @@
 
 
         // ========================================================
-        // HTML ESCAPE
+        // HTML ESCAPING
         // ========================================================
 
         function escapeHTML(value) {
@@ -658,33 +457,13 @@
 
             }
 
-
             return String(value)
 
-                .replace(
-                    /&/g,
-                    "&amp;"
-                )
-
-                .replace(
-                    /</g,
-                    "&lt;"
-                )
-
-                .replace(
-                    />/g,
-                    "&gt;"
-                )
-
-                .replace(
-                    /"/g,
-                    "&quot;"
-                )
-
-                .replace(
-                    /'/g,
-                    "&#039;"
-                );
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
 
         }
 
@@ -700,30 +479,25 @@
                     properties.Cemetery_Name
                 );
 
-
             const otherNames =
                 escapeHTML(
                     properties.Other_Names
                 );
-
 
             const township =
                 escapeHTML(
                     properties.Township
                 );
 
-
             const birthYear =
                 escapeHTML(
                     properties.Birth_Year
                 );
 
-
             const rowNumber =
                 escapeHTML(
                     properties.Row_Number
                 );
-
 
             const condition =
                 escapeHTML(
@@ -739,11 +513,9 @@
                     ${name}
                 </h2>
 
-
                 ${
                     otherNames
                     ? `
-
                         <h3>
                             Other Name
                         </h3>
@@ -751,16 +523,13 @@
                         <p>
                             ${otherNames}
                         </p>
-
-                      `
+                    `
                     : ""
                 }
-
 
                 ${
                     township
                     ? `
-
                         <h3>
                             Township
                         </h3>
@@ -768,16 +537,13 @@
                         <p>
                             ${township}
                         </p>
-
-                      `
+                    `
                     : ""
                 }
-
 
                 ${
                     birthYear
                     ? `
-
                         <h3>
                             Earliest Recorded Birth Year
                         </h3>
@@ -785,16 +551,13 @@
                         <p>
                             ${birthYear}
                         </p>
-
-                      `
+                    `
                     : ""
                 }
-
 
                 ${
                     rowNumber
                     ? `
-
                         <h3>
                             Land / Survey Reference
                         </h3>
@@ -802,16 +565,13 @@
                         <p>
                             ${rowNumber}
                         </p>
-
-                      `
+                    `
                     : ""
                 }
-
 
                 ${
                     condition
                     ? `
-
                         <h3>
                             Condition / Location Notes
                         </h3>
@@ -819,8 +579,7 @@
                         <p>
                             ${condition}
                         </p>
-
-                      `
+                    `
                     : ""
                 }
 
@@ -830,10 +589,7 @@
 
 
         // ========================================================
-        // MAP LOAD
-        //
-        // We wait until MapLibre is completely ready before
-        // attempting to load the GeoJSON.
+        // WAIT FOR MAP TO LOAD
         // ========================================================
 
         map.on(
@@ -841,35 +597,9 @@
             function() {
 
 
-                console.log(
-                    "================================"
-                );
-
-                console.log(
-                    "MAP LOADED"
-                );
-
-                console.log(
-                    "GeoJSON URL:"
-                );
-
-                console.log(
-                    GEOJSON_FILE
-                );
-
-                console.log(
-                    "================================"
-                );
-
-
-                // ================================================
-                // FETCH THE FILE AS TEXT FIRST
-                //
-                // This is intentional.
-                //
-                // We want to see EXACTLY what GitHub Pages
-                // is returning before JSON.parse() is attempted.
-                // ================================================
+                // =================================================
+                // LOAD GEOJSON AS TEXT
+                // =================================================
 
                 fetch(
                     GEOJSON_FILE,
@@ -881,33 +611,17 @@
                 .then(
                     function(response) {
 
-
-                        console.log(
-                            "GeoJSON HTTP status:",
-                            response.status
-                        );
-
-
-                        console.log(
-                            "GeoJSON Content-Type:",
-                            response.headers.get(
-                                "content-type"
-                            )
-                        );
-
-
                         if (!response.ok) {
 
                             throw new Error(
 
-                                "HTTP " +
-                                response.status +
-                                " while loading graves.geojson."
+                                "Could not load graves.geojson. " +
+                                "HTTP status: " +
+                                response.status
 
                             );
 
                         }
-
 
                         return response.text();
 
@@ -919,33 +633,34 @@
                     function(text) {
 
 
-                        // ========================================
-                        // SHOW WHAT THE SERVER ACTUALLY RETURNED
-                        // ========================================
+                        // ==========================================
+                        // REMOVE UTF-8 BOM IF PRESENT
+                        //
+                        // This is the important fix.
+                        //
+                        // A BOM is invisible but can cause:
+                        //
+                        // JSON.parse:
+                        // unexpected character at line 1 column 1
+                        // ==========================================
 
-                        console.log(
-                            "================================"
-                        );
-
-                        console.log(
-                            "FIRST 500 CHARACTERS RETURNED:"
-                        );
-
-                        console.log(
-                            text.substring(
-                                0,
-                                500
-                            )
-                        );
-
-                        console.log(
-                            "================================"
-                        );
+                        text =
+                            text.replace(
+                                /^\uFEFF/,
+                                ""
+                            );
 
 
-                        // ========================================
-                        // PARSE JSON MANUALLY
-                        // ========================================
+                        // Also remove any accidental whitespace
+                        // before the opening JSON object.
+
+                        text =
+                            text.trim();
+
+
+                        // ==========================================
+                        // PARSE JSON
+                        // ==========================================
 
                         let data;
 
@@ -953,49 +668,39 @@
                         try {
 
                             data =
-                                JSON.parse(
-                                    text
-                                );
+                                JSON.parse(text);
 
                         }
 
                         catch (error) {
 
-                            const beginning =
-                                text
-                                    .substring(
-                                        0,
-                                        200
-                                    )
-                                    .replace(
-                                        /\s+/g,
-                                        " "
-                                    );
+                            console.error(
+                                "Raw graves.geojson response:",
+                                text.substring(
+                                    0,
+                                    500
+                                )
+                            );
 
 
                             throw new Error(
 
-                                "The server returned something " +
-                                "that is NOT valid JSON.\n\n" +
+                                "graves.geojson is not valid JSON. " +
 
-                                "The beginning of the response was:\n\n" +
+                                "The first character received was: " +
 
-                                beginning
+                                JSON.stringify(
+                                    text.charAt(0)
+                                )
 
                             );
 
                         }
 
 
-                        console.log(
-                            "GeoJSON parsed successfully:",
-                            data
-                        );
-
-
-                        // ========================================
-                        // VALIDATE GEOJSON
-                        // ========================================
+                        // ==========================================
+                        // VERIFY GEOJSON STRUCTURE
+                        // ==========================================
 
                         if (
                             !data ||
@@ -1008,47 +713,18 @@
 
                             throw new Error(
 
-                                "The file was parsed as JSON, " +
-                                "but it is not a valid " +
-                                "GeoJSON FeatureCollection."
+                                "graves.geojson is valid JSON, " +
+                                "but it is not a valid GeoJSON " +
+                                "FeatureCollection."
 
                             );
 
                         }
 
 
-                        console.log(
-                            "Number of features:",
-                            data.features.length
-                        );
-
-
-                        // ========================================
-                        // LIST THE FEATURES
-                        // ========================================
-
-                        data.features.forEach(
-
-                            function(feature, index) {
-
-                                console.log(
-
-                                    "Feature " +
-                                    (index + 1) +
-                                    ":",
-
-                                    feature
-
-                                );
-
-                            }
-
-                        );
-
-
-                        // ========================================
+                        // ==========================================
                         // ADD SOURCE
-                        // ========================================
+                        // ==========================================
 
                         map.addSource(
 
@@ -1067,14 +743,9 @@
                         );
 
 
-                        console.log(
-                            "Cemetery GeoJSON source added."
-                        );
-
-
-                        // ========================================
-                        // ADD DOTS
-                        // ========================================
+                        // ==========================================
+                        // ADD CEMETERY DOTS
+                        // ==========================================
 
                         map.addLayer({
 
@@ -1090,10 +761,10 @@
                             paint: {
 
                                 "circle-radius":
-                                    10,
+                                    9,
 
                                 "circle-color":
-                                    "#ff0000",
+                                    "#b91c1c",
 
                                 "circle-opacity":
                                     1,
@@ -1112,91 +783,37 @@
                         });
 
 
-                        console.log(
-                            "Cemetery dot layer added."
-                        );
-
-
-                        // ========================================
-                        // SUCCESS MESSAGE
-                        // ========================================
+                        // ==========================================
+                        // SUCCESS
+                        // ==========================================
 
                         document.getElementById(
                             "info-panel"
                         ).innerHTML = `
 
                             <div
-                                class="success-message"
+                                class="placeholder"
                             >
 
                                 <strong>
-                                    Cemetery data loaded.
+                                    ${data.features.length}
                                 </strong>
+
+                                cemetery records loaded.
 
                                 <br><br>
 
-                                ${data.features.length}
-                                cemetery records loaded.
+                                Click a marker to view its
+                                information.
 
                             </div>
 
                         `;
 
 
-                        // ========================================
-                        // WAIT FOR RENDER
-                        // ========================================
-
-                        map.once(
-
-                            "idle",
-
-                            function() {
-
-
-                                const rendered =
-                                    map.queryRenderedFeatures(
-
-                                        {
-
-                                            layers:
-                                                [
-                                                    "cemeteries-layer"
-                                                ]
-
-                                        }
-
-                                    );
-
-
-                                const sourceFeatures =
-                                    map.querySourceFeatures(
-
-                                        "cemeteries"
-
-                                    );
-
-
-                                console.log(
-                                    "Rendered cemetery features:",
-                                    rendered
-                                );
-
-
-                                console.log(
-                                    "Source cemetery features:",
-                                    sourceFeatures
-                                );
-
-
-                            }
-
-                        );
-
-
-                        // ========================================
-                        // MARKER CLICK
-                        // ========================================
+                        // ==========================================
+                        // CLICK MARKER
+                        // ==========================================
 
                         map.on(
 
@@ -1206,41 +823,33 @@
 
                             function(event) {
 
-
                                 const feature =
                                     event.features &&
                                     event.features[0];
 
 
                                 if (!feature) {
-
                                     return;
-
                                 }
 
 
                                 showCemeteryInfo(
-
                                     feature.properties
-
                                 );
 
 
                                 new maplibregl.Popup()
 
                                     .setLngLat(
-
                                         feature
                                             .geometry
                                             .coordinates
-
                                     )
 
                                     .setHTML(`
 
                                         <div
-                                            class=
-                                            "popup-title"
+                                            class="popup-title"
                                         >
 
                                             ${escapeHTML(
@@ -1250,7 +859,6 @@
                                             )}
 
                                         </div>
-
 
                                         ${
                                             feature
@@ -1272,55 +880,22 @@
 
                                                 </div>
 
-                                              `
-
-                                            : ""
-                                        }
-
-
-                                        ${
-                                            feature
-                                                .properties
-                                                .Township
-
-                                            ? `
-
-                                                <div>
-
-                                                    <span
-                                                        class=
-                                                        "popup-label"
-                                                    >
-                                                        Township:
-                                                    </span>
-
-                                                    ${escapeHTML(
-                                                        feature
-                                                            .properties
-                                                            .Township
-                                                    )}
-
-                                                </div>
-
-                                              `
-
+                                            `
                                             : ""
                                         }
 
                                     `)
 
-                                    .addTo(
-                                        map
-                                    );
+                                    .addTo(map);
 
                             }
 
                         );
 
 
-                        // ========================================
+                        // ==========================================
                         // POINTER
-                        // ========================================
+                        // ==========================================
 
                         map.on(
 
@@ -1357,9 +932,7 @@
 
                         );
 
-
                     }
-
                 )
 
 
@@ -1368,24 +941,11 @@
                 // =================================================
 
                 .catch(
-
                     function(error) {
 
-
                         console.error(
-                            "================================"
-                        );
-
-                        console.error(
-                            "CEMETERY DATA ERROR"
-                        );
-
-                        console.error(
+                            "Cemetery data error:",
                             error
-                        );
-
-                        console.error(
-                            "================================"
                         );
 
 
@@ -1408,35 +968,14 @@
                                     error.message
                                 )}
 
-                                <div
-                                    class="debug-box"
-                                >
-
-                                    Requested URL:
-
-                                    ${escapeHTML(
-                                        GEOJSON_FILE
-                                    )}
-
-                                </div>
-
-                                <br>
-
-                                Open the browser's
-                                developer console to see
-                                exactly what the server
-                                returned.
-
                             </div>
 
                         `;
 
                     }
-
                 );
 
             }
-
         );
 
 
@@ -1445,9 +984,7 @@
         // ========================================================
 
         map.on(
-
             "error",
-
             function(event) {
 
                 console.error(
@@ -1456,7 +993,6 @@
                 );
 
             }
-
         );
 
 
@@ -1465,27 +1001,17 @@
         // ========================================================
 
         document
-            .getElementById(
-                "reset-button"
-            )
+            .getElementById("reset-button")
             .addEventListener(
-
                 "click",
-
                 function() {
 
-
                     document
-                        .getElementById(
-                            "search"
-                        )
+                        .getElementById("search")
                         .value = "";
 
-
                     document
-                        .getElementById(
-                            "year-filter"
-                        )
+                        .getElementById("year-filter")
                         .value = "";
 
 
@@ -1496,11 +1022,8 @@
                     ) {
 
                         map.setFilter(
-
                             "cemeteries-layer",
-
                             null
-
                         );
 
                     }
@@ -1522,7 +1045,6 @@
                     `;
 
                 }
-
             );
 
 
@@ -1531,15 +1053,10 @@
         // ========================================================
 
         document
-            .getElementById(
-                "search"
-            )
+            .getElementById("search")
             .addEventListener(
-
                 "input",
-
                 function() {
-
 
                     if (
                         !map.getLayer(
@@ -1561,11 +1078,8 @@
                     if (!searchText) {
 
                         map.setFilter(
-
                             "cemeteries-layer",
-
                             null
-
                         );
 
                         return;
@@ -1596,11 +1110,8 @@
                                         "coalesce",
 
                                         [
-
                                             "get",
-
                                             "Cemetery_Name"
-
                                         ],
 
                                         ""
@@ -1610,7 +1121,6 @@
                                 ]
 
                             ],
-
 
                             [
 
@@ -1627,11 +1137,8 @@
                                         "coalesce",
 
                                         [
-
                                             "get",
-
                                             "Other_Names"
-
                                         ],
 
                                         ""
@@ -1647,7 +1154,6 @@
                     );
 
                 }
-
             );
 
 
@@ -1656,15 +1162,10 @@
         // ========================================================
 
         document
-            .getElementById(
-                "year-filter"
-            )
+            .getElementById("year-filter")
             .addEventListener(
-
                 "input",
-
                 function() {
-
 
                     if (
                         !map.getLayer(
@@ -1680,11 +1181,8 @@
                     if (!this.value) {
 
                         map.setFilter(
-
                             "cemeteries-layer",
-
                             null
-
                         );
 
                         return;
@@ -1711,11 +1209,8 @@
                                 "to-number",
 
                                 [
-
                                     "get",
-
                                     "Birth_Year"
-
                                 ]
 
                             ],
@@ -1727,9 +1222,7 @@
                     );
 
                 }
-
             );
-
 
     </script>
 
