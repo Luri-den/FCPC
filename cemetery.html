@@ -102,7 +102,34 @@
             font-size: 18px;
         }
 
+        /* ============================================================
+           CEMETERY PHOTO GALLERY
+           ============================================================ */
 
+        .photo-gallery {
+            display: grid;
+            grid-template-columns: repeat(
+                auto-fit,
+                minmax(220px, 1fr)
+            );
+            gap: 15px;
+        }
+
+
+        .cemetery-photo {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+        }
+
+
+        .cemetery-photo:hover {
+            opacity: 0.9;
+        }
+        
         /* ============================================================
            ERROR MESSAGE
            ============================================================ */
@@ -165,7 +192,25 @@
 
         </section>
 
+        <!-- ========================================================
+             CEMETERY PHOTOS
+             ======================================================== -->
 
+        <section>
+
+            <h2>
+                Cemetery Photos
+            </h2>
+
+            <div
+                id="cemetery-photos"
+                class="photo-gallery"
+            >
+                Loading...
+            </div>
+
+        </section>
+        
         <!-- ========================================================
              INTERMENTS
              ======================================================== -->
@@ -372,6 +417,13 @@
                             </div>
 
                         `;
+
+
+                        // ------------------------------------------------
+                        // LOAD PHOTOS
+                        // ------------------------------------------------
+
+                        loadPhotos();
 
 
                         // ------------------------------------------------
@@ -623,7 +675,117 @@
 
         }
 
+        // ============================================================
+        // LOAD CEMETERY PHOTOS
+        // ============================================================
 
+        function loadPhotos() {
+
+            const container =
+                document.getElementById(
+                    "cemetery-photos"
+                );
+
+
+            const photoPromises = [];
+
+
+            // --------------------------------------------------------
+            // CHECK FOR NUMBERED PHOTOS
+            // --------------------------------------------------------
+
+            for (
+                let photoNumber = 1;
+                photoNumber <= 20;
+                photoNumber++
+            ) {
+
+                const photoPath =
+                    `photos/${encodeURIComponent(cemeteryID)}-${photoNumber}.jpg`;
+
+
+                photoPromises.push(
+
+                    new Promise(function(resolve) {
+
+                        const image =
+                            new Image();
+
+
+                        image.onload =
+                            function() {
+
+                                resolve(photoPath);
+
+                            };
+
+
+                        image.onerror =
+                            function() {
+
+                                resolve(null);
+
+                            };
+
+
+                        image.src =
+                            photoPath;
+
+                    })
+
+                );
+
+            }
+
+
+            // --------------------------------------------------------
+            // DISPLAY PHOTOS THAT EXIST
+            // --------------------------------------------------------
+
+            Promise.all(photoPromises)
+                .then(function(photoPaths) {
+
+                    const validPhotos =
+                        photoPaths.filter(
+                            function(path) {
+                                return path !== null;
+                            }
+                        );
+
+
+                    if (
+                        validPhotos.length === 0
+                    ) {
+
+                        container.innerHTML =
+                            "<p>No cemetery photos currently available.</p>";
+
+                        return;
+
+                    }
+
+
+                    container.innerHTML =
+                        validPhotos.map(
+                            function(photoPath) {
+
+                                return `
+
+                                    <img
+                                        src="${photoPath}"
+                                        alt="Cemetery photograph"
+                                        class="cemetery-photo"
+                                    >
+
+                                `;
+
+                            }
+                        ).join("");
+
+                });
+
+        }
+        
     </script>
 
 
