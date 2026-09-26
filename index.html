@@ -151,7 +151,22 @@
             background: #463a2d;
         }
 
+       .see-more-button {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #8d8375;
+            border-radius: 4px;
+            background: #01796F;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
 
+
+        .see-more-button:hover {
+            background: #463a2d;
+        }
         /* =====================================================
            MAP
            ===================================================== */
@@ -651,7 +666,8 @@
 
                                 properties: {
 
-
+Cemetery_ID:
+    row.ID || "",
                                     // ==========================
                                     // CEMETERY NAME
                                     // ==========================
@@ -1222,18 +1238,35 @@
 
 
                         <p>
-                            <button
-                                class="see-more-button"
-                                type="button"
-                            >
-                                SEE MORE
-                            </button>
+<a
+    class="see-more-button"
+    href="cemetery.html?id=${encodeURIComponent(props.Cemetery_ID)}"
+>
+    SEE MORE
+</a>
                         </p>
                     `;
 
                 }
             );
+.see-more-button {
+    display: block;
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #8d8375;
+    border-radius: 4px;
+    background: #01796F;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+}
 
+.see-more-button:hover {
+    background: #463a2d;
+}
 
             // ====================================================
             // POINTER CURSOR
