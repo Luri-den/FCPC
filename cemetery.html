@@ -129,6 +129,22 @@ h2 {
 
 }
 
+    .person-name {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: bold;
+    font-size: 24px;
+    margin-bottom: 18px;
+}
+
+.veteran-icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    margin-left: 12px;
+}
+
 /* ============================================================
    INTERMENT RECORDS
    ============================================================ */
@@ -1061,16 +1077,26 @@ function displayInterments(
 
                 return `
 
-                    <div class="interment">
+                    <div class="person-name">
 
+    <span>
+        ${firstName} ${lastName}
+    </span>
 
-                        <div class="person-name">
+    ${
+        veteran === 1
+            ? `
+                <img
+                    src="veticon.svg"
+                    alt="Veteran"
+                    class="veteran-icon"
+                    title="Veteran"
+                >
+              `
+            : ""
+    }
 
-                            ${row["FIRST NAME"] || "N/A"}
-
-                            ${row["LAST NAME"] || "N/A"}
-
-                        </div>
+</div>
 
 
                         <div class="field">
