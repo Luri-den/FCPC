@@ -210,6 +210,35 @@
 
 
         /* =====================================================
+           HISTORICAL CEMETERY LIST
+           ===================================================== */
+
+        .lake-cemetery {
+            border-top: 1px solid #ddd;
+            padding: 12px 0;
+        }
+
+
+        .lake-cemetery:first-child {
+            border-top: none;
+        }
+
+
+        .lake-cemetery h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            color: #463a2d;
+        }
+
+
+        .lake-introduction {
+            margin: 0 0 12px 0;
+            line-height: 1.4;
+            font-size: 14px;
+        }
+
+
+        /* =====================================================
            MAP
            ===================================================== */
 
@@ -625,8 +654,15 @@
                 ).href;
 
 
+            const LAKE_CSV_PATH =
+                new URL(
+                    "lakecems.csv",
+                    document.baseURI
+                ).href;
+
+
             // ====================================================
-            // LOAD CSV
+            // LOAD MAIN CEMETERY CSV
             // ====================================================
 
             Papa.parse(CSV_PATH, {
@@ -903,27 +939,17 @@
 
                             // ========================================
                             // MARKER SIZE
-                            //
-                            // Based on grave count.
-                            //
-                            // 0–24     = 6 px
-                            // 25–99    = 8 px
-                            // 100–249  = 11 px
-                            // 250–499  = 14 px
-                            // 500+     = 18 px
                             // ========================================
 
                             "circle-radius": [
 
                                 "case",
 
-                                // No grave count recorded
                                 ["<", ["get", "Grave_Count"], 0],
 
                                 8,
 
 
-                                // Known grave count
                                 [
                                     "step",
 
@@ -942,28 +968,17 @@
 
                             // ========================================
                             // MARKER COLOR
-                            //
-                            // Unknown grave count = gray
-                            //
-                            // Otherwise based on ACCESS:
-                            //
-                            // 0 = Inaccessible
-                            // 1 = Private Land
-                            // 2 = With Permission
-                            // 3 = Public
                             // ========================================
 
                             "circle-color": [
 
                                 "case",
 
-                                // No grave count recorded
                                 ["<", ["get", "Grave_Count"], 0],
 
                                 "#777777",
 
 
-                                // Otherwise color by ACCESS
                                 [
                                     "match",
 
@@ -990,16 +1005,493 @@
 
 
                     // =================================================
-                    // ACTIVATE MAP INTERACTIONS
+                    // LOAD HISTORIC / INUNDATED CEMETERIES
                     // =================================================
 
-                    activateInteractions();
+                    Papa.parse(
+
+                        LAKE_CSV_PATH,
+
+                        {
+
+                            download: true,
+
+                            header: true,
+
+                            skipEmptyLines: true,
+
+
+                            complete: function (lakeResults) {
+
+
+                                // =====================================
+                                // REMOVE COMPLETELY EMPTY ROWS
+                                // =====================================
+
+                                const lakeCemeteries =
+                                    lakeResults.data.filter(
+
+                                        function (row) {
+
+                                            return String(
+                                                row.NAME || ""
+                                            ).trim() !== "";
+
+                                        }
+
+                                    );
+
+
+                                // =====================================
+                                // NO HISTORIC RECORDS
+                                // =====================================
+
+                                if (
+                                    lakeCemeteries.length === 0
+                                ) {
+
+                                    activateInteractions();
+
+                                    return;
+
+                                }
+
+
+                                // =====================================
+                                // REPRESENTATIVE HISTORICAL LOCATION
+                                //
+                                // IMPORTANT:
+                                // This point represents the group
+                                // of historical cemeteries only.
+                                // It does NOT represent the actual
+                                // location of any individual cemetery.
+                                // =====================================
+
+                                const lakeLocation = [
+                                    -85.0100,
+                                    39.4200
+                                ];
+
+
+                                // =====================================
+                                // ADD HISTORIC CEMETERY SOURCE
+                                // =====================================
+
+                                map.addSource(
+
+                                    "lake-cemeteries-data",
+
+                                    {
+
+                                        type: "geojson",
+
+                                        data: {
+
+                                            type: "FeatureCollection",
+
+                                            features: [
+
+                                                {
+
+                                                    type: "Feature",
+
+                                                    properties: {
+
+                                                        Cemetery_Count:
+                                                            lakeCemeteries.length
+
+                                                    },
+
+                                                    geometry: {
+
+                                                        type: "Point",
+
+                                                        coordinates:
+                                                            lakeLocation
+
+                                                    }
+
+                                                }
+
+                                            ]
+
+                                        }
+
+                                    }
+
+                                );
+
+
+                                // =====================================
+                                // ADD HISTORIC CEMETERY MARKER
+                                // =====================================
+
+                                map.addLayer({
+
+                                    id: "lake-cemeteries-layer",
+
+                                    type: "circle",
+
+                                    source:
+                                        "lake-cemeteries-data",
+
+                                    paint: {
+
+                                        "circle-radius": 16,
+
+                                        "circle-color":
+                                            "#555555",
+
+                                        "circle-opacity":
+                                            0.65,
+
+                                        "circle-stroke-width":
+                                            3,
+
+                                        "circle-stroke-color":
+                                            "#222222",
+
+                                        "circle-stroke-opacity":
+                                            0.8
+
+                                    }
+
+                                });
+
+
+                                // =====================================
+                                // HISTORIC MARKER CLICK
+                                // =====================================
+
+                                map.on(
+
+                                    "click",
+
+                                    "lake-cemeteries-layer",
+
+                                    function () {
+
+
+                                        infoPanel.style.display =
+                                            "block";
+
+
+                                        let cemeteryList =
+                                            "";
+
+
+                                        lakeCemeteries.forEach(
+
+                                            function (row) {
+
+
+                                                cemeteryList += `
+
+                                                    <div
+                                                        class="lake-cemetery"
+                                                    >
+
+                                                        <h3>
+                                                            ${
+                                                                row.NAME ||
+                                                                "Unnamed Cemetery"
+                                                            }
+                                                        </h3>
+
+
+                                                        ${
+                                                            row[
+                                                                "ALTERNATE NAME"
+                                                            ]
+                                                                ? `
+                                                                    <div
+                                                                        class="popup-field"
+                                                                    >
+
+                                                                        <span
+                                                                            class="popup-label"
+                                                                        >
+                                                                            Alternate Name:
+                                                                        </span>
+
+                                                                        <span>
+                                                                            ${
+                                                                                row[
+                                                                                    "ALTERNATE NAME"
+                                                                                ]
+                                                                            }
+                                                                        </span>
+
+                                                                    </div>
+                                                                  `
+                                                                : ""
+                                                        }
+
+
+                                                        ${
+                                                            row.DESIGNATION
+                                                                ? `
+                                                                    <div
+                                                                        class="popup-field"
+                                                                    >
+
+                                                                        <span
+                                                                            class="popup-label"
+                                                                        >
+                                                                            Designation:
+                                                                        </span>
+
+                                                                        <span>
+                                                                            ${
+                                                                                row.DESIGNATION
+                                                                            }
+                                                                        </span>
+
+                                                                    </div>
+                                                                  `
+                                                                : ""
+                                                        }
+
+
+                                                        ${
+                                                            row[
+                                                                "ORIGINAL LOCATION"
+                                                            ]
+                                                                ? `
+                                                                    <div
+                                                                        class="popup-field"
+                                                                    >
+
+                                                                        <span
+                                                                            class="popup-label"
+                                                                        >
+                                                                            Original Location:
+                                                                        </span>
+
+                                                                        <span>
+                                                                            ${
+                                                                                row[
+                                                                                    "ORIGINAL LOCATION"
+                                                                                ]
+                                                                            }
+                                                                        </span>
+
+                                                                    </div>
+                                                                  `
+                                                                : ""
+                                                        }
+
+
+                                                        ${
+                                                            row.TOWNSHIP
+                                                                ? `
+                                                                    <div
+                                                                        class="popup-field"
+                                                                    >
+
+                                                                        <span
+                                                                            class="popup-label"
+                                                                        >
+                                                                            Township:
+                                                                        </span>
+
+                                                                        <span>
+                                                                            ${
+                                                                                row.TOWNSHIP
+                                                                            }
+                                                                        </span>
+
+                                                                    </div>
+                                                                  `
+                                                                : ""
+                                                        }
+
+
+                                                        ${
+                                                            row["MOVED TO"]
+                                                                ? `
+                                                                    <div
+                                                                        class="popup-field"
+                                                                    >
+
+                                                                        <span
+                                                                            class="popup-label"
+                                                                        >
+                                                                            Moved To:
+                                                                        </span>
+
+                                                                        <span>
+                                                                            ${
+                                                                                row[
+                                                                                    "MOVED TO"
+                                                                                ]
+                                                                            }
+                                                                        </span>
+
+                                                                    </div>
+                                                                  `
+                                                                : ""
+                                                        }
+
+
+                                                        ${
+                                                            row.NOTES
+                                                                ? `
+                                                                    <div
+                                                                        class="popup-field"
+                                                                    >
+
+                                                                        <span
+                                                                            class="popup-label"
+                                                                        >
+                                                                            Notes:
+                                                                        </span>
+
+                                                                        <span>
+                                                                            ${
+                                                                                row.NOTES
+                                                                            }
+                                                                        </span>
+
+                                                                    </div>
+                                                                  `
+                                                                : ""
+                                                        }
+
+                                                    </div>
+
+                                                `;
+
+                                            }
+
+                                        );
+
+
+                                        // =================================
+                                        // BUILD HISTORIC INFORMATION PANEL
+                                        // =================================
+
+                                        infoContent.innerHTML = `
+
+                                            <h2>
+                                                Historic Fairfield Cemeteries
+                                            </h2>
+
+
+                                            <p
+                                                class="lake-introduction"
+                                            >
+
+                                                Cemeteries affected by
+                                                the construction of
+                                                Brookville Lake.
+
+                                                Individual former
+                                                cemetery locations are
+                                                not currently mapped.
+
+                                            </p>
+
+
+                                            <p
+                                                class="lake-introduction"
+                                            >
+
+                                                <strong>
+                                                    ${
+                                                        lakeCemeteries.length
+                                                    }
+                                                </strong>
+
+                                                documented
+                                                ${
+                                                    lakeCemeteries.length === 1
+                                                        ? "cemetery"
+                                                        : "cemeteries"
+                                                }.
+
+                                            </p>
+
+
+                                            ${cemeteryList}
+
+                                        `;
+
+                                    }
+
+                                );
+
+
+                                // =====================================
+                                // HISTORIC MARKER POINTER
+                                // =====================================
+
+                                map.on(
+
+                                    "mouseenter",
+
+                                    "lake-cemeteries-layer",
+
+                                    function () {
+
+                                        map.getCanvas().style.cursor =
+                                            "pointer";
+
+                                    }
+
+                                );
+
+
+                                map.on(
+
+                                    "mouseleave",
+
+                                    "lake-cemeteries-layer",
+
+                                    function () {
+
+                                        map.getCanvas().style.cursor =
+                                            "";
+
+                                    }
+
+                                );
+
+
+                                // =====================================
+                                // ACTIVATE NORMAL MAP INTERACTIONS
+                                // =====================================
+
+                                activateInteractions();
+
+                            },
+
+
+                            // =========================================
+                            // HISTORIC CSV ERROR
+                            // =========================================
+
+                            error: function (error) {
+
+                                console.error(
+                                    "lakecems.csv loading error:",
+                                    error
+                                );
+
+
+                                activateInteractions();
+
+                            }
+
+                        }
+
+                    );
 
                 },
 
 
                 // ====================================================
-                // CSV ERROR
+                // MAIN CSV ERROR
                 // ====================================================
 
                 error: function (error) {
@@ -1430,9 +1922,7 @@
 
 
                 const filterYear =
-                    parseInt(
-                        yearSlider.value
-                    );
+                    parseInt(yearSlider.value);
 
 
                 const activeFilters = [
