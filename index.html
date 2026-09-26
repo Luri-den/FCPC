@@ -1649,6 +1649,40 @@ map.on("click", function (event) {
 
                             });
 
+                            map.on(
+    "load",
+    function () {
+
+        // =====================================================
+        // FRANKLIN COUNTY BOUNDARY
+        // =====================================================
+
+        map.addSource("franklin-county", {
+            type: "geojson",
+            data: "franklin-county.geojson"
+        });
+
+        map.addLayer({
+            id: "franklin-county-outline",
+            type: "line",
+            source: "franklin-county",
+            paint: {
+                "line-color": "#555555",
+                "line-width": 1.5,
+                "line-opacity": 0.7
+            }
+        });
+
+
+        // =====================================================
+        // EXISTING CEMETERY CODE
+        // =====================================================
+
+        // your existing cemetery source/layer code here
+
+
+    }
+);
 
                             // =================================
                             // MAIN MARKER CLICK
