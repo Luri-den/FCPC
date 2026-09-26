@@ -105,45 +105,73 @@ h2 {
    ============================================================ */
 
 .field {
+
     display: grid;
+
     grid-template-columns: 180px 1fr;
+
     column-gap: 10px;
+
     margin-bottom: 8px;
+
 }
+
 
 .label {
+
     font-weight: bold;
+
 }
+
+
+/* ============================================================
+   PERSON NAME
+   ============================================================ */
 
 .person-name {
-    font-weight: bold;
-    font-size: 24px;
-    margin-bottom: 18px;
-}
 
-@media (max-width: 600px) {
-
-    .field {
-        grid-template-columns: 140px 1fr;
-    }
-
-}
-
-    .person-name {
     display: flex;
+
     align-items: center;
+
     justify-content: space-between;
+
     font-weight: bold;
+
     font-size: 24px;
+
     margin-bottom: 18px;
+
 }
+
+
+/* ============================================================
+   VETERAN ICON
+   ============================================================ */
 
 .veteran-icon {
+
     width: 24px;
+
     height: 24px;
+
     object-fit: contain;
+
     margin-left: 12px;
+
 }
+
+
+/* ============================================================
+   VETERAN DETAILS
+   ============================================================ */
+
+.veteran-details {
+
+    margin-top: 4px;
+
+}
+
 
 /* ============================================================
    INTERMENT RECORDS
@@ -160,14 +188,6 @@ h2 {
 .interment:last-child {
 
     border-bottom: none;
-
-}
-
-.person-name {
-
-    font-weight: bold;
-
-    font-size: 18px;
 
 }
 
@@ -274,6 +294,21 @@ a {
     object-fit: contain;
 
     cursor: pointer;
+
+}
+
+
+/* ============================================================
+   MOBILE LAYOUT
+   ============================================================ */
+
+@media (max-width: 600px) {
+
+    .field {
+
+        grid-template-columns: 140px 1fr;
+
+    }
 
 }
 
@@ -997,17 +1032,37 @@ function displayInterments(
 
 
                 // ------------------------------------------------
+                // NAME
+                // ------------------------------------------------
+
+                const firstName =
+                    row["FIRST NAME"]
+                    ||
+                    "N/A";
+
+
+                const lastName =
+                    row["LAST NAME"]
+                    ||
+                    "N/A";
+
+
+                // ------------------------------------------------
                 // VETERAN STATUS
                 // ------------------------------------------------
+
+                const veteranValue =
+                    String(
+                        row.VETERAN
+                    ).trim();
+
 
                 let veteranText =
                     "N/A";
 
 
                 if (
-                    String(
-                        row.VETERAN
-                    ).trim()
+                    veteranValue
                     ===
                     "1"
                 ) {
@@ -1018,9 +1073,7 @@ function displayInterments(
                 }
 
                 else if (
-                    String(
-                        row.VETERAN
-                    ).trim()
+                    veteranValue
                     ===
                     "0"
                 ) {
@@ -1041,9 +1094,7 @@ function displayInterments(
 
                 if (
 
-                    String(
-                        row.VETERAN
-                    ).trim()
+                    veteranValue
                     ===
                     "1"
 
@@ -1057,10 +1108,9 @@ function displayInterments(
 
                 ) {
 
-
                     veteranDetails = `
 
-                        <div class="field">
+                        <div class="veteran-details">
 
                             ${row["VET DETAILS"]}
 
@@ -1072,31 +1122,47 @@ function displayInterments(
 
 
                 // ------------------------------------------------
+                // VETERAN ICON
+                // ------------------------------------------------
+
+                const veteranIcon =
+
+                    veteranValue
+                    ===
+                    "1"
+
+                        ? `
+
+                            <img
+                                src="veticon.svg"
+                                alt="Veteran"
+                                class="veteran-icon"
+                                title="Veteran"
+                            >
+
+                          `
+
+                        : "";
+
+
+                // ------------------------------------------------
                 // RETURN INTERMENT
                 // ------------------------------------------------
 
                 return `
 
-                    <div class="person-name">
+                    <div class="interment">
 
-    <span>
-        ${firstName} ${lastName}
-    </span>
 
-    ${
-        veteran === 1
-            ? `
-                <img
-                    src="veticon.svg"
-                    alt="Veteran"
-                    class="veteran-icon"
-                    title="Veteran"
-                >
-              `
-            : ""
-    }
+                        <div class="person-name">
 
-</div>
+                            <span>
+                                ${firstName} ${lastName}
+                            </span>
+
+                            ${veteranIcon}
+
+                        </div>
 
 
                         <div class="field">
@@ -1105,7 +1171,9 @@ function displayInterments(
                                 Birth:
                             </span>
 
-                            ${row.BIRTH || "N/A"}
+                            <span>
+                                ${row.BIRTH || "N/A"}
+                            </span>
 
                         </div>
 
@@ -1116,7 +1184,9 @@ function displayInterments(
                                 Death:
                             </span>
 
-                            ${row.DEATH || "N/A"}
+                            <span>
+                                ${row.DEATH || "N/A"}
+                            </span>
 
                         </div>
 
@@ -1127,7 +1197,9 @@ function displayInterments(
                                 Row:
                             </span>
 
-                            ${row.ROW || "N/A"}
+                            <span>
+                                ${row.ROW || "N/A"}
+                            </span>
 
                         </div>
 
@@ -1138,7 +1210,9 @@ function displayInterments(
                                 Plot:
                             </span>
 
-                            ${row.PLOT || "N/A"}
+                            <span>
+                                ${row.PLOT || "N/A"}
+                            </span>
 
                         </div>
 
@@ -1149,13 +1223,15 @@ function displayInterments(
                                 Additional Information:
                             </span>
 
-                            ${
-                                row[
-                                    "ADDITIONAL INFORMATION ON STONE"
-                                ]
-                                ||
-                                "N/A"
-                            }
+                            <span>
+                                ${
+                                    row[
+                                        "ADDITIONAL INFORMATION ON STONE"
+                                    ]
+                                    ||
+                                    "N/A"
+                                }
+                            </span>
 
                         </div>
 
@@ -1166,12 +1242,15 @@ function displayInterments(
                                 Veteran:
                             </span>
 
-                            ${veteranText}
+                            <span>
+
+                                ${veteranText}
+
+                                ${veteranDetails}
+
+                            </span>
 
                         </div>
-
-
-                        ${veteranDetails}
 
 
                     </div>
