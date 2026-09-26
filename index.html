@@ -1037,19 +1037,49 @@
 
 
     // ========================================================
-    // CLOSE INFORMATION PANEL
-    // ========================================================
+// CLOSE INFORMATION PANEL
+// ========================================================
 
-    document
-        .getElementById("close-info")
-        .addEventListener(
-            "click",
-            function () {
+document
+    .getElementById("close-info")
+    .addEventListener(
+        "click",
+        function () {
 
-                infoPanel.style.display = "none";
+            infoPanel.style.display = "none";
 
-            }
-        );
+        }
+    );
+
+
+// ========================================================
+// CLOSE INFO PANEL WHEN CLICKING OUTSIDE IT
+// ========================================================
+
+map.on("click", function (event) {
+
+    const clickedFeatures = map.queryRenderedFeatures(
+        event.point,
+        {
+            layers: [
+                "cemeteries-layer",
+                "lake-cemeteries-layer"
+            ]
+        }
+    );
+
+    // If we clicked a cemetery marker, let its own
+    // click handler manage the information panel.
+    if (clickedFeatures.length > 0) {
+        return;
+    }
+
+    // Otherwise, clicking the map closes the panel.
+    if (!infoPanel.contains(event.originalEvent.target)) {
+        infoPanel.style.display = "none";
+    }
+
+});
 
 
     // ========================================================
