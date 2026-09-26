@@ -1,6 +1,8 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -10,6 +12,7 @@
 
     <title>Franklin County Pioneer Cemeteries Archive</title>
 
+
     <!-- =========================================================
          MAPLIBRE
          ========================================================= -->
@@ -17,7 +20,7 @@
     <link
         rel="stylesheet"
         href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"
-    />
+    >
 
     <script
         src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js">
@@ -34,18 +37,28 @@
             box-sizing: border-box;
         }
 
+
         html,
         body {
+
             margin: 0;
             padding: 0;
+
             width: 100%;
             height: 100%;
-            font-family: Arial, Helvetica, sans-serif;
+
+            font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
         }
 
+
         body {
+
             display: flex;
             flex-direction: column;
+
             background: #f4f1e8;
         }
 
@@ -55,20 +68,31 @@
            ===================================================== */
 
         header {
+
             background: #3f3528;
+
             color: white;
+
             padding: 14px 18px;
+
             z-index: 10;
         }
 
+
         header h1 {
+
             margin: 0 0 5px 0;
+
             font-size: 22px;
         }
 
+
         header p {
+
             margin: 0;
+
             font-size: 14px;
+
             opacity: 0.9;
         }
 
@@ -78,57 +102,97 @@
            ===================================================== */
 
         #controls {
+
             background: #eee9dc;
-            border-bottom: 1px solid #c9c1b2;
+
+            border-bottom:
+                1px solid #c9c1b2;
+
             padding: 10px;
+
             display: flex;
+
             flex-wrap: wrap;
+
             gap: 8px;
+
             align-items: center;
+
             z-index: 5;
         }
 
+
         #search {
+
             flex: 1 1 220px;
+
             min-width: 180px;
+
             padding: 9px 10px;
-            border: 1px solid #aaa;
+
+            border:
+                1px solid #aaa;
+
             border-radius: 4px;
+
             font-size: 15px;
         }
 
+
         #year-filter {
+
             width: 150px;
+
             padding: 9px 10px;
-            border: 1px solid #aaa;
+
+            border:
+                1px solid #aaa;
+
             border-radius: 4px;
+
             font-size: 15px;
+
             background: white;
         }
 
+
         button {
+
             padding: 9px 14px;
-            border: 1px solid #8d8375;
+
+            border:
+                1px solid #8d8375;
+
             border-radius: 4px;
+
             background: #5a4b3a;
+
             color: white;
+
             font-size: 14px;
+
             cursor: pointer;
         }
 
+
         button:hover {
+
             background: #463a2d;
         }
 
 
         /* =====================================================
-           MAIN MAP AREA
+           MAP
            ===================================================== */
 
         #map {
+
             flex: 1;
+
             min-height: 0;
+
             width: 100%;
+
             position: relative;
         }
 
@@ -138,79 +202,123 @@
            ===================================================== */
 
         #info-panel {
+
             position: absolute;
+
             top: 10px;
             right: 10px;
+
             width: 310px;
-            max-width: calc(100% - 20px);
-            max-height: calc(100% - 20px);
+
+            max-width:
+                calc(100% - 20px);
+
+            max-height:
+                calc(100% - 20px);
+
             overflow-y: auto;
 
-            background: rgba(255, 255, 255, 0.96);
-            border: 1px solid #aaa;
+            background:
+                rgba(255, 255, 255, 0.96);
+
+            border:
+                1px solid #aaa;
+
             border-radius: 5px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+
+            box-shadow:
+                0 2px 8px
+                rgba(0, 0, 0, 0.25);
 
             padding: 14px;
+
             z-index: 4;
         }
 
+
         #info-panel h2 {
-            margin: 0 0 6px 0;
+
+            margin:
+                0 0 6px 0;
+
             font-size: 20px;
+
             color: #3f3528;
         }
 
+
         #info-panel h3 {
-            margin: 12px 0 3px 0;
+
+            margin:
+                12px 0 3px 0;
+
             font-size: 13px;
+
             color: #6b6258;
-            text-transform: uppercase;
+
+            text-transform:
+                uppercase;
         }
+
 
         #info-panel p {
+
             margin: 0;
+
             line-height: 1.4;
+
             font-size: 14px;
         }
+
 
         .placeholder {
+
             color: #666;
+
             font-size: 14px;
+
             line-height: 1.4;
         }
 
+
         .error-message {
+
             color: #8b0000;
+
             font-size: 14px;
+
             line-height: 1.4;
         }
 
 
         /* =====================================================
-           MAP POPUP
+           POPUP
            ===================================================== */
 
-        .maplibregl-popup-content {
-            font-family: Arial, Helvetica, sans-serif;
-            max-width: 280px;
-            padding: 12px;
-        }
-
         .popup-title {
+
             font-size: 17px;
+
             font-weight: bold;
+
             margin-bottom: 5px;
+
             color: #3f3528;
         }
 
+
         .popup-subtitle {
+
             font-size: 13px;
+
             color: #666;
+
             margin-bottom: 8px;
         }
 
+
         .popup-label {
+
             font-weight: bold;
         }
 
@@ -222,59 +330,87 @@
         @media (max-width: 700px) {
 
             header {
-                padding: 11px 13px;
+
+                padding:
+                    11px 13px;
             }
 
+
             header h1 {
+
                 font-size: 18px;
             }
 
+
             header p {
+
                 font-size: 12px;
             }
 
+
             #controls {
+
                 padding: 8px;
             }
+
 
             #search,
             #year-filter,
             button {
+
                 width: 100%;
-                flex: 1 1 100%;
+
+                flex:
+                    1 1 100%;
             }
 
+
             #info-panel {
+
                 position: absolute;
+
                 top: auto;
+
                 right: 8px;
                 bottom: 8px;
                 left: 8px;
 
                 width: auto;
+
                 max-width: none;
+
                 max-height: 38%;
             }
+
         }
 
     </style>
+
 </head>
 
 
 <body>
+
 
     <!-- =========================================================
          HEADER
          ========================================================= -->
 
     <header>
-        <h1>Franklin County Pioneer Cemeteries Archive</h1>
-        <p>Historic cemetery locations and associated records</p>
+
+        <h1>
+            Franklin County Pioneer Cemeteries Archive
+        </h1>
+
+        <p>
+            Historic cemetery locations and associated records
+        </p>
+
     </header>
 
 
     <!-- =========================================================
-         SEARCH / FILTER CONTROLS
+         CONTROLS
          ========================================================= -->
 
     <div id="controls">
@@ -307,7 +443,10 @@
         <div id="info-panel">
 
             <div class="placeholder">
-                Click a cemetery marker to view its information.
+
+                Click a cemetery marker to view
+                its information.
+
             </div>
 
         </div>
@@ -321,20 +460,40 @@
 
     <script>
 
+
         // ========================================================
-        // BASIC SETTINGS
+        // FILE LOCATION
         // ========================================================
 
         const GEOJSON_FILE =
-            new URL("graves.geojson", document.baseURI).href;
+            new URL(
+                "graves.geojson",
+                document.baseURI
+            ).href;
 
 
-        // Franklin County / surrounding area
-        const MAP_CENTER = [-85.0626, 39.3992];
+        // ========================================================
+        // MAP SETTINGS
+        // ========================================================
+
+        const MAP_CENTER = [
+            -85.0626,
+            39.3992
+        ];
+
 
         const MAP_BOUNDS = [
-            [-85.313644, 39.263095],
-            [-84.811707, 39.535292]
+
+            [
+                -85.313644,
+                39.263095
+            ],
+
+            [
+                -84.811707,
+                39.535292
+            ]
+
         ];
 
 
@@ -347,21 +506,26 @@
             container: "map",
 
             style: {
+
                 version: 8,
 
                 sources: {
 
                     osm: {
+
                         type: "raster",
 
                         tiles: [
+
                             "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+
                         ],
 
                         tileSize: 256,
 
                         attribution:
                             "© OpenStreetMap contributors"
+
                     }
 
                 },
@@ -369,26 +533,32 @@
                 layers: [
 
                     {
+
                         id: "osm",
 
                         type: "raster",
 
                         source: "osm"
+
                     }
 
                 ]
+
             },
 
-            center: MAP_CENTER,
+            center:
+                MAP_CENTER,
 
             zoom: 10,
 
-            maxBounds: MAP_BOUNDS
+            maxBounds:
+                MAP_BOUNDS
+
         });
 
 
         // ========================================================
-        // MAP NAVIGATION
+        // NAVIGATION
         // ========================================================
 
         map.addControl(
@@ -399,549 +569,610 @@
 
         // ========================================================
         // HTML ESCAPING
-        //
-        // Prevents GeoJSON text from being interpreted as HTML.
         // ========================================================
 
         function escapeHTML(value) {
 
-            if (value === null || value === undefined) {
+            if (
+                value === null ||
+                value === undefined
+            ) {
+
                 return "";
+
             }
 
+
             return String(value)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
+
+                .replace(
+                    /&/g,
+                    "&amp;"
+                )
+
+                .replace(
+                    /</g,
+                    "&lt;"
+                )
+
+                .replace(
+                    />/g,
+                    "&gt;"
+                )
+
+                .replace(
+                    /"/g,
+                    "&quot;"
+                )
+
+                .replace(
+                    /'/g,
+                    "&#039;"
+                );
+
         }
 
 
         // ========================================================
-        // DISPLAY CEMETERY INFORMATION
+        // SHOW CEMETERY INFORMATION
         // ========================================================
 
         function showCemeteryInfo(properties) {
 
             const name =
-                escapeHTML(properties.Cemetery_Name);
+                escapeHTML(
+                    properties.Cemetery_Name
+                );
+
 
             const otherNames =
-                escapeHTML(properties.Other_Names);
+                escapeHTML(
+                    properties.Other_Names
+                );
+
 
             const township =
-                escapeHTML(properties.Township);
+                escapeHTML(
+                    properties.Township
+                );
+
 
             const birthYear =
-                escapeHTML(properties.Birth_Year);
+                escapeHTML(
+                    properties.Birth_Year
+                );
+
 
             const rowNumber =
-                escapeHTML(properties.Row_Number);
+                escapeHTML(
+                    properties.Row_Number
+                );
+
 
             const condition =
-                escapeHTML(properties.Condition_Notes);
+                escapeHTML(
+                    properties.Condition_Notes
+                );
 
 
-            document.getElementById("info-panel").innerHTML = `
+            document.getElementById(
+                "info-panel"
+            ).innerHTML = `
 
                 <h2>${name}</h2>
+
 
                 ${
                     otherNames
                     ? `
                         <h3>Other Name</h3>
-                        <p>${otherNames}</p>
+
+                        <p>
+                            ${otherNames}
+                        </p>
                       `
                     : ""
                 }
+
 
                 ${
                     township
                     ? `
                         <h3>Township</h3>
-                        <p>${township}</p>
+
+                        <p>
+                            ${township}
+                        </p>
                       `
                     : ""
                 }
+
 
                 ${
                     birthYear
                     ? `
-                        <h3>Earliest Recorded Birth Year</h3>
-                        <p>${birthYear}</p>
+                        <h3>
+                            Earliest Recorded Birth Year
+                        </h3>
+
+                        <p>
+                            ${birthYear}
+                        </p>
                       `
                     : ""
                 }
+
 
                 ${
                     rowNumber
                     ? `
-                        <h3>Land / Survey Reference</h3>
-                        <p>${rowNumber}</p>
+                        <h3>
+                            Land / Survey Reference
+                        </h3>
+
+                        <p>
+                            ${rowNumber}
+                        </p>
                       `
                     : ""
                 }
 
+
                 ${
                     condition
                     ? `
-                        <h3>Condition / Location Notes</h3>
-                        <p>${condition}</p>
+                        <h3>
+                            Condition / Location Notes
+                        </h3>
+
+                        <p>
+                            ${condition}
+                        </p>
                       `
                     : ""
                 }
 
             `;
+
         }
 
 
         // ========================================================
-        // LOAD GEOJSON
+        // IMPORTANT:
         //
-        // This is intentionally done with fetch() rather than
-        // giving MapLibre the filename directly.
+        // WAIT FOR MAPLIBRE TO FINISH LOADING FIRST.
         //
-        // This lets us verify that the mobile browser actually
-        // received and parsed the GeoJSON.
+        // Only after "load" fires do we fetch and add the
+        // cemetery GeoJSON.
         // ========================================================
 
-        fetch(GEOJSON_FILE)
-
-            .then(function(response) {
-
-                console.log(
-                    "GeoJSON response:",
-                    response.status,
-                    response.statusText
-                );
-
-
-                if (!response.ok) {
-
-                    throw new Error(
-                        `GeoJSON HTTP error: ${response.status} ${response.statusText}`
-                    );
-
-                }
-
-
-                return response.json();
-
-            })
-
-
-            .then(function(data) {
+        map.on(
+            "load",
+            function() {
 
                 console.log(
-                    "GeoJSON loaded successfully:",
-                    data
+                    "MapLibre finished loading."
                 );
-
-
-                // =================================================
-                // BASIC GEOJSON VALIDATION
-                // =================================================
-
-                if (
-                    !data ||
-                    data.type !== "FeatureCollection" ||
-                    !Array.isArray(data.features)
-                ) {
-
-                    throw new Error(
-                        "The GeoJSON file is not a valid FeatureCollection."
-                    );
-
-                }
 
 
                 console.log(
-                    "Cemetery feature count:",
-                    data.features.length
+                    "Attempting to load:",
+                    GEOJSON_FILE
                 );
 
 
                 // =================================================
-                // ADD GEOJSON SOURCE
+                // FETCH GEOJSON
                 // =================================================
 
-                map.addSource(
-                    "cemeteries",
-                    {
-                        type: "geojson",
-                        data: data
-                    }
-                );
+                fetch(GEOJSON_FILE)
+
+                    .then(
+                        function(response) {
+
+                            console.log(
+                                "GeoJSON HTTP status:",
+                                response.status
+                            );
 
 
-                // =================================================
-                // ADD CEMETERY DOTS
-                //
-                // These are intentionally somewhat larger and
-                // higher-contrast while we test mobile rendering.
-                // =================================================
+                            if (!response.ok) {
 
-                map.addLayer({
+                                throw new Error(
 
-                    id: "cemeteries-layer",
+                                    "GeoJSON could not be loaded. " +
 
-                    type: "circle",
+                                    "HTTP status: " +
 
-                    source: "cemeteries",
+                                    response.status
 
-                    paint: {
+                                );
 
-                        "circle-radius": 9,
-
-                        "circle-color": "#b91c1c",
-
-                        "circle-opacity": 1,
-
-                        "circle-stroke-width": 3,
-
-                        "circle-stroke-color": "#ffffff",
-
-                        "circle-stroke-opacity": 1
-
-                    }
-
-                });
+                            }
 
 
-                // =================================================
-                // CLICK A CEMETERY
-                // =================================================
+                            return response.json();
 
-                map.on(
-                    "click",
-                    "cemeteries-layer",
-                    function(event) {
-
-                        const feature =
-                            event.features &&
-                            event.features[0];
-
-
-                        if (!feature) {
-                            return;
                         }
+                    )
 
 
-                        showCemeteryInfo(
-                            feature.properties
-                        );
+                    .then(
+                        function(data) {
+
+                            console.log(
+                                "GeoJSON successfully parsed:",
+                                data
+                            );
 
 
-                        // Center the clicked cemetery
-                        map.easeTo({
+                            // =====================================
+                            // VERIFY GEOJSON
+                            // =====================================
 
-                            center:
-                                feature.geometry.coordinates,
+                            if (
+                                !data ||
+                                data.type !==
+                                    "FeatureCollection" ||
+                                !Array.isArray(
+                                    data.features
+                                )
+                            ) {
 
-                            duration: 500
+                                throw new Error(
+                                    "Invalid GeoJSON FeatureCollection."
+                                );
 
-                        });
-
-
-                        // Popup
-                        new maplibregl.Popup({
-
-                            closeButton: true,
-
-                            closeOnClick: true
-
-                        })
-
-                        .setLngLat(
-                            feature.geometry.coordinates
-                        )
-
-                        .setHTML(`
-
-                            <div class="popup-title">
-                                ${escapeHTML(
-                                    feature.properties.Cemetery_Name
-                                )}
-                            </div>
-
-                            ${
-                                feature.properties.Other_Names
-                                ? `
-                                    <div class="popup-subtitle">
-                                        ${escapeHTML(
-                                            feature.properties.Other_Names
-                                        )}
-                                    </div>
-                                  `
-                                : ""
                             }
 
-                            ${
-                                feature.properties.Township
-                                ? `
-                                    <div>
-                                        <span class="popup-label">
-                                            Township:
-                                        </span>
-                                        ${escapeHTML(
-                                            feature.properties.Township
-                                        )}
-                                    </div>
-                                  `
-                                : ""
-                            }
 
-                        `)
-
-                        .addTo(map);
-
-                    }
-                );
+                            console.log(
+                                "Number of cemetery features:",
+                                data.features.length
+                            );
 
 
-                // =================================================
-                // POINTER CURSOR
-                // =================================================
+                            // =====================================
+                            // ADD SOURCE
+                            // =====================================
 
-                map.on(
-                    "mouseenter",
-                    "cemeteries-layer",
-                    function() {
+                            map.addSource(
 
-                        map.getCanvas().style.cursor =
-                            "pointer";
+                                "cemeteries",
 
-                    }
-                );
-
-
-                map.on(
-                    "mouseleave",
-                    "cemeteries-layer",
-                    function() {
-
-                        map.getCanvas().style.cursor =
-                            "";
-
-                    }
-                );
-
-
-                // =================================================
-                // INITIAL DEBUG INFORMATION
-                // =================================================
-
-                map.once(
-                    "idle",
-                    function() {
-
-                        console.log(
-                            "Rendered cemetery features:",
-                            map.queryRenderedFeatures(
                                 {
-                                    layers: [
-                                        "cemeteries-layer"
-                                    ]
+
+                                    type:
+                                        "geojson",
+
+                                    data:
+                                        data
+
                                 }
-                            )
-                        );
 
-                    }
-                );
-
-            })
+                            );
 
 
-            // ====================================================
-            // GEOJSON ERROR HANDLER
-            // ====================================================
-
-            .catch(function(error) {
-
-                console.error(
-                    "Could not load cemetery data:",
-                    error
-                );
+                            console.log(
+                                "Cemetery source added."
+                            );
 
 
-                document.getElementById(
-                    "info-panel"
-                ).innerHTML = `
+                            // =====================================
+                            // ADD MARKER LAYER
+                            // =====================================
 
-                    <div class="error-message">
+                            map.addLayer({
 
-                        <strong>
-                            Cemetery data could not be loaded.
-                        </strong>
+                                id:
+                                    "cemeteries-layer",
 
-                        <br><br>
+                                type:
+                                    "circle",
 
-                        ${escapeHTML(error.message)}
+                                source:
+                                    "cemeteries",
 
-                    </div>
+                                paint: {
 
-                `;
+                                    "circle-radius":
+                                        10,
 
-            });
+                                    "circle-color":
+                                        "#ff0000",
 
+                                    "circle-opacity":
+                                        1,
 
-        // ========================================================
-        // SEARCH
-        // ========================================================
+                                    "circle-stroke-width":
+                                        3,
 
-        document
-            .getElementById("search")
-            .addEventListener(
-                "input",
-                function() {
+                                    "circle-stroke-color":
+                                        "#ffffff",
 
-                    if (!map.getLayer("cemeteries-layer")) {
-                        return;
-                    }
+                                    "circle-stroke-opacity":
+                                        1
 
+                                }
 
-                    const searchText =
-                        this.value
-                            .trim()
-                            .toLowerCase();
+                            });
 
 
-                    if (!searchText) {
-
-                        map.setFilter(
-                            "cemeteries-layer",
-                            null
-                        );
-
-                        return;
-                    }
+                            console.log(
+                                "Cemetery layer added."
+                            );
 
 
-                    map.setFilter(
-                        "cemeteries-layer",
-                        [
-                            "any",
+                            // =====================================
+                            // CHECK WHETHER MAPLIBRE SEES THEM
+                            // =====================================
 
-                            [
-                                "in",
-                                searchText,
-                                [
-                                    "downcase",
-                                    [
-                                        "coalesce",
-                                        [
-                                            "get",
-                                            "Cemetery_Name"
-                                        ],
-                                        ""
-                                    ]
-                                ]
-                            ],
+                            map.once(
+                                "idle",
+                                function() {
 
-                            [
-                                "in",
-                                searchText,
-                                [
-                                    "downcase",
-                                    [
-                                        "coalesce",
-                                        [
-                                            "get",
-                                            "Other_Names"
-                                        ],
-                                        ""
-                                    ]
-                                ]
-                            ]
-
-                        ]
-                    );
-
-                }
-            );
+                                    const rendered =
+                                        map.queryRenderedFeatures(
+                                            {
+                                                layers:
+                                                    [
+                                                        "cemeteries-layer"
+                                                    ]
+                                            }
+                                        );
 
 
-        // ========================================================
-        // YEAR FILTER
-        // ========================================================
-
-        document
-            .getElementById("year-filter")
-            .addEventListener(
-                "input",
-                function() {
-
-                    if (!map.getLayer("cemeteries-layer")) {
-                        return;
-                    }
+                                    console.log(
+                                        "Rendered cemetery features:",
+                                        rendered
+                                    );
 
 
-                    const year =
-                        Number(this.value);
+                                    const sourceFeatures =
+                                        map.querySourceFeatures(
+                                            "cemeteries"
+                                        );
 
 
-                    if (!this.value) {
+                                    console.log(
+                                        "Source cemetery features:",
+                                        sourceFeatures
+                                    );
 
-                        const searchText =
-                            document
-                                .getElementById("search")
-                                .value
-                                .trim()
-                                .toLowerCase();
+                                }
+                            );
 
 
-                        if (!searchText) {
+                            // =====================================
+                            // CLICK MARKER
+                            // =====================================
 
-                            map.setFilter(
+                            map.on(
+                                "click",
                                 "cemeteries-layer",
-                                null
+                                function(event) {
+
+                                    const feature =
+                                        event.features &&
+                                        event.features[0];
+
+
+                                    if (!feature) {
+                                        return;
+                                    }
+
+
+                                    showCemeteryInfo(
+                                        feature.properties
+                                    );
+
+
+                                    // =================================
+                                    // POPUP
+                                    // =================================
+
+                                    new maplibregl.Popup()
+
+                                        .setLngLat(
+                                            feature.geometry.coordinates
+                                        )
+
+                                        .setHTML(`
+
+                                            <div
+                                                class="popup-title"
+                                            >
+
+                                                ${escapeHTML(
+                                                    feature
+                                                        .properties
+                                                        .Cemetery_Name
+                                                )}
+
+                                            </div>
+
+
+                                            ${
+                                                feature
+                                                    .properties
+                                                    .Other_Names
+
+                                                ? `
+
+                                                    <div
+                                                        class=
+                                                        "popup-subtitle"
+                                                    >
+
+                                                        ${escapeHTML(
+                                                            feature
+                                                                .properties
+                                                                .Other_Names
+                                                        )}
+
+                                                    </div>
+
+                                                  `
+
+                                                : ""
+                                            }
+
+
+                                            ${
+                                                feature
+                                                    .properties
+                                                    .Township
+
+                                                ? `
+
+                                                    <div>
+
+                                                        <span
+                                                            class=
+                                                            "popup-label"
+                                                        >
+                                                            Township:
+                                                        </span>
+
+                                                        ${escapeHTML(
+                                                            feature
+                                                                .properties
+                                                                .Township
+                                                        )}
+
+                                                    </div>
+
+                                                  `
+
+                                                : ""
+                                            }
+
+                                        `)
+
+                                        .addTo(map);
+
+                                }
+                            );
+
+
+                            // =====================================
+                            // POINTER
+                            // =====================================
+
+                            map.on(
+                                "mouseenter",
+                                "cemeteries-layer",
+                                function() {
+
+                                    map.getCanvas()
+                                        .style
+                                        .cursor =
+                                        "pointer";
+
+                                }
+                            );
+
+
+                            map.on(
+                                "mouseleave",
+                                "cemeteries-layer",
+                                function() {
+
+                                    map.getCanvas()
+                                        .style
+                                        .cursor =
+                                        "";
+
+                                }
                             );
 
                         }
-
-                        return;
-                    }
+                    )
 
 
-                    map.setFilter(
-                        "cemeteries-layer",
-                        [
-                            ">=",
+                    // =================================================
+                    // GEOJSON ERROR
+                    // =================================================
 
-                            [
-                                "to-number",
-                                [
-                                    "get",
-                                    "Birth_Year"
-                                ]
-                            ],
+                    .catch(
+                        function(error) {
 
-                            year
+                            console.error(
+                                "Cemetery GeoJSON error:",
+                                error
+                            );
 
-                        ]
+
+                            document.getElementById(
+                                "info-panel"
+                            ).innerHTML = `
+
+                                <div
+                                    class="error-message"
+                                >
+
+                                    <strong>
+                                        Cemetery data could
+                                        not be loaded.
+                                    </strong>
+
+                                    <br><br>
+
+                                    ${escapeHTML(
+                                        error.message
+                                    )}
+
+                                </div>
+
+                            `;
+
+                        }
                     );
 
-                }
-            );
+            }
+        );
 
 
         // ========================================================
-        // RESET
+        // MAP ERROR
+        // ========================================================
+
+        map.on(
+            "error",
+            function(event) {
+
+                console.error(
+                    "MapLibre error:",
+                    event
+                );
+
+            }
+        );
+
+
+        // ========================================================
+        // RESET BUTTON
         // ========================================================
 
         document
-            .getElementById("reset-button")
+            .getElementById(
+                "reset-button"
+            )
             .addEventListener(
                 "click",
                 function() {
 
                     document
-                        .getElementById("search")
+                        .getElementById(
+                            "search"
+                        )
                         .value = "";
 
+
                     document
-                        .getElementById("year-filter")
+                        .getElementById(
+                            "year-filter"
+                        )
                         .value = "";
 
 
@@ -963,9 +1194,13 @@
                         "info-panel"
                     ).innerHTML = `
 
-                        <div class="placeholder">
-                            Click a cemetery marker to view
-                            its information.
+                        <div
+                            class="placeholder"
+                        >
+
+                            Click a cemetery marker
+                            to view its information.
+
                         </div>
 
                     `;
@@ -975,22 +1210,190 @@
 
 
         // ========================================================
-        // MAP ERROR LOGGING
+        // SEARCH
+        //
+        // Kept simple for now. It is not used to create the
+        // initial markers, so it cannot prevent them from loading.
         // ========================================================
 
-        map.on(
-            "error",
-            function(event) {
+        document
+            .getElementById(
+                "search"
+            )
+            .addEventListener(
+                "input",
+                function() {
 
-                console.error(
-                    "MapLibre error:",
-                    event
-                );
+                    if (
+                        !map.getLayer(
+                            "cemeteries-layer"
+                        )
+                    ) {
 
-            }
-        );
+                        return;
+
+                    }
+
+
+                    const text =
+                        this.value
+                            .trim()
+                            .toLowerCase();
+
+
+                    if (!text) {
+
+                        map.setFilter(
+                            "cemeteries-layer",
+                            null
+                        );
+
+                        return;
+
+                    }
+
+
+                    map.setFilter(
+
+                        "cemeteries-layer",
+
+                        [
+
+                            "any",
+
+                            [
+
+                                "in",
+
+                                text,
+
+                                [
+
+                                    "downcase",
+
+                                    [
+
+                                        "coalesce",
+
+                                        [
+                                            "get",
+                                            "Cemetery_Name"
+                                        ],
+
+                                        ""
+
+                                    ]
+
+                                ]
+
+                            ],
+
+
+                            [
+
+                                "in",
+
+                                text,
+
+                                [
+
+                                    "downcase",
+
+                                    [
+
+                                        "coalesce",
+
+                                        [
+                                            "get",
+                                            "Other_Names"
+                                        ],
+
+                                        ""
+
+                                    ]
+
+                                ]
+
+                            ]
+
+                        ]
+
+                    );
+
+                }
+            );
+
+
+        // ========================================================
+        // YEAR FILTER
+        // ========================================================
+
+        document
+            .getElementById(
+                "year-filter"
+            )
+            .addEventListener(
+                "input",
+                function() {
+
+                    if (
+                        !map.getLayer(
+                            "cemeteries-layer"
+                        )
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    if (!this.value) {
+
+                        map.setFilter(
+                            "cemeteries-layer",
+                            null
+                        );
+
+                        return;
+
+                    }
+
+
+                    const year =
+                        Number(this.value);
+
+
+                    map.setFilter(
+
+                        "cemeteries-layer",
+
+                        [
+
+                            ">=",
+
+                            [
+
+                                "to-number",
+
+                                [
+                                    "get",
+                                    "Birth_Year"
+                                ]
+
+                            ],
+
+                            year
+
+                        ]
+
+                    );
+
+                }
+            );
+
 
     </script>
 
 </body>
+
 </html>
