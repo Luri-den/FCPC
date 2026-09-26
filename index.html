@@ -117,7 +117,7 @@
         #year-filter-label {
             font-size: 14px;
             white-space: nowrap;
-            : #3f3528;
+            color: #3f3528;
         }
 
 
@@ -131,7 +131,7 @@
             min-width: 42px;
             font-weight: bold;
             font-size: 14px;
-            : #3f3528;
+            color: #3f3528;
             text-align: center;
         }
 
@@ -141,7 +141,7 @@
             border: 1px solid #8d8375;
             border-radius: 4px;
             background: #01796F;
-            : white;
+            color: white;
             font-size: 14px;
             cursor: pointer;
         }
@@ -209,7 +209,7 @@
 
             background: transparent;
 
-            : #5a4b3a;
+            color: #5a4b3a;
 
             font-size: 23px;
             line-height: 28px;
@@ -220,7 +220,7 @@
 
         #close-info:hover {
             background: #e5e0d5;
-            : #2f281f;
+            color: #2f281f;
         }
 
 
@@ -232,14 +232,14 @@
         #info-panel h2 {
             margin: 0 0 6px 0;
             font-size: 20px;
-            : #3f3528;
+            color: #3f3528;
         }
 
 
         #info-panel h3 {
             margin: 12px 0 3px 0;
             font-size: 13px;
-            : #6b6258;
+            color: #6b6258;
             text-transform: uppercase;
         }
 
@@ -252,14 +252,14 @@
 
 
         .placeholder {
-            : #666;
+            color: #666;
             font-size: 14px;
             line-height: 1.4;
         }
 
 
         .error-message {
-            : #8b0000;
+            color: #8b0000;
             font-size: 14px;
             line-height: 1.45;
         }
@@ -615,6 +615,30 @@
 
 
                         // ----------------------------------------
+                        // READ NEW DATA
+                        // ----------------------------------------
+
+                        const graveCount =
+                            parseInt(row.COUNT) || 0;
+
+
+                        const access =
+                            parseInt(row.ACCESS);
+
+
+                        const approximateSize =
+                            row["APPROXIMATE SIZE"] || "";
+
+
+                        const status =
+                            parseInt(row.STATUS);
+
+
+                        const vets =
+                            parseInt(row.VETS);
+
+
+                        // ----------------------------------------
                         // ONLY CREATE A MARKER IF BOTH
                         // COORDINATES ARE VALID
                         // ----------------------------------------
@@ -696,7 +720,53 @@
                                     // ==========================
 
                                     Condition_Notes:
-                                        row.CONDITION || ""
+                                        row.CONDITION || "",
+
+
+                                    // ==========================
+                                    // GRAVE COUNT
+                                    // ==========================
+
+                                    Grave_Count:
+                                        graveCount,
+
+
+                                    // ==========================
+                                    // ACCESSIBILITY
+                                    // ==========================
+
+                                    Access:
+                                        isNaN(access)
+                                            ? -1
+                                            : access,
+
+
+                                    // ==========================
+                                    // APPROXIMATE SIZE
+                                    // ==========================
+
+                                    Approximate_Size:
+                                        approximateSize,
+
+
+                                    // ==========================
+                                    // STATUS
+                                    // ==========================
+
+                                    Status:
+                                        isNaN(status)
+                                            ? -1
+                                            : status,
+
+
+                                    // ==========================
+                                    // VETERANS
+                                    // ==========================
+
+                                    Vets:
+                                        isNaN(vets)
+                                            ? -1
+                                            : vets
 
                                 },
 
@@ -758,10 +828,88 @@
 
                         paint: {
 
-                            "circle-radius": 10,
 
-                            "circle-color":
+                            // ========================================
+                            // MARKER SIZE
+                            //
+                            // Based on grave count.
+                            //
+                            // 0–24     = 6 px
+                            // 25–99    = 8 px
+                            // 100–249  = 11 px
+                            // 250–499  = 14 px
+                            // 500+     = 18 px
+                            // ========================================
+
+                            "circle-radius": [
+
+                                "step",
+
+                                [
+                                    "get",
+                                    "Grave_Count"
+                                ],
+
+                                6,
+
+                                25,
+                                8,
+
+                                100,
+                                11,
+
+                                250,
+                                14,
+
+                                500,
+                                18
+
+                            ],
+
+
+                            // ========================================
+                            // MARKER COLOR
+                            //
+                            // 0 = Inaccessible
+                            // 1 = Private Land
+                            // 2 = With Permission
+                            // 3 = Public
+                            // ========================================
+
+                            "circle-color": [
+
+                                "match",
+
+                                [
+                                    "get",
+                                    "Access"
+                                ],
+
+
+                                0,
+                                "#8B0000",
+
+
+                                1,
+                                "#D2691E",
+
+
+                                2,
+                                "#C9A227",
+
+
+                                3,
                                 "#01796F",
+
+
+                                "#777777"
+
+                            ],
+
+
+                            // ========================================
+                            // MARKER OUTLINE
+                            // ========================================
 
                             "circle-stroke-width":
                                 2,
@@ -849,6 +997,120 @@
 
 
                     // --------------------------------------------
+                    // CONVERT ACCESS CODE TO TEXT
+                    // --------------------------------------------
+
+                    let accessText =
+                        "Unknown";
+
+
+                    if (
+                        Number(props.Access) === 0
+                    ) {
+
+                        accessText =
+                            "Inaccessible";
+
+                    }
+
+                    else if (
+                        Number(props.Access) === 1
+                    ) {
+
+                        accessText =
+                            "Private Land";
+
+                    }
+
+                    else if (
+                        Number(props.Access) === 2
+                    ) {
+
+                        accessText =
+                            "With Permission";
+
+                    }
+
+                    else if (
+                        Number(props.Access) === 3
+                    ) {
+
+                        accessText =
+                            "Public";
+
+                    }
+
+
+                    // --------------------------------------------
+                    // CONVERT STATUS CODE TO TEXT
+                    // --------------------------------------------
+
+                    let statusText =
+                        "Unknown";
+
+
+                    if (
+                        Number(props.Status) === 1
+                    ) {
+
+                        statusText =
+                            "Inactive";
+
+                    }
+
+                    else if (
+                        Number(props.Status) === 2
+                    ) {
+
+                        statusText =
+                            "Active";
+
+                    }
+
+
+                    // --------------------------------------------
+                    // CONVERT VETERAN CODE TO TEXT
+                    // --------------------------------------------
+
+                    let vetsText =
+                        "Unknown";
+
+
+                    if (
+                        Number(props.Vets) === 1
+                    ) {
+
+                        vetsText =
+                            "Yes";
+
+                    }
+
+                    else if (
+                        Number(props.Vets) === 2
+                    ) {
+
+                        vetsText =
+                            "No";
+
+                    }
+
+
+                    // --------------------------------------------
+                    // GRAVE COUNT DISPLAY
+                    // --------------------------------------------
+
+                    const graveCountText =
+
+                        Number(props.Grave_Count) > 0
+
+                            ? `Grave Count: ${
+                                props.Grave_Count
+                            } Visible`
+
+                            : "Grave Count: Unknown";
+
+
+                    // --------------------------------------------
                     // BUILD INFORMATION PANEL
                     // --------------------------------------------
 
@@ -912,6 +1174,63 @@
                                 props.Birth_Year > 0
                                     ? props.Birth_Year
                                     : "Unknown"
+                            }
+                        </p>
+
+
+                        <h3>
+                            Cemetery Information
+                        </h3>
+
+
+                        <p>
+                            <strong>
+                                ${graveCountText}
+                            </strong>
+                        </p>
+
+
+                        <p>
+                            <strong>
+                                Approximate Size:
+                            </strong>
+
+                            ${
+                                props.Approximate_Size ||
+                                "Unknown"
+                            }
+                        </p>
+
+
+                        <p>
+                            <strong>
+                                Status:
+                            </strong>
+
+                            ${
+                                statusText
+                            }
+                        </p>
+
+
+                        <p>
+                            <strong>
+                                Accessibility:
+                            </strong>
+
+                            ${
+                                accessText
+                            }
+                        </p>
+
+
+                        <p>
+                            <strong>
+                                Veterans:
+                            </strong>
+
+                            ${
+                                vetsText
                             }
                         </p>
 
@@ -1109,19 +1428,24 @@
                             ">=",
 
                             [
+
                                 "index-of",
 
                                 searchStr,
 
                                 [
+
                                     "downcase",
 
                                     [
+
                                         "to-string",
 
                                         [
+
                                             "get",
                                             "Other_Names"
+
                                         ]
 
                                     ]
