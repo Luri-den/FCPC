@@ -201,18 +201,33 @@
 
                     complete: function(results) {
 
-                        const cemetery =
-                            results.data.find(
-                                function(row) {
+                       const cemetery =
+    results.data.find(
+        function(row) {
 
-                                   return (
-    String(row.CEMETERY_ID).trim()
-    ===
-    String(cemeteryID).trim()
+            return (
+                String(row.ID).trim()
+                ===
+                String(cemeteryID).trim()
+            );
+
+        }
+    );
+
+
+console.log("ID from URL:", cemeteryID);
+
+console.log(
+    "First cemetery row:",
+    results.data[0]
 );
 
-                                }
-                            );
+console.log(
+    "First cemetery ID:",
+    results.data[0]
+        ? results.data[0].ID
+        : "NO DATA"
+);
 
 
                         // ------------------------------------------------
