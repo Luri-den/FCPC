@@ -176,6 +176,19 @@
             background: #463a2d;
         }
 
+           /* =====================================================
+           CEMETERY POPUP PHOTO
+           ===================================================== */
+
+        .cemetery-popup-photo {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-height: 220px;
+            object-fit: contain;
+            margin: 0 0 12px 0;
+            border-radius: 4px;
+        }
 
         /* =====================================================
            MAP
@@ -1140,6 +1153,13 @@
                     // --------------------------------------------
 
                     infoContent.innerHTML = `
+
+                        <img
+                            src="photos/${encodeURIComponent(props.Cemetery_ID)}.jpg"
+                            alt="${props.Cemetery_Name || "Cemetery"}"
+                            class="cemetery-popup-photo"
+                            onerror="this.style.display='none';"
+                        >
 
 
                         <h2>
