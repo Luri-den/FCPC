@@ -619,7 +619,10 @@
                         // ----------------------------------------
 
                         const graveCount =
-                            parseInt(row.COUNT) || 0;
+    row["COUNT"] === undefined ||
+    row["COUNT"].trim() === ""
+        ? -1
+        : parseInt(row["COUNT"]);
 
 
                         const access =
@@ -841,81 +844,46 @@
                             // 500+     = 18 px
                             // ========================================
 
-                            "circle-radius": [
+                           "circle-radius": [
+    "case",
 
-                                "step",
+    // No grave count recorded
+    ["<", ["get", "Grave_Count"], 0],
+    8,
 
-                                [
-                                    "get",
-                                    "Grave_Count"
-                                ],
+    // Known grave count
+    [
+        "step",
+        ["get", "Grave_Count"],
+        6,
+        25, 8,
+        100, 11,
+        250, 14,
+        500, 18
+    ]
+],
 
-                                6,
+"circle-color": [
+    "case",
 
-                                25,
-                                8,
+    // No grave count recorded = neutral gray
+    ["<", ["get", "Grave_Count"], 0],
+    "#777777",
 
-                                100,
-                                11,
+    // Otherwise color by ACCESS
+    [
+        "match",
+        ["get", "Access"],
+        0, "#8B0000",
+        1, "#D2691E",
+        2, "#C9A227",
+        3, "#01796F",
+        "#777777"
+    ]
+],
 
-                                250,
-                                14,
-
-                                500,
-                                18
-
-                            ],
-
-
-                            // ========================================
-                            // MARKER COLOR
-                            //
-                            // 0 = Inaccessible
-                            // 1 = Private Land
-                            // 2 = With Permission
-                            // 3 = Public
-                            // ========================================
-
-                            "circle-color": [
-
-                                "match",
-
-                                [
-                                    "get",
-                                    "Access"
-                                ],
-
-
-                                0,
-                                "#8B0000",
-
-
-                                1,
-                                "#D2691E",
-
-
-                                2,
-                                "#C9A227",
-
-
-                                3,
-                                "#01796F",
-
-
-                                "#777777"
-
-                            ],
-
-
-                            // ========================================
-                            // MARKER OUTLINE
-                            // ========================================
-
-                            "circle-stroke-width":
-                                2,
-
-                            "circle-stroke-color":
-                                "#ffffff"
+"circle-stroke-width": 2,
+"circle-stroke-color": "#ffffff"
 
                         }
 
@@ -1099,15 +1067,10 @@
                     // GRAVE COUNT DISPLAY
                     // --------------------------------------------
 
-                    const graveCountText =
-
-                        Number(props.Grave_Count) > 0
-
-                            ? `Grave Count: ${
-                                props.Grave_Count
-                            } Visible`
-
-                            : "Grave Count: Unknown";
+               const graveCountText =
+    Number(props.Grave_Count) >= 0
+        ? `Grave Count: ${props.Grave_Count} Visible`
+        : "Grave Count: Unknown";
 
 
                     // --------------------------------------------
