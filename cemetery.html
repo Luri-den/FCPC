@@ -420,11 +420,84 @@
                         `;
 
 
-                        // ------------------------------------------------
-                        // LOAD PHOTOS
-                        // ------------------------------------------------
+                        // ============================================================
+// LOAD CEMETERY PHOTOS
+// ============================================================
 
-                        loadPhotos();
+function loadPhotos() {
+
+    const container =
+        document.getElementById("cemetery-photos");
+
+    const photoPaths = [
+        `photos/${encodeURIComponent(cemeteryID)}.jpg`,
+        `photos/${encodeURIComponent(cemeteryID)}-2.jpg`,
+        `photos/${encodeURIComponent(cemeteryID)}-3.jpg`,
+        `photos/${encodeURIComponent(cemeteryID)}-4.jpg`,
+        `photos/${encodeURIComponent(cemeteryID)}-5.jpg`
+    ];
+
+    const photoPromises =
+        photoPaths.map(function(photoPath) {
+
+            return new Promise(function(resolve) {
+
+                const image =
+                    new Image();
+
+                image.onload =
+                    function() {
+                        resolve(photoPath);
+                    };
+
+                image.onerror =
+                    function() {
+                        resolve(null);
+                    };
+
+                image.src =
+                    photoPath;
+
+            });
+
+        });
+
+    Promise.all(photoPromises)
+        .then(function(photoResults) {
+
+            const validPhotos =
+                photoResults.filter(function(photoPath) {
+                    return photoPath !== null;
+                });
+
+            if (validPhotos.length === 0) {
+
+                container.innerHTML =
+                    "<p>No cemetery photos currently available.</p>";
+
+                return;
+            }
+
+            container.innerHTML =
+                validPhotos.map(function(photoPath) {
+
+                    return `
+                        <a
+                            href="${photoPath}"
+                            target="_blank"
+                        >
+                            <img
+                                src="${photoPath}"
+                                alt="Cemetery photograph"
+                                class="cemetery-photo"
+                            >
+                        </a>
+                    `;
+
+                }).join("");
+
+        });
+}
 
 
                         // ------------------------------------------------
