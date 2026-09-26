@@ -105,17 +105,29 @@ h2 {
    ============================================================ */
 
 .field {
-
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    column-gap: 10px;
     margin-bottom: 8px;
-
 }
 
 .label {
-
     font-weight: bold;
-
 }
 
+.person-name {
+    font-weight: bold;
+    font-size: 24px;
+    margin-bottom: 18px;
+}
+
+@media (max-width: 600px) {
+
+    .field {
+        grid-template-columns: 140px 1fr;
+    }
+
+}
 
 /* ============================================================
    INTERMENT RECORDS
