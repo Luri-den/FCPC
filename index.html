@@ -176,7 +176,8 @@
             background: #463a2d;
         }
 
-           /* =====================================================
+
+        /* =====================================================
            CEMETERY POPUP PHOTO
            ===================================================== */
 
@@ -189,6 +190,24 @@
             margin: 0 0 12px 0;
             border-radius: 4px;
         }
+
+
+        /* =====================================================
+           POPUP LABEL / VALUE FIELDS
+           ===================================================== */
+
+        .popup-field {
+            display: grid;
+            grid-template-columns: 130px 1fr;
+            column-gap: 10px;
+            margin-bottom: 8px;
+        }
+
+
+        .popup-label {
+            font-weight: bold;
+        }
+
 
         /* =====================================================
            MAP
@@ -359,6 +378,11 @@
                 width: auto;
                 max-width: none;
                 max-height: 38%;
+            }
+
+
+            .popup-field {
+                grid-template-columns: 120px 1fr;
             }
 
         }
@@ -1144,8 +1168,8 @@
 
                     const graveCountText =
                         Number(props.Grave_Count) >= 0
-                            ? `Grave Count: ${props.Grave_Count} Visible`
-                            : "Grave Count: Unknown";
+                            ? `${props.Grave_Count} Visible`
+                            : "Unknown";
 
 
                     // --------------------------------------------
@@ -1188,25 +1212,32 @@
                         </h3>
 
 
-                        <p>
-                            <strong>Township:</strong>
-                            ${
-                                props.Township ||
-                                "Unlisted"
-                            }
-                        </p>
+                        <div class="popup-field">
+                            <span class="popup-label">
+                                Township:
+                            </span>
+
+                            <span>
+                                ${
+                                    props.Township ||
+                                    "Unlisted"
+                                }
+                            </span>
+                        </div>
 
 
-                        <p>
-                            <strong>
+                        <div class="popup-field">
+                            <span class="popup-label">
                                 Map Location/Grid:
-                            </strong>
+                            </span>
 
-                            ${
-                                props.Grid_Index ||
-                                "N/A"
-                            }
-                        </p>
+                            <span>
+                                ${
+                                    props.Grid_Index ||
+                                    "N/A"
+                                }
+                            </span>
+                        </div>
 
 
                         <h3>
@@ -1214,13 +1245,19 @@
                         </h3>
 
 
-                        <p>
-                            ${
-                                props.Birth_Year > 0
-                                    ? props.Birth_Year
-                                    : "Unknown"
-                            }
-                        </p>
+                        <div class="popup-field">
+                            <span class="popup-label">
+                                Year:
+                            </span>
+
+                            <span>
+                                ${
+                                    props.Birth_Year > 0
+                                        ? props.Birth_Year
+                                        : "Unknown"
+                                }
+                            </span>
+                        </div>
 
 
                         <h3>
@@ -1228,56 +1265,62 @@
                         </h3>
 
 
-                        <p>
-                            <strong>
+                        <div class="popup-field">
+                            <span class="popup-label">
+                                Grave Count:
+                            </span>
+
+                            <span>
                                 ${graveCountText}
-                            </strong>
-                        </p>
+                            </span>
+                        </div>
 
 
-                        <p>
-                            <strong>
+                        <div class="popup-field">
+                            <span class="popup-label">
                                 Approximate Size:
-                            </strong>
+                            </span>
 
-                            ${
-                                props.Approximate_Size ||
-                                "Unknown"
-                            }
-                        </p>
+                            <span>
+                                ${
+                                    props.Approximate_Size ||
+                                    "Unknown"
+                                }
+                            </span>
+                        </div>
 
 
-                        <p>
-                            <strong>
+                        <div class="popup-field">
+                            <span class="popup-label">
                                 Status:
-                            </strong>
+                            </span>
 
-                            ${
-                                statusText
-                            }
-                        </p>
+                            <span>
+                                ${statusText}
+                            </span>
+                        </div>
 
 
-                        <p>
-                            <strong>
+                        <div class="popup-field">
+                            <span class="popup-label">
                                 Accessibility:
-                            </strong>
+                            </span>
 
-                            ${
-                                accessText
-                            }
-                        </p>
+                            <span>
+                                ${accessText}
+                            </span>
+                        </div>
 
 
-                        <p>
-                            <strong>
+                        <div class="popup-field">
+                            <span class="popup-label">
                                 Veterans:
-                            </strong>
+                            </span>
 
-                            ${
-                                vetsText
-                            }
-                        </p>
+                            <span>
+                                ${vetsText}
+                            </span>
+                        </div>
 
 
                         <h3>
@@ -1496,6 +1539,7 @@
                                         [
 
                                             "get",
+
                                             "Other_Names"
 
                                         ]
