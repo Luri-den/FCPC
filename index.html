@@ -100,14 +100,41 @@
             font-size: 15px;
         }
 
+
+        /* =====================================================
+           EARLIEST GRAVE SLIDER
+           ===================================================== */
+
+        #year-filter-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 4px;
+        }
+
+        #year-filter-label {
+            font-size: 14px;
+            white-space: nowrap;
+            color: #3f3528;
+        }
+
         #year-filter {
             width: 150px;
-            padding: 9px 10px;
-            border: 1px solid #aaa;
-            border-radius: 4px;
-            font-size: 15px;
-            background: white;
+            cursor: pointer;
         }
+
+        #year-value {
+            min-width: 42px;
+            font-weight: bold;
+            font-size: 14px;
+            color: #3f3528;
+            text-align: center;
+        }
+
+
+        /* =====================================================
+           BUTTONS
+           ===================================================== */
 
         button {
             padding: 9px 14px;
@@ -160,6 +187,47 @@
             padding: 14px;
 
             z-index: 4;
+        }
+
+
+        /* =====================================================
+           CLOSE BUTTON
+           ===================================================== */
+
+        #close-info {
+            position: absolute;
+            top: 5px;
+            right: 7px;
+
+            width: 28px;
+            height: 28px;
+
+            padding: 0;
+
+            border: none;
+            border-radius: 50%;
+
+            background: transparent;
+            color: #5a4b3a;
+
+            font-size: 23px;
+            line-height: 28px;
+
+            cursor: pointer;
+        }
+
+        #close-info:hover {
+            background: #e5e0d5;
+            color: #2f281f;
+        }
+
+
+        /* =====================================================
+           INFORMATION CONTENT
+           ===================================================== */
+
+        #info-content {
+            padding-right: 24px;
         }
 
         #info-panel h2 {
@@ -239,10 +307,19 @@
             }
 
             #search,
-            #year-filter,
             button {
                 width: 100%;
                 flex: 1 1 100%;
+            }
+
+            #year-filter-container {
+                width: 100%;
+                flex: 1 1 100%;
+            }
+
+            #year-filter {
+                flex: 1;
+                width: auto;
             }
 
             #info-panel {
@@ -296,11 +373,28 @@
             placeholder="Search cemetery name or other name..."
         >
 
-        <input
-            type="number"
-            id="year-filter"
-            placeholder="Birth year..."
-        >
+
+        <div id="year-filter-container">
+
+            <span id="year-filter-label">
+                Earliest Grave:
+            </span>
+
+            <input
+                type="range"
+                id="year-filter"
+                min="1700"
+                max="1900"
+                value="1700"
+                step="1"
+            >
+
+            <span id="year-value">
+                All
+            </span>
+
+        </div>
+
 
         <button id="reset-button">
             Reset
@@ -317,9 +411,21 @@
 
         <div id="info-panel">
 
-            <div class="placeholder">
+            <button
+                id="close-info"
+                aria-label="Close information panel"
+                title="Close"
+            >
+                ×
+            </button>
 
-                Loading cemetery data...
+            <div id="info-content">
+
+                <div class="placeholder">
+
+                    Loading cemetery data...
+
+                </div>
 
             </div>
 
@@ -369,6 +475,15 @@
             ]
 
         ];
+
+
+        // ========================================================
+        // EARLIEST GRAVE SLIDER SETTINGS
+        // ========================================================
+
+        const YEAR_MIN = 1700;
+        const YEAR_MAX = 1900;
+        const YEAR_DEFAULT = YEAR_MIN;
 
 
         // ========================================================
@@ -469,6 +584,45 @@
 
 
         // ========================================================
+        // INFO PANEL CONTENT
+        // ========================================================
+
+        function setInfoContent(html) {
+
+            document.getElementById(
+                "info-content"
+            ).innerHTML = html;
+
+        }
+
+
+        // ========================================================
+        // SHOW INFO PANEL
+        // ========================================================
+
+        function showInfoPanel() {
+
+            document.getElementById(
+                "info-panel"
+            ).style.display = "block";
+
+        }
+
+
+        // ========================================================
+        // HIDE INFO PANEL
+        // ========================================================
+
+        function hideInfoPanel() {
+
+            document.getElementById(
+                "info-panel"
+            ).style.display = "none";
+
+        }
+
+
+        // ========================================================
         // SHOW CEMETERY INFORMATION
         // ========================================================
 
@@ -505,9 +659,7 @@
                 );
 
 
-            document.getElementById(
-                "info-panel"
-            ).innerHTML = `
+            setInfoContent(`
 
                 <h2>
                     ${name}
@@ -583,7 +735,10 @@
                     : ""
                 }
 
-            `;
+            `);
+
+
+            showInfoPanel();
 
         }
 
@@ -634,14 +789,7 @@
 
 
                         // ==========================================
-                        // REMOVE UTF-8 BOM IF PRESENT
-                        //
-                        // This is the important fix.
-                        //
-                        // A BOM is invisible but can cause:
-                        //
-                        // JSON.parse:
-                        // unexpected character at line 1 column 1
+                        // REMOVE UTF-8 BOM
                         // ==========================================
 
                         text =
@@ -651,8 +799,9 @@
                             );
 
 
-                        // Also remove any accidental whitespace
-                        // before the opening JSON object.
+                        // ==========================================
+                        // REMOVE ACCIDENTAL WHITESPACE
+                        // ==========================================
 
                         text =
                             text.trim();
@@ -787,9 +936,7 @@
                         // SUCCESS
                         // ==========================================
 
-                        document.getElementById(
-                            "info-panel"
-                        ).innerHTML = `
+                        setInfoContent(`
 
                             <div
                                 class="placeholder"
@@ -808,7 +955,7 @@
 
                             </div>
 
-                        `;
+                        `);
 
 
                         // ==========================================
@@ -949,9 +1096,7 @@
                         );
 
 
-                        document.getElementById(
-                            "info-panel"
-                        ).innerHTML = `
+                        setInfoContent(`
 
                             <div
                                 class="error-message"
@@ -970,7 +1115,7 @@
 
                             </div>
 
-                        `;
+                        `);
 
                     }
                 );
@@ -997,6 +1142,22 @@
 
 
         // ========================================================
+        // CLOSE INFORMATION PANEL
+        // ========================================================
+
+        document
+            .getElementById("close-info")
+            .addEventListener(
+                "click",
+                function() {
+
+                    hideInfoPanel();
+
+                }
+            );
+
+
+        // ========================================================
         // RESET
         // ========================================================
 
@@ -1010,9 +1171,15 @@
                         .getElementById("search")
                         .value = "";
 
+
                     document
                         .getElementById("year-filter")
-                        .value = "";
+                        .value = YEAR_DEFAULT;
+
+
+                    document
+                        .getElementById("year-value")
+                        .textContent = "All";
 
 
                     if (
@@ -1029,9 +1196,7 @@
                     }
 
 
-                    document.getElementById(
-                        "info-panel"
-                    ).innerHTML = `
+                    setInfoContent(`
 
                         <div
                             class="placeholder"
@@ -1042,7 +1207,10 @@
 
                         </div>
 
-                    `;
+                    `);
+
+
+                    showInfoPanel();
 
                 }
             );
@@ -1158,7 +1326,7 @@
 
 
         // ========================================================
-        // YEAR FILTER
+        // EARLIEST GRAVE SLIDER
         // ========================================================
 
         document
@@ -1178,23 +1346,40 @@
                     }
 
 
-                    if (!this.value) {
+                    const year =
+                        Number(
+                            this.value
+                        );
+
+
+                    document
+                        .getElementById("year-value")
+                        .textContent = year;
+
+
+                    // At the minimum year, show everything.
+
+                    if (
+                        year === YEAR_MIN
+                    ) {
 
                         map.setFilter(
                             "cemeteries-layer",
                             null
                         );
 
+                        document
+                            .getElementById("year-value")
+                            .textContent = "All";
+
                         return;
 
                     }
 
 
-                    const year =
-                        Number(
-                            this.value
-                        );
-
+                    // Show cemeteries whose earliest
+                    // recorded birth year is at or after
+                    // the selected year.
 
                     map.setFilter(
 
@@ -1209,8 +1394,11 @@
                                 "to-number",
 
                                 [
+
                                     "get",
+
                                     "Birth_Year"
+
                                 ]
 
                             ],
@@ -1223,6 +1411,7 @@
 
                 }
             );
+
 
     </script>
 
