@@ -2372,6 +2372,7 @@ waveContext.lineWidth =
 waveContext.lineCap =
     "round";
 
+
 // -------------------------
 // TOP WAVE
 // -------------------------
@@ -2430,60 +2431,83 @@ waveContext.bezierCurveTo(
 waveContext.stroke();
 
 
-// -------------------------
-// ADD TO MAP
-// -------------------------
+// =========================================================
+// CONVERT CANVAS TO AN IMAGE MAPLIBRE CAN LOAD
+// =========================================================
 
-const waveImageData =
-    waveContext.getImageData(
-        0,
-        0,
-        32,
-        32
-    );
+const waveImageURL =
+    waveCanvas.toDataURL("image/png");
 
-map.addImage(
-    "historic-water-waves",
-    {
-        width: 32,
-        height: 32,
-        data: waveImageData.data
+
+map.loadImage(
+    waveImageURL,
+    function (error, image) {
+
+        if (error) {
+
+            console.error(
+                "Unable to create historic water-wave image:",
+                error
+            );
+
+            return;
+
+        }
+
+
+        // -------------------------
+        // ADD IMAGE TO MAP
+        // -------------------------
+
+        if (
+            !map.hasImage(
+                "historic-water-waves"
+            )
+        ) {
+
+            map.addImage(
+                "historic-water-waves",
+                image
+            );
+
+        }
+
+
+        // -------------------------
+        // WAVE SYMBOL LAYER
+        // -------------------------
+
+        map.addLayer({
+
+            id:
+                "historic-water-waves-layer",
+
+            type:
+                "symbol",
+
+            source:
+                "lake-cemeteries-data",
+
+            layout: {
+
+                "icon-image":
+                    "historic-water-waves",
+
+                "icon-size":
+                    1,
+
+                "icon-allow-overlap":
+                    true,
+
+                "icon-ignore-placement":
+                    true
+
+            }
+
+        });
+
     }
 );
-
-
-// -------------------------
-// WAVE SYMBOL LAYER
-// -------------------------
-
-map.addLayer({
-
-    id:
-        "historic-water-waves-layer",
-
-    type:
-        "symbol",
-
-    source:
-        "lake-cemeteries-data",
-
-    layout: {
-
-        "icon-image":
-            "historic-water-waves",
-
-        "icon-size":
-            1,
-
-        "icon-allow-overlap":
-            true,
-
-        "icon-ignore-placement":
-            true
-
-    }
-
-});
                                             
                                             // =========================
                                             // HISTORIC MARKER CLICK
