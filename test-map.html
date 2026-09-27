@@ -4008,6 +4008,1308 @@
         }
     );
 
+// ============================================================
+// SHARED PHYSICAL MARKER SUPPORT
+//
+// MARKER_ID rules:
+//
+// Blank / one occurrence  -> normal individual marker
+// 2+ occurrences           -> one shared ◎ marker
+//
+// Shared markers use the first valid LAT/LONG found for that
+// MARKER_ID as the representative physical-marker location.
+// ============================================================
+
+(function () {
+
+    const sharedMarkerState = {
+
+        loaded: false,
+
+        rowsByCemetery: {},
+
+        groupsByCemetery: {}
+
+    };
+
+
+    // ========================================================
+    // SHARED MARKER BUTTON STYLES
+    // ========================================================
+
+    const sharedMarkerStyle =
+        document.createElement("style");
+
+    sharedMarkerStyle.textContent = `
+
+        .shared-marker-person-button,
+        .shared-marker-view-all-button {
+
+            display: block;
+
+            width: 100%;
+
+            margin: 7px 0;
+
+            padding: 10px 12px;
+
+            border: 1px solid #8d8375;
+
+            border-radius: 4px;
+
+            background: #01796F;
+
+            color: white;
+
+            font-size: 14px;
+
+            font-weight: bold;
+
+            text-align: left;
+
+            cursor: pointer;
+
+        }
+
+
+        .shared-marker-person-button:hover,
+        .shared-marker-view-all-button:hover {
+
+            background: #463a2d;
+
+        }
+
+
+        .shared-marker-view-all-button {
+
+            text-align: center;
+
+            margin-top: 12px;
+
+        }
+
+    `;
+
+    document.head.appendChild(
+        sharedMarkerStyle
+    );
+
+
+    // ========================================================
+    // SHOW SHARED MARKER PANEL
+    // ========================================================
+
+    function showSharedMarkerPanel(
+        cemeteryID,
+        markerID,
+        viewAll
+    ) {
+
+        const groups =
+            sharedMarkerState
+                .groupsByCemetery[
+                    cemeteryID
+                ];
+
+        const group =
+            groups &&
+            groups[markerID];
+
+
+        if (
+            !group ||
+            group.length < 2
+        ) {
+
+            return;
+
+        }
+
+
+        infoPanel.style.display =
+            "block";
+
+
+        let peopleButtons = "";
+
+
+        group.forEach(
+            function (person, index) {
+
+                peopleButtons += `
+
+                    <button
+                        type="button"
+                        class="shared-marker-person-button"
+                        data-shared-cemetery="${encodeURIComponent(
+                            cemeteryID
+                        )}"
+                        data-shared-marker="${encodeURIComponent(
+                            markerID
+                        )}"
+                        data-shared-index="${index}"
+                    >
+                        ${escapeHtml(
+                            person.name ||
+                            "Unnamed Interment"
+                        )}
+                    </button>
+
+                `;
+
+            }
+        );
+
+
+        if (viewAll) {
+
+            infoContent.innerHTML = `
+
+                <h2>
+                    People at This Marker
+                </h2>
+
+                <p>
+                    This physical marker represents
+                    <strong>
+                        ${group.length}
+                    </strong>
+                    people.
+                </p>
+
+                <h3>
+                    Select a person
+                </h3>
+
+                ${peopleButtons}
+
+            `;
+
+            return;
+
+        }
+
+
+        infoContent.innerHTML = `
+
+            <h2>
+                Shared Marker
+            </h2>
+
+            <p>
+                This physical marker represents
+                <strong>
+                    ${group.length}
+                </strong>
+                people.
+            </p>
+
+            <h3>
+                Select a person
+            </h3>
+
+            ${peopleButtons}
+
+            <button
+                type="button"
+                class="shared-marker-view-all-button"
+                data-shared-view-all="true"
+                data-shared-cemetery="${encodeURIComponent(
+                    cemeteryID
+                )}"
+                data-shared-marker="${encodeURIComponent(
+                    markerID
+                )}"
+            >
+                View all
+            </button>
+
+        `;
+
+    }
+
+
+    // ========================================================
+    // SHARED MARKER MAP CLICK
+    // ========================================================
+
+    function handleSharedMarkerClick(
+        event
+    ) {
+
+        if (
+            !event.features ||
+            !event.features.length
+        ) {
+
+            return;
+
+        }
+
+
+        const props =
+            event.features[0]
+                .properties;
+
+
+        showSharedMarkerPanel(
+            props.Cemetery_ID,
+            props.Marker_ID,
+            false
+        );
+
+
+        if (event.originalEvent) {
+
+            event.originalEvent
+                .stopPropagation();
+
+        }
+
+    }
+
+
+    // ========================================================
+    // UPDATE SHARED MARKER LAYERS
+    // ========================================================
+
+    function updateSharedMarkerLayers() {
+
+        const source =
+            map.getSource(
+                "shared-markers-data"
+            );
+
+
+        if (!source) {
+
+            return;
+
+        }
+
+
+        if (
+            !selectedCemeteryFeature ||
+            !sharedMarkerState.loaded
+        ) {
+
+            source.setData({
+
+                type:
+                    "FeatureCollection",
+
+                features:
+                    []
+
+            });
+
+
+            if (
+                map.getLayer(
+                    "shared-markers-outer-layer"
+                )
+            ) {
+
+                map.setLayoutProperty(
+                    "shared-markers-outer-layer",
+                    "visibility",
+                    "none"
+                );
+
+            }
+
+
+            if (
+                map.getLayer(
+                    "shared-markers-inner-layer"
+                )
+            ) {
+
+                map.setLayoutProperty(
+                    "shared-markers-inner-layer",
+                    "visibility",
+                    "none"
+                );
+
+            }
+
+
+            return;
+
+        }
+
+
+        const cemeteryID =
+            String(
+                selectedCemeteryFeature
+                    .properties
+                    .Cemetery_ID ||
+                ""
+            ).trim();
+
+
+        const groups =
+            sharedMarkerState
+                .groupsByCemetery[
+                    cemeteryID
+                ] || {};
+
+
+        const features = [];
+
+
+        Object.keys(groups).forEach(
+            function (markerID) {
+
+                const group =
+                    groups[markerID];
+
+
+                if (
+                    !group ||
+                    group.length < 2
+                ) {
+
+                    return;
+
+                }
+
+
+                // First valid GPS location
+                // becomes the physical marker location.
+
+                const representative =
+                    group.find(
+                        function (person) {
+
+                            return Array.isArray(
+                                person.coordinates
+                            );
+
+                        }
+                    );
+
+
+                if (!representative) {
+
+                    return;
+
+                }
+
+
+                features.push({
+
+                    type:
+                        "Feature",
+
+                    properties: {
+
+                        Cemetery_ID:
+                            cemeteryID,
+
+                        Marker_ID:
+                            markerID,
+
+                        Person_Count:
+                            group.length
+
+                    },
+
+                    geometry: {
+
+                        type:
+                            "Point",
+
+                        coordinates:
+                            representative.coordinates
+
+                    }
+
+                });
+
+            }
+        );
+
+
+        source.setData({
+
+            type:
+                "FeatureCollection",
+
+            features:
+                features
+
+        });
+
+
+        map.setLayoutProperty(
+            "shared-markers-outer-layer",
+            "visibility",
+            "visible"
+        );
+
+
+        map.setLayoutProperty(
+            "shared-markers-inner-layer",
+            "visibility",
+            "visible"
+        );
+
+    }
+
+
+    // ========================================================
+    // REPLACE THE EXISTING GRAVE UPDATE FUNCTION
+    //
+    // Before MARKER_ID data loads, the original behavior is
+    // retained. Once it loads, shared people disappear from
+    // the individual layer and are represented by ◎.
+    // ========================================================
+
+    const originalUpdateCemeteryGraves =
+        updateCemeteryGraves;
+
+
+    updateCemeteryGraves =
+        function () {
+
+            if (
+                !sharedMarkerState.loaded
+            ) {
+
+                originalUpdateCemeteryGraves();
+
+                return;
+
+            }
+
+
+            const source =
+                map.getSource(
+                    "graves-data"
+                );
+
+
+            if (!source) {
+
+                return;
+
+            }
+
+
+            if (!selectedCemeteryFeature) {
+
+                source.setData({
+
+                    type:
+                        "FeatureCollection",
+
+                    features:
+                        []
+
+                });
+
+
+                if (
+                    map.getLayer(
+                        "graves-layer"
+                    )
+                ) {
+
+                    map.setLayoutProperty(
+                        "graves-layer",
+                        "visibility",
+                        "none"
+                    );
+
+                }
+
+
+                updateSharedMarkerLayers();
+
+                return;
+
+            }
+
+
+            const cemeteryID =
+                String(
+                    selectedCemeteryFeature
+                        .properties
+                        .Cemetery_ID ||
+                    ""
+                ).trim();
+
+
+            const rows =
+                sharedMarkerState
+                    .rowsByCemetery[
+                        cemeteryID
+                    ] || [];
+
+
+            const groups =
+                sharedMarkerState
+                    .groupsByCemetery[
+                        cemeteryID
+                    ] || {};
+
+
+            const individualFeatures = [];
+
+
+            rows.forEach(
+                function (person, index) {
+
+                    const markerID =
+                        person.markerID;
+
+
+                    const group =
+                        markerID
+                            ? groups[
+                                markerID
+                            ]
+                            : null;
+
+
+                    // 2+ people sharing the same
+                    // MARKER_ID become ONE ◎ marker.
+
+                    if (
+                        markerID &&
+                        group &&
+                        group.length >= 2
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    if (
+                        !Array.isArray(
+                            person.coordinates
+                        )
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    // Blank MARKER_ID or a
+                    // single-use MARKER_ID
+                    // remains a normal ●.
+
+                    individualFeatures.push({
+
+                        type:
+                            "Feature",
+
+                        properties: {
+
+                            Cemetery_ID:
+                                cemeteryID,
+
+                            Grave_Index:
+                                index + 1,
+
+                            Person_Name:
+                                person.name ||
+                                "Unnamed Interment",
+
+                            Veteran:
+                                person.veteran
+
+                        },
+
+                        geometry: {
+
+                            type:
+                                "Point",
+
+                            coordinates:
+                                person.coordinates
+
+                        }
+
+                    });
+
+                }
+            );
+
+
+            source.setData({
+
+                type:
+                    "FeatureCollection",
+
+                features:
+                    individualFeatures
+
+            });
+
+
+            map.setLayoutProperty(
+                "graves-layer",
+                "visibility",
+                "visible"
+            );
+
+
+            updateSharedMarkerLayers();
+
+        };
+
+
+    // ========================================================
+    // PEOPLE BUTTONS / VIEW ALL
+    //
+    // These are added alongside the existing SEE MORE
+    // event delegation. Existing cemetery buttons continue
+    // to work normally.
+    // ========================================================
+
+    infoContent.addEventListener(
+        "click",
+        function (event) {
+
+
+            // -----------------------------------------------
+            // INDIVIDUAL PERSON
+            // -----------------------------------------------
+
+            const personButton =
+                event.target.closest(
+                    ".shared-marker-person-button"
+                );
+
+
+            if (personButton) {
+
+                const cemeteryID =
+                    decodeURIComponent(
+                        personButton
+                            .dataset
+                            .sharedCemetery
+                    );
+
+
+                const markerID =
+                    decodeURIComponent(
+                        personButton
+                            .dataset
+                            .sharedMarker
+                    );
+
+
+                const index =
+                    parseInt(
+                        personButton
+                            .dataset
+                            .sharedIndex,
+                        10
+                    );
+
+
+                const groups =
+                    sharedMarkerState
+                        .groupsByCemetery[
+                            cemeteryID
+                        ];
+
+
+                const group =
+                    groups &&
+                    groups[markerID];
+
+
+                const person =
+                    group &&
+                    group[index];
+
+
+                if (person) {
+
+                    // Send the selected person through
+                    // the EXISTING individual grave popup.
+
+                    handleGraveClick({
+
+                        features: [
+
+                            {
+
+                                properties: {
+
+                                    Cemetery_ID:
+                                        cemeteryID,
+
+                                    Person_Name:
+                                        person.name ||
+                                        "Unnamed Interment",
+
+                                    Veteran:
+                                        person.veteran
+
+                                }
+
+                            }
+
+                        ],
+
+                        originalEvent:
+                            null
+
+                    });
+
+                }
+
+
+                return;
+
+            }
+
+
+            // -----------------------------------------------
+            // VIEW ALL
+            // -----------------------------------------------
+
+            const viewAllButton =
+                event.target.closest(
+                    ".shared-marker-view-all-button"
+                );
+
+
+            if (viewAllButton) {
+
+                showSharedMarkerPanel(
+
+                    decodeURIComponent(
+                        viewAllButton
+                            .dataset
+                            .sharedCemetery
+                    ),
+
+                    decodeURIComponent(
+                        viewAllButton
+                            .dataset
+                            .sharedMarker
+                    ),
+
+                    true
+
+                );
+
+            }
+
+        }
+    );
+
+
+    // ========================================================
+    // CREATE SHARED MARKER LAYERS
+    // ========================================================
+
+    map.on(
+        "load",
+        function () {
+
+
+            // -----------------------------------------------
+            // DATA SOURCE
+            // -----------------------------------------------
+
+            if (
+                !map.getSource(
+                    "shared-markers-data"
+                )
+            ) {
+
+                map.addSource(
+                    "shared-markers-data",
+                    {
+
+                        type:
+                            "geojson",
+
+                        data: {
+
+                            type:
+                                "FeatureCollection",
+
+                            features:
+                                []
+
+                        }
+
+                    }
+                );
+
+            }
+
+
+            // -----------------------------------------------
+            // OUTER RING
+            // -----------------------------------------------
+
+            if (
+                !map.getLayer(
+                    "shared-markers-outer-layer"
+                )
+            ) {
+
+                map.addLayer({
+
+                    id:
+                        "shared-markers-outer-layer",
+
+                    type:
+                        "circle",
+
+                    source:
+                        "shared-markers-data",
+
+                    layout: {
+
+                        visibility:
+                            "none"
+
+                    },
+
+                    paint: {
+
+                        "circle-radius":
+                            8,
+
+                        "circle-color":
+                            "#ffffff",
+
+                        "circle-opacity":
+                            0,
+
+                        "circle-stroke-width":
+                            2,
+
+                        "circle-stroke-color":
+                            "#463a2d",
+
+                        "circle-stroke-opacity":
+                            0.95
+
+                    }
+
+                });
+
+            }
+
+
+            // -----------------------------------------------
+            // INNER DOT
+            // -----------------------------------------------
+
+            if (
+                !map.getLayer(
+                    "shared-markers-inner-layer"
+                )
+            ) {
+
+                map.addLayer({
+
+                    id:
+                        "shared-markers-inner-layer",
+
+                    type:
+                        "circle",
+
+                    source:
+                        "shared-markers-data",
+
+                    layout: {
+
+                        visibility:
+                            "none"
+
+                    },
+
+                    paint: {
+
+                        "circle-radius":
+                            4,
+
+                        "circle-color":
+                            "#463a2d",
+
+                        "circle-opacity":
+                            0.92,
+
+                        "circle-stroke-width":
+                            1.5,
+
+                        "circle-stroke-color":
+                            "#ffffff"
+
+                    }
+
+                });
+
+            }
+
+
+            // -----------------------------------------------
+            // CLICK
+            //
+            // The OUTER layer is the click target, so the
+            // physical target is larger than the visible dot.
+            // -----------------------------------------------
+
+            map.on(
+                "click",
+                "shared-markers-outer-layer",
+                handleSharedMarkerClick
+            );
+
+
+            // -----------------------------------------------
+            // HOVER
+            // -----------------------------------------------
+
+            map.on(
+                "mouseenter",
+                "shared-markers-outer-layer",
+                function (event) {
+
+                    if (
+                        !desktopHoverEnabled()
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    map.getCanvas()
+                        .style.cursor =
+                        "pointer";
+
+
+                    const feature =
+                        event.features &&
+                        event.features[0];
+
+
+                    if (feature) {
+
+                        showHoverLabel(
+
+                            "Marker for " +
+                            feature.properties
+                                .Person_Count +
+                            " people",
+
+                            event.lngLat
+
+                        );
+
+                    }
+
+                }
+            );
+
+
+            map.on(
+                "mousemove",
+                "shared-markers-outer-layer",
+                function (event) {
+
+                    if (
+                        !desktopHoverEnabled()
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    const feature =
+                        event.features &&
+                        event.features[0];
+
+
+                    if (feature) {
+
+                        showHoverLabel(
+
+                            "Marker for " +
+                            feature.properties
+                                .Person_Count +
+                            " people",
+
+                            event.lngLat
+
+                        );
+
+                    }
+
+                }
+            );
+
+
+            map.on(
+                "mouseleave",
+                "shared-markers-outer-layer",
+                function () {
+
+                    map.getCanvas()
+                        .style.cursor =
+                        "";
+
+                    removeHoverLabel();
+
+                }
+            );
+
+
+            // =================================================
+            // LOAD INTERMENTS AGAIN FOR MARKER_ID SUPPORT
+            //
+            // The existing loader remains untouched.
+            // This second read only adds the grouping information
+            // needed for physical markers.
+            // =================================================
+
+            Papa.parse(
+
+                new URL(
+                    "interments.csv",
+                    document.baseURI
+                ).href,
+
+                {
+
+                    download:
+                        true,
+
+                    header:
+                        true,
+
+                    skipEmptyLines:
+                        true,
+
+
+                    complete:
+                        function (results) {
+
+
+                            sharedMarkerState
+                                .rowsByCemetery =
+                                {};
+
+                            sharedMarkerState
+                                .groupsByCemetery =
+                                {};
+
+
+                            results.data.forEach(
+                                function (row) {
+
+                                    const cemeteryID =
+                                        String(
+                                            row.CEMETERY_ID ||
+                                            ""
+                                        ).trim();
+
+
+                                    if (
+                                        !cemeteryID
+                                    ) {
+
+                                        return;
+
+                                    }
+
+
+                                    if (
+                                        !sharedMarkerState
+                                            .rowsByCemetery[
+                                                cemeteryID
+                                            ]
+                                    ) {
+
+                                        sharedMarkerState
+                                            .rowsByCemetery[
+                                                cemeteryID
+                                            ] = [];
+
+                                    }
+
+
+                                    if (
+                                        !sharedMarkerState
+                                            .groupsByCemetery[
+                                                cemeteryID
+                                            ]
+                                    ) {
+
+                                        sharedMarkerState
+                                            .groupsByCemetery[
+                                                cemeteryID
+                                            ] = {};
+
+                                    }
+
+
+                                    const firstName =
+                                        String(
+                                            row[
+                                                "FIRST NAME"
+                                            ] || ""
+                                        ).trim();
+
+
+                                    const lastName =
+                                        String(
+                                            row[
+                                                "LAST NAME"
+                                            ] || ""
+                                        ).trim();
+
+
+                                    const fullName =
+                                        (
+                                            firstName +
+                                            " " +
+                                            lastName
+                                        ).trim();
+
+
+                                    const markerID =
+                                        String(
+                                            row.MARKER_ID ||
+                                            ""
+                                        ).trim();
+
+
+                                    const lat =
+                                        parseFloat(
+                                            row.LAT
+                                        );
+
+
+                                    const lon =
+                                        parseFloat(
+                                            row.LONG
+                                        );
+
+
+                                    const person = {
+
+                                        name:
+                                            fullName ||
+                                            "Unnamed Interment",
+
+                                        veteran:
+                                            String(
+                                                row.VETERAN ||
+                                                ""
+                                            ).trim() === "1",
+
+                                        markerID:
+                                            markerID,
+
+                                        coordinates:
+                                            !isNaN(lat) &&
+                                            !isNaN(lon)
+
+                                                ? [
+                                                    lon,
+                                                    lat
+                                                ]
+
+                                                : null
+
+                                    };
+
+
+                                    sharedMarkerState
+                                        .rowsByCemetery[
+                                            cemeteryID
+                                        ]
+                                        .push(
+                                            person
+                                        );
+
+
+                                    // Only nonblank MARKER_ID
+                                    // values enter a group.
+
+                                    if (
+                                        markerID
+                                    ) {
+
+                                        if (
+                                            !sharedMarkerState
+                                                .groupsByCemetery[
+                                                    cemeteryID
+                                                ][markerID]
+                                        ) {
+
+                                            sharedMarkerState
+                                                .groupsByCemetery[
+                                                    cemeteryID
+                                                ][markerID] =
+                                                [];
+
+                                        }
+
+
+                                        sharedMarkerState
+                                            .groupsByCemetery[
+                                                cemeteryID
+                                            ][markerID]
+                                            .push(
+                                                person
+                                            );
+
+                                    }
+
+                                }
+                            );
+
+
+                            sharedMarkerState
+                                .loaded =
+                                true;
+
+
+                            // Refresh the current cemetery,
+                            // if one is already selected.
+
+                            updateCemeteryGraves();
+
+                        },
+
+
+                    error:
+                        function (error) {
+
+                            console.error(
+                                "MARKER_ID support loading error:",
+                                error
+                            );
+
+                        }
+
+                }
+
+            );
+
+        }
+
+    );
+
+})();
 
 </script>
 
