@@ -1,0 +1,24 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "CEMETERY_ID": "TEST001",
+        "NAME": "Test Cemetery"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-85.04535382, 39.42423460],
+            [-85.04531892, 39.42423460],
+            [-85.04531892, 39.42426199],
+            [-85.04535382, 39.42426199],
+            [-85.04535382, 39.42423460]
+          ]
+        ]
+      }
+    }
+  ]
+}
