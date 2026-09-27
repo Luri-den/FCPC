@@ -2354,77 +2354,129 @@
 // HISTORIC CEMETERY WATER-WAVE SYMBOL
 // =========================================================
 
-const waveSVG = `
-<svg xmlns="http://www.w3.org/2000/svg"
-     width="32"
-     height="32"
-     viewBox="0 0 32 32">
+const waveCanvas =
+    document.createElement("canvas");
 
-    <path
-        d="M5 13
-           C8 10, 11 16, 14 13
-           C17 10, 20 16, 23 13
-           C25 11, 27 13, 27 13"
-        fill="none"
-        stroke="#ffffff"
-        stroke-width="1.5"
-        stroke-linecap="round"/>
+waveCanvas.width = 32;
+waveCanvas.height = 32;
 
-    <path
-        d="M5 19
-           C8 16, 11 22, 14 19
-           C17 16, 20 22, 23 19
-           C25 17, 27 19, 27 19"
-        fill="none"
-        stroke="#ffffff"
-        stroke-width="1.5"
-        stroke-linecap="round"/>
+const waveContext =
+    waveCanvas.getContext("2d");
 
-</svg>
-`;
+waveContext.strokeStyle =
+    "#ffffff";
 
-const waveImage =
-    new Image();
+waveContext.lineWidth =
+    1.5;
 
-waveImage.onload =
-    function () {
+waveContext.lineCap =
+    "round";
 
-        map.addImage(
+// -------------------------
+// TOP WAVE
+// -------------------------
+
+waveContext.beginPath();
+
+waveContext.moveTo(5, 13);
+
+waveContext.bezierCurveTo(
+    8, 10,
+    11, 16,
+    14, 13
+);
+
+waveContext.bezierCurveTo(
+    17, 10,
+    20, 16,
+    23, 13
+);
+
+waveContext.bezierCurveTo(
+    25, 11,
+    27, 13,
+    27, 13
+);
+
+waveContext.stroke();
+
+
+// -------------------------
+// BOTTOM WAVE
+// -------------------------
+
+waveContext.beginPath();
+
+waveContext.moveTo(5, 19);
+
+waveContext.bezierCurveTo(
+    8, 16,
+    11, 22,
+    14, 19
+);
+
+waveContext.bezierCurveTo(
+    17, 16,
+    20, 22,
+    23, 19
+);
+
+waveContext.bezierCurveTo(
+    25, 17,
+    27, 19,
+    27, 19
+);
+
+waveContext.stroke();
+
+
+// -------------------------
+// ADD TO MAP
+// -------------------------
+
+map.addImage(
+    "historic-water-waves",
+    waveContext.getImageData(
+        0,
+        0,
+        32,
+        32
+    )
+);
+
+
+// -------------------------
+// WAVE SYMBOL LAYER
+// -------------------------
+
+map.addLayer({
+
+    id:
+        "historic-water-waves-layer",
+
+    type:
+        "symbol",
+
+    source:
+        "lake-cemeteries-data",
+
+    layout: {
+
+        "icon-image":
             "historic-water-waves",
-            waveImage
-        );
 
-        map.addLayer({
-            id:
-                "historic-water-waves-layer",
+        "icon-size":
+            1,
 
-            type:
-                "symbol",
+        "icon-allow-overlap":
+            true,
 
-            source:
-                "lake-cemeteries-data",
+        "icon-ignore-placement":
+            true
 
-            layout: {
+    }
 
-                "icon-image":
-                    "historic-water-waves",
-
-                "icon-size":
-                    1,
-
-                "icon-allow-overlap":
-                    true,
-
-                "icon-ignore-placement":
-                    true
-
-            }
-        });
-    };
-
-waveImage.src =
-    "data:image/svg+xml;charset=utf-8," +
-    encodeURIComponent(waveSVG);
+});
                                             
                                             // =========================
                                             // HISTORIC MARKER CLICK
