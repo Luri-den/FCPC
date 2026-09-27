@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 
 <html lang="en">
@@ -108,6 +107,19 @@
         align-items: center;
 
         z-index: 5;
+    }
+
+
+    /* =====================================================
+       SEARCH RESULTS
+       ===================================================== */
+
+    #search-results {
+        min-width: 150px;
+        color: #5a5045;
+        font-size: 13px;
+        line-height: 1.3;
+        white-space: nowrap;
     }
 
 
@@ -396,150 +408,6 @@
 
 
     /* =====================================================
-       ACCESSIBILITY LEGEND
-       ===================================================== */
-
-    #accessibility-legend {
-        position: absolute;
-
-        top: 10px;
-        right: 60px;
-
-        z-index: 6;
-
-        background: white;
-
-        border: 1px solid #aaa;
-        border-radius: 5px;
-
-        box-shadow:
-            0 2px 8px rgba(0, 0, 0, 0.25);
-
-        overflow: hidden;
-
-        font-family:
-            Arial,
-            Helvetica,
-            sans-serif;
-    }
-
-
-    /* =====================================================
-       LEGEND TOGGLE
-       ===================================================== */
-
-    #legend-toggle {
-        width: 110px;
-
-        padding:
-            8px 10px;
-
-        border: none;
-        border-radius: 0;
-
-        background: white;
-        color: #3f3528;
-
-        display: flex;
-
-        justify-content: space-between;
-        align-items: center;
-
-        font-size: 13px;
-        font-weight: bold;
-
-        cursor: pointer;
-    }
-
-
-    #legend-toggle:hover {
-        background: #eee9dc;
-        color: #3f3528;
-    }
-
-
-    #legend-arrow {
-        font-size: 13px;
-        line-height: 1;
-    }
-
-
-    /* =====================================================
-       LEGEND CONTENT
-       ===================================================== */
-
-    #legend-content {
-        display: none;
-
-        min-width: 185px;
-
-        padding:
-            8px 12px 11px 12px;
-
-        border-top:
-            1px solid #ddd;
-
-        background: white;
-    }
-
-
-    /* =====================================================
-       LEGEND TITLE
-       ===================================================== */
-
-    .legend-title {
-        margin-bottom: 7px;
-
-        color: #555;
-
-        font-size: 11px;
-        font-weight: bold;
-    }
-
-
-    /* =====================================================
-       LEGEND ITEMS
-       ===================================================== */
-
-    .legend-item {
-        display: flex;
-
-        align-items: center;
-
-        gap: 8px;
-
-        margin: 5px 0;
-
-        color: #333;
-
-        font-size: 13px;
-
-        line-height: 1.4;
-
-        white-space: nowrap;
-    }
-
-
-    /* =====================================================
-       LEGEND CIRCLES
-       ===================================================== */
-
-    .legend-circle {
-        width: 14px;
-        height: 14px;
-
-        min-width: 14px;
-
-        display: inline-block;
-
-        border-radius: 50%;
-
-        border:
-            1px solid rgba(0, 0, 0, 0.25);
-    }
-
-
-    /* =====================================================
        INFO PANEL
        ===================================================== */
 
@@ -724,6 +592,126 @@
 
 
     /* =====================================================
+       ACCESSIBILITY LEGEND
+       ===================================================== */
+
+    #accessibility-legend {
+        position: absolute;
+
+        top: 10px;
+        left: 10px;
+
+        z-index: 10;
+
+        background: rgba(255, 255, 255, 0.96);
+
+        border: 1px solid #aaa;
+        border-radius: 5px;
+
+        box-shadow:
+            0 2px 8px rgba(0, 0, 0, 0.25);
+
+        overflow: hidden;
+
+        font-family:
+            Arial,
+            Helvetica,
+            sans-serif;
+    }
+
+
+    #legend-toggle {
+        width: 110px;
+
+        padding: 8px 10px;
+
+        border: none;
+        border-radius: 0;
+
+        background: white;
+        color: #3f3528;
+
+        display: flex;
+
+        justify-content: space-between;
+        align-items: center;
+
+        font-size: 13px;
+        font-weight: bold;
+
+        cursor: pointer;
+    }
+
+
+    #legend-toggle:hover {
+        background: #eee9dc;
+        color: #3f3528;
+    }
+
+
+    #legend-arrow {
+        font-size: 13px;
+        line-height: 1;
+    }
+
+
+    #legend-content {
+        display: none;
+
+        min-width: 180px;
+
+        padding: 8px 12px 11px 12px;
+
+        border-top: 1px solid #ddd;
+
+        background: white;
+    }
+
+
+    .legend-title {
+        margin-bottom: 7px;
+
+        color: #555;
+
+        font-size: 11px;
+        font-weight: bold;
+    }
+
+
+    .legend-item {
+        display: flex;
+
+        align-items: center;
+
+        gap: 8px;
+
+        margin: 5px 0;
+
+        color: #333;
+
+        font-size: 13px;
+
+        line-height: 1.4;
+
+        white-space: nowrap;
+    }
+
+
+    .legend-circle {
+        width: 14px;
+        height: 14px;
+
+        min-width: 14px;
+
+        display: inline-block;
+
+        border-radius: 50%;
+
+        border: 1px solid rgba(0, 0, 0, 0.25);
+    }
+
+
+    /* =====================================================
        MOBILE
        ===================================================== */
 
@@ -752,12 +740,25 @@
         #search,
         #controls > button {
             width: 100%;
+
             flex: 1 1 100%;
+        }
+
+
+        #search-results {
+            width: 100%;
+
+            flex: 1 1 100%;
+
+            white-space: normal;
+
+            padding-left: 2px;
         }
 
 
         #search-toggles {
             width: 100%;
+
             flex: 1 1 100%;
         }
 
@@ -769,48 +770,44 @@
 
         #year-filter-container {
             width: 100%;
+
             flex: 1 1 100%;
         }
 
 
         #year-filter {
             flex: 1;
+
             width: auto;
         }
 
 
-        /* -----------------------------------------------
-           MOBILE LEGEND
-           ----------------------------------------------- */
-
         #accessibility-legend {
-            top: 10px;
-            right: 50px;
+            top: 8px;
+            left: 8px;
         }
 
 
         #legend-toggle {
-            width: 105px;
+            width: 100px;
 
-            padding:
-                8px 10px;
+            padding: 8px 9px;
 
-            font-size: 13px;
+            font-size: 12px;
         }
 
 
         #legend-content {
             min-width: 165px;
 
-            padding:
-                7px 10px 10px 10px;
+            padding: 7px 10px 9px 10px;
         }
 
 
         .legend-item {
-            margin: 4px 0;
-
             font-size: 12px;
+
+            margin: 4px 0;
         }
 
 
@@ -833,6 +830,7 @@
             width: auto;
 
             max-width: none;
+
             max-height: 65%;
         }
 
@@ -916,6 +914,17 @@
 
 
     <!-- =====================================================
+         SEARCH RESULTS
+         ===================================================== -->
+
+    <div
+        id="search-results"
+        aria-live="polite"
+        aria-atomic="true"
+    ></div>
+
+
+    <!-- =====================================================
          SEARCH TOGGLES
          ===================================================== -->
 
@@ -982,8 +991,11 @@
          RESET
          ===================================================== -->
 
-    <button id="reset-btn">
-        Reset Filters
+    <button
+        id="reset-btn"
+        type="button"
+    >
+        Reset
     </button>
 
 </div>
@@ -1008,7 +1020,6 @@
             aria-expanded="false"
             aria-controls="legend-content"
         >
-
             <span>
                 Legend
             </span>
@@ -1016,7 +1027,6 @@
             <span id="legend-arrow">
                 ▾
             </span>
-
         </button>
 
 
@@ -1107,7 +1117,6 @@
 
     <div id="info-panel">
 
-
         <button
             id="close-info"
             title="Close Panel"
@@ -1136,7 +1145,6 @@
 
     <div id="cemetery-lightbox">
 
-
         <button
             id="close-cemetery-lightbox"
             title="Close Cemetery Record"
@@ -1160,6 +1168,18 @@
      ========================================================= -->
 
 <script>
+
+
+    // ========================================================
+    // INITIAL MAP VIEW
+    // ========================================================
+
+    const INITIAL_CENTER = [
+        -85.0626,
+        39.3992
+    ];
+
+    const INITIAL_ZOOM = 11;
 
 
     // ========================================================
@@ -1210,12 +1230,9 @@
 
             },
 
-            zoom: 11,
+            zoom: INITIAL_ZOOM,
 
-            center: [
-                -85.0626,
-                39.3992
-            ],
+            center: INITIAL_CENTER,
 
             maxBounds: [
                 [-85.50, 39.10],
@@ -1241,6 +1258,10 @@
 
     const searchBox =
         document.getElementById("search");
+
+
+    const searchResults =
+        document.getElementById("search-results");
 
 
     const clearSearch =
@@ -1290,28 +1311,6 @@
 
 
     // ========================================================
-    // ACCESSIBILITY LEGEND REFERENCES
-    // ========================================================
-
-    const legendToggle =
-        document.getElementById(
-            "legend-toggle"
-        );
-
-
-    const legendContent =
-        document.getElementById(
-            "legend-content"
-        );
-
-
-    const legendArrow =
-        document.getElementById(
-            "legend-arrow"
-        );
-
-
-    // ========================================================
     // APPLICATION STATE
     // ========================================================
 
@@ -1326,58 +1325,6 @@
     let searchPerson = true;
 
     let veteransOnly = false;
-
-
-    // ========================================================
-    // ACCESSIBILITY LEGEND TOGGLE
-    // ========================================================
-
-    legendToggle.addEventListener(
-        "click",
-        function (event) {
-
-            // Prevent the legend click from becoming
-            // a map click.
-            event.stopPropagation();
-
-
-            const isOpen =
-                legendContent.style.display ===
-                "block";
-
-
-            if (isOpen) {
-
-                legendContent.style.display =
-                    "none";
-
-                legendArrow.textContent =
-                    "▾";
-
-                legendToggle.setAttribute(
-                    "aria-expanded",
-                    "false"
-                );
-
-            }
-
-            else {
-
-                legendContent.style.display =
-                    "block";
-
-                legendArrow.textContent =
-                    "▴";
-
-                legendToggle.setAttribute(
-                    "aria-expanded",
-                    "true"
-                );
-
-            }
-
-        }
-    );
 
 
     // ========================================================
@@ -1415,36 +1362,6 @@
 
             }
         );
-
-
-    // ========================================================
-    // CLOSE INFO PANEL WHEN CLICKING OUTSIDE IT
-    // ========================================================
-
-    map.on("click", function (event) {
-
-        const clickedFeatures = map.queryRenderedFeatures(
-            event.point,
-            {
-                layers: [
-                    "cemeteries-layer",
-                    "lake-cemeteries-layer"
-                ]
-            }
-        );
-
-        // If we clicked a cemetery marker, let its own
-        // click handler manage the information panel.
-        if (clickedFeatures.length > 0) {
-            return;
-        }
-
-        // Otherwise, clicking the map closes the panel.
-        if (!infoPanel.contains(event.originalEvent.target)) {
-            infoPanel.style.display = "none";
-        }
-
-    });
 
 
     // ========================================================
@@ -1550,25 +1467,17 @@
 
 
             // =================================================
-            // FRANKLIN COUNTY BOUNDARY
-            //
-            // The GeoJSON file should be in the same folder
-            // as this HTML file.
-            //
-            // This is a visual line only. It has no click
-            // or hover handler of its own.
+            // COUNTY BOUNDARY
             // =================================================
 
             map.addSource(
                 "franklin-county",
                 {
-
                     type:
                         "geojson",
 
                     data:
                         "franklin-county.geojson"
-
                 }
             );
 
@@ -1587,13 +1496,18 @@
                 paint: {
 
                     "line-color":
-                        "#01F9C6",
+                        "#555555",
 
                     "line-width":
-                        2.5,
+                        2,
 
                     "line-opacity":
-                        0.7
+                        0.8,
+
+                    "line-dasharray": [
+                        4,
+                        3
+                    ]
 
                 }
 
@@ -2441,7 +2355,6 @@
                                                     lakeCemeteries.forEach(
                                                         function (row) {
 
-
                                                             cemeteryList += `
 
                                                                 <div class="lake-cemetery">
@@ -2757,7 +2670,6 @@
             );
 
         }
-
 
     );
 
@@ -3184,6 +3096,13 @@
         // CALCULATE SEARCH MATCHES
         // ====================================================
 
+        let cemeteryNameMatches = 0;
+
+        let personNameMatches = 0;
+
+        let displayedCemeteryCount = 0;
+
+
         cemeteryFeatures.forEach(
             function (feature) {
 
@@ -3232,6 +3151,48 @@
 
 
                 // ==========================================
+                // CEMETERY NAME MATCH
+                // ==========================================
+
+                const cemeteryMatch =
+                    searchStr !== "" &&
+                    searchCemetery &&
+                    cemeteryText.includes(
+                        searchStr
+                    );
+
+
+                // ==========================================
+                // PERSON NAME MATCH
+                // ==========================================
+
+                const personMatch =
+                    searchStr !== "" &&
+                    searchPerson &&
+                    personText.includes(
+                        searchStr
+                    );
+
+
+                if (
+                    cemeteryMatch
+                ) {
+
+                    cemeteryNameMatches++;
+
+                }
+
+
+                if (
+                    personMatch
+                ) {
+
+                    personNameMatches++;
+
+                }
+
+
+                // ==========================================
                 // TEXT MATCH
                 // ==========================================
 
@@ -3244,33 +3205,8 @@
                 ) {
 
                     textMatch =
-                        false;
-
-
-                    if (
-                        searchCemetery &&
-                        cemeteryText.includes(
-                            searchStr
-                        )
-                    ) {
-
-                        textMatch =
-                            true;
-
-                    }
-
-
-                    if (
-                        searchPerson &&
-                        personText.includes(
-                            searchStr
-                        )
-                    ) {
-
-                        textMatch =
-                            true;
-
-                    }
+                        cemeteryMatch ||
+                        personMatch;
 
                 }
 
@@ -3311,8 +3247,87 @@
                 props.Search_Active =
                     searchIsActive;
 
+
+                // ==========================================
+                // COUNT CEMETERIES ACTUALLY DISPLAYED
+                // ==========================================
+
+                const yearMatch =
+                    filterYear >= 1900 ||
+                    (
+                        Number(
+                            props.Established_Year
+                        ) > 0 &&
+                        Number(
+                            props.Established_Year
+                        ) <= filterYear
+                    );
+
+
+                if (
+                    yearMatch &&
+                    finalMatch
+                ) {
+
+                    displayedCemeteryCount++;
+
+                }
+
             }
         );
+
+
+        // ====================================================
+        // SEARCH RESULT DISPLAY
+        // ====================================================
+
+        if (
+            searchStr === "" &&
+            !veteransOnly
+        ) {
+
+            searchResults.textContent =
+                "";
+
+        }
+
+        else {
+
+            let resultParts = [];
+
+
+            resultParts.push(
+                displayedCemeteryCount +
+                (
+                    displayedCemeteryCount === 1
+                        ? " cemetery match"
+                        : " cemetery matches"
+                )
+            );
+
+
+            if (
+                searchStr !== ""
+            ) {
+
+                resultParts.push(
+                    personNameMatches +
+                    (
+                        personNameMatches === 1
+                            ? " name match"
+                            : " name matches"
+                    )
+                );
+
+            }
+
+
+            searchResults.textContent =
+                resultParts.join(
+                    " · "
+                );
+
+        }
 
 
         // ====================================================
@@ -3622,7 +3637,7 @@
 
 
     // ========================================================
-    // RESET FILTERS
+    // RESET
     // ========================================================
 
     resetButton.addEventListener(
@@ -3698,6 +3713,121 @@
 
             showDefaultInfo();
 
+
+            // -----------------------------------------------
+            // RESTORE MAP VIEW
+            // -----------------------------------------------
+
+            map.flyTo({
+
+                center:
+                    INITIAL_CENTER,
+
+                zoom:
+                    INITIAL_ZOOM,
+
+                duration:
+                    500
+
+            });
+
+
+            // -----------------------------------------------
+            // CLOSE OPEN RECORD
+            // -----------------------------------------------
+
+            closeCemeteryRecord();
+
+
+            // -----------------------------------------------
+            // COLLAPSE LEGEND
+            // -----------------------------------------------
+
+            legendContent.style.display =
+                "none";
+
+
+            legendArrow.textContent =
+                "▾";
+
+
+            legendToggle.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+
+        }
+    );
+
+
+    // ========================================================
+    // ACCESSIBILITY LEGEND TOGGLE
+    // ========================================================
+
+    const legendToggle =
+        document.getElementById(
+            "legend-toggle"
+        );
+
+
+    const legendContent =
+        document.getElementById(
+            "legend-content"
+        );
+
+
+    const legendArrow =
+        document.getElementById(
+            "legend-arrow"
+        );
+
+
+    legendToggle.addEventListener(
+        "click",
+        function (event) {
+
+            event.stopPropagation();
+
+
+            const isOpen =
+                legendContent.style.display ===
+                "block";
+
+
+            if (isOpen) {
+
+                legendContent.style.display =
+                    "none";
+
+
+                legendArrow.textContent =
+                    "▾";
+
+
+                legendToggle.setAttribute(
+                    "aria-expanded",
+                    "false"
+                );
+
+            }
+
+            else {
+
+                legendContent.style.display =
+                    "block";
+
+
+                legendArrow.textContent =
+                    "▴";
+
+
+                legendToggle.setAttribute(
+                    "aria-expanded",
+                    "true"
+                );
+
+            }
+
         }
     );
 
@@ -3707,4 +3837,3 @@
 </body>
 
 </html>
-
