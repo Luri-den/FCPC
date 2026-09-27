@@ -2963,56 +2963,266 @@
 
     function handleGraveClick(event) {
 
-        if (
-            !event.features ||
-            !event.features.length
-        ) {
-            return;
+    if (
+        !event.features ||
+        !event.features.length
+    ) {
+        return;
+    }
+
+    const props =
+        event.features[0].properties;
+
+    infoPanel.style.display = "block";
+
+    const cemetery =
+        cemeteryFeatures.find(
+            function (feature) {
+
+                return String(
+                    feature.properties.Cemetery_ID || ""
+                ).trim() === String(
+                    props.Cemetery_ID || ""
+                ).trim();
+
+            }
+        );
+
+    /*
+     * The shared-marker system can pass the complete
+     * person record through Person_Data.
+     *
+     * Normal individual graves also use this same
+     * structure when available.
+     */
+
+    let person = null;
+
+    if (props.Person_Data) {
+
+        try {
+
+            const parsed =
+                JSON.parse(
+                    props.Person_Data
+                );
+
+            if (
+                Array.isArray(parsed) &&
+                parsed.length
+            ) {
+                person = parsed[0];
+            }
+
         }
+        catch (error) {
 
-        const props =
-            event.features[0].properties;
-
-        infoPanel.style.display = "block";
-
-        const cemetery =
-            cemeteryFeatures.find(
-                function (feature) {
-                    return String(
-                        feature.properties.Cemetery_ID || ""
-                    ).trim() === String(
-                        props.Cemetery_ID || ""
-                    ).trim();
-                }
+            console.error(
+                "Unable to parse Person_Data:",
+                error
             );
 
-        infoContent.innerHTML = `
-            <h2>${escapeHtml(
-                props.Person_Name ||
-                "Unnamed Interment"
-            )}</h2>
+        }
 
-            <h3>Cemetery</h3>
+    }
+
+    /*
+     * Fallback for an ordinary grave feature.
+     */
+
+    if (!person) {
+
+        person = {
+
+            name:
+                props.Person_Name ||
+                "Unnamed Interment",
+
+            veteran:
+                props.Veteran === true,
+
+            birth:
+                props.Birth || "",
+
+            death:
+                props.Death || "",
+
+            row:
+                props.Row || "",
+
+            plot:
+                props.Plot || "",
+
+            stoneInfo:
+                props.Stone_Info || "",
+
+            vetDetails:
+                props.Vet_Details || "",
+
+            markerID:
+                props.Marker_ID || ""
+
+        };
+
+    }
+
+
+    const cemeteryName =
+        cemetery
+            ? cemetery.properties.Cemetery_Name
+            : props.Cemetery_ID;
+
+
+    let html = "";
+
+
+    html += `
+        <h2>
+            ${escapeHtml(
+                person.name ||
+                "Unnamed Interment"
+            )}
+        </h2>
+    `;
+
+
+    html += `
+        <h3>Cemetery</h3>
+
+        <p>
+            ${escapeHtml(
+                cemeteryName || ""
+            )}
+        </p>
+    `;
+
+
+    if (person.birth) {
+
+        html += `
+            <h3>Birth</h3>
 
             <p>
                 ${escapeHtml(
-                    cemetery
-                        ? cemetery.properties.Cemetery_Name
-                        : props.Cemetery_ID
+                    person.birth
                 )}
-            </p>
-
-            <h3>Veteran</h3>
-
-            <p>
-                ${props.Veteran === true ? "Yes" : "No"}
             </p>
         `;
 
-        event.originalEvent &&
-            event.originalEvent.stopPropagation();
+    }
+
+
+    if (person.death) {
+
+        html += `
+            <h3>Death</h3>
+
+            <p>
+                ${escapeHtml(
+                    person.death
+                )}
+            </p>
+        `;
 
     }
+
+
+    html += `
+        <h3>Veteran</h3>
+
+        <p>
+            ${person.veteran
+                ? "Yes"
+                : "No"}
+        </p>
+    `;
+
+
+    if (person.vetDetails) {
+
+        html += `
+            <h3>Veteran Details</h3>
+
+            <p>
+                ${escapeHtml(
+                    person.vetDetails
+                )}
+            </p>
+        `;
+
+    }
+
+
+    if (person.row) {
+
+        html += `
+            <h3>Row</h3>
+
+            <p>
+                ${escapeHtml(
+                    person.row
+                )}
+            </p>
+        `;
+
+    }
+
+
+    if (person.plot) {
+
+        html += `
+            <h3>Plot</h3>
+
+            <p>
+                ${escapeHtml(
+                    person.plot
+                )}
+            </p>
+        `;
+
+    }
+
+
+    if (person.stoneInfo) {
+
+        html += `
+            <h3>Additional Information on Stone</h3>
+
+            <p>
+                ${escapeHtml(
+                    person.stoneInfo
+                )}
+            </p>
+        `;
+
+    }
+
+
+    if (person.markerID) {
+
+        html += `
+            <h3>Marker ID</h3>
+
+            <p>
+                ${escapeHtml(
+                    person.markerID
+                )}
+            </p>
+        `;
+
+    }
+
+
+    infoContent.innerHTML = html;
+
+
+    if (event.originalEvent) {
+
+        event.originalEvent.stopPropagation();
+
+    }
+
+}
 
 
     // ========================================================
@@ -4099,101 +4309,72 @@
     // SHOW SHARED MARKER PANEL
     // ========================================================
 
-    function showSharedMarkerPanel(
-        cemeteryID,
-        markerID,
-        viewAll
+  function showSharedMarkerPanel(
+    cemeteryID,
+    markerID,
+    viewAll
+) {
+
+    const groups =
+        sharedMarkerState
+            .groupsByCemetery[
+                cemeteryID
+            ];
+
+    const group =
+        groups &&
+        groups[markerID];
+
+
+    if (
+        !group ||
+        group.length < 2
     ) {
 
-        const groups =
-            sharedMarkerState
-                .groupsByCemetery[
-                    cemeteryID
-                ];
+        return;
 
-        const group =
-            groups &&
-            groups[markerID];
+    }
 
 
-        if (
-            !group ||
-            group.length < 2
-        ) {
-
-            return;
-
-        }
+    infoPanel.style.display =
+        "block";
 
 
-        infoPanel.style.display =
-            "block";
+    const cemetery =
+        cemeteryFeatures.find(
+            function (feature) {
 
-
-        let peopleButtons = "";
-
-
-        group.forEach(
-            function (person, index) {
-
-                peopleButtons += `
-
-                    <button
-                        type="button"
-                        class="shared-marker-person-button"
-                        data-shared-cemetery="${encodeURIComponent(
-                            cemeteryID
-                        )}"
-                        data-shared-marker="${encodeURIComponent(
-                            markerID
-                        )}"
-                        data-shared-index="${index}"
-                    >
-                        ${escapeHtml(
-                            person.name ||
-                            "Unnamed Interment"
-                        )}
-                    </button>
-
-                `;
+                return String(
+                    feature.properties.Cemetery_ID || ""
+                ).trim() === String(
+                    cemeteryID || ""
+                ).trim();
 
             }
         );
 
 
-        if (viewAll) {
-
-            infoContent.innerHTML = `
-
-                <h2>
-                    People at This Marker
-                </h2>
-
-                <p>
-                    This physical marker represents
-                    <strong>
-                        ${group.length}
-                    </strong>
-                    people.
-                </p>
-
-                <h3>
-                    Select a person
-                </h3>
-
-                ${peopleButtons}
-
-            `;
-
-            return;
-
-        }
+    const cemeteryName =
+        cemetery
+            ? cemetery.properties.Cemetery_Name
+            : cemeteryID;
 
 
-        infoContent.innerHTML = `
+    /*
+     * ========================================================
+     * SHOW ALL
+     *
+     * This now displays the ACTUAL DATA for every person
+     * associated with the physical marker.
+     * ========================================================
+     */
+
+    if (viewAll) {
+
+        let html = `
 
             <h2>
-                Shared Marker
+                People at This Marker
             </h2>
 
             <p>
@@ -4204,29 +4385,295 @@
                 people.
             </p>
 
-            <h3>
-                Select a person
-            </h3>
-
-            ${peopleButtons}
-
-            <button
-                type="button"
-                class="shared-marker-view-all-button"
-                data-shared-view-all="true"
-                data-shared-cemetery="${encodeURIComponent(
-                    cemeteryID
-                )}"
-                data-shared-marker="${encodeURIComponent(
-                    markerID
-                )}"
-            >
-                View all
-            </button>
+            <p>
+                ${escapeHtml(
+                    cemeteryName || ""
+                )}
+            </p>
 
         `;
 
+
+        group.forEach(
+            function (person, index) {
+
+                html += `
+
+                    <div
+                        style="
+                            border-top:1px solid #ccc;
+                            margin-top:16px;
+                            padding-top:14px;
+                        "
+                    >
+
+                        <h2>
+                            ${escapeHtml(
+                                person.name ||
+                                "Unnamed Interment"
+                            )}
+                        </h2>
+
+                `;
+
+
+                if (person.birth) {
+
+                    html += `
+
+                        <div class="popup-field">
+
+                            <div class="popup-label">
+                                Birth
+                            </div>
+
+                            <div>
+                                ${escapeHtml(
+                                    person.birth
+                                )}
+                            </div>
+
+                        </div>
+
+                    `;
+
+                }
+
+
+                if (person.death) {
+
+                    html += `
+
+                        <div class="popup-field">
+
+                            <div class="popup-label">
+                                Death
+                            </div>
+
+                            <div>
+                                ${escapeHtml(
+                                    person.death
+                                )}
+                            </div>
+
+                        </div>
+
+                    `;
+
+                }
+
+
+                html += `
+
+                    <div class="popup-field">
+
+                        <div class="popup-label">
+                            Veteran
+                        </div>
+
+                        <div>
+                            ${person.veteran
+                                ? "Yes"
+                                : "No"}
+                        </div>
+
+                    </div>
+
+                `;
+
+
+                if (person.vetDetails) {
+
+                    html += `
+
+                        <div class="popup-field">
+
+                            <div class="popup-label">
+                                Veteran Details
+                            </div>
+
+                            <div>
+                                ${escapeHtml(
+                                    person.vetDetails
+                                )}
+                            </div>
+
+                        </div>
+
+                    `;
+
+                }
+
+
+                if (person.row) {
+
+                    html += `
+
+                        <div class="popup-field">
+
+                            <div class="popup-label">
+                                Row
+                            </div>
+
+                            <div>
+                                ${escapeHtml(
+                                    person.row
+                                )}
+                            </div>
+
+                        </div>
+
+                    `;
+
+                }
+
+
+                if (person.plot) {
+
+                    html += `
+
+                        <div class="popup-field">
+
+                            <div class="popup-label">
+                                Plot
+                            </div>
+
+                            <div>
+                                ${escapeHtml(
+                                    person.plot
+                                )}
+                            </div>
+
+                        </div>
+
+                    `;
+
+                }
+
+
+                if (person.stoneInfo) {
+
+                    html += `
+
+                        <div class="popup-field">
+
+                            <div class="popup-label">
+                                Additional Information on Stone
+                            </div>
+
+                            <div>
+                                ${escapeHtml(
+                                    person.stoneInfo
+                                )}
+                            </div>
+
+                        </div>
+
+                    `;
+
+                }
+
+
+                html += `
+
+                    </div>
+
+                `;
+
+            }
+        );
+
+
+        infoContent.innerHTML =
+            html;
+
+        return;
+
     }
+
+
+    /*
+     * ========================================================
+     * NORMAL SHARED-MARKER VIEW
+     * ========================================================
+     */
+
+    let peopleButtons = "";
+
+
+    group.forEach(
+        function (person, index) {
+
+            peopleButtons += `
+
+                <button
+                    type="button"
+                    class="shared-marker-person-button"
+
+                    data-shared-cemetery="${encodeURIComponent(
+                        cemeteryID
+                    )}"
+
+                    data-shared-marker="${encodeURIComponent(
+                        markerID
+                    )}"
+
+                    data-shared-index="${index}"
+                >
+
+                    ${escapeHtml(
+                        person.name ||
+                        "Unnamed Interment"
+                    )}
+
+                </button>
+
+            `;
+
+        }
+    );
+
+
+    infoContent.innerHTML = `
+
+        <h2>
+            Shared Marker
+        </h2>
+
+        <p>
+            This physical marker represents
+            <strong>
+                ${group.length}
+            </strong>
+            people.
+        </p>
+
+        <h3>
+            Select a person
+        </h3>
+
+        ${peopleButtons}
+
+        <button
+            type="button"
+            class="shared-marker-view-all-button"
+
+            data-shared-view-all="true"
+
+            data-shared-cemetery="${encodeURIComponent(
+                cemeteryID
+            )}"
+
+            data-shared-marker="${encodeURIComponent(
+                markerID
+            )}"
+        >
+            View all
+        </button>
+
+    `;
+
+}
 
 
     // ========================================================
@@ -4609,21 +5056,46 @@
 
                         properties: {
 
-                            Cemetery_ID:
-                                cemeteryID,
+    Cemetery_ID:
+        cemeteryID,
 
-                            Grave_Index:
-                                index + 1,
+    Grave_Index:
+        index + 1,
 
-                            Person_Name:
-                                person.name ||
-                                "Unnamed Interment",
+    Person_Name:
+        person.name ||
+        "Unnamed Interment",
 
-                            Veteran:
-                                person.veteran
+    Veteran:
+        person.veteran,
 
-                        },
+    Birth:
+        person.birth || "",
 
+    Death:
+        person.death || "",
+
+    Row:
+        person.row || "",
+
+    Plot:
+        person.plot || "",
+
+    Stone_Info:
+        person.stoneInfo || "",
+
+    Vet_Details:
+        person.vetDetails || "",
+
+    Marker_ID:
+        person.markerID || "",
+
+    Person_Data:
+        JSON.stringify([
+            person
+        ])
+
+},
                         geometry: {
 
                             type:
@@ -4725,51 +5197,127 @@
                     groups[markerID];
 
 
-                const person =
-                    group &&
-                    group[index];
+                const person = {
+
+    /*
+     * ========================================================
+     * IDENTITY
+     * ========================================================
+     */
+
+    name:
+        fullName ||
+        "Unnamed Interment",
+
+    firstName:
+        firstName,
+
+    lastName:
+        lastName,
 
 
-                if (person) {
+    /*
+     * ========================================================
+     * LIFE DATES
+     * ========================================================
+     */
 
-                    // Send the selected person through
-                    // the EXISTING individual grave popup.
+    birth:
+        String(
+            row.BIRTH ||
+            ""
+        ).trim(),
 
-                    handleGraveClick({
-
-                        features: [
-
-                            {
-
-                                properties: {
-
-                                    Cemetery_ID:
-                                        cemeteryID,
-
-                                    Person_Name:
-                                        person.name ||
-                                        "Unnamed Interment",
-
-                                    Veteran:
-                                        person.veteran
-
-                                }
-
-                            }
-
-                        ],
-
-                        originalEvent:
-                            null
-
-                    });
-
-                }
+    death:
+        String(
+            row.DEATH ||
+            ""
+        ).trim(),
 
 
-                return;
+    /*
+     * ========================================================
+     * LOCATION / PLOT
+     * ========================================================
+     */
 
-            }
+    row:
+        String(
+            row.ROW ||
+            ""
+        ).trim(),
+
+    plot:
+        String(
+            row.PLOT ||
+            ""
+        ).trim(),
+
+
+    /*
+     * ========================================================
+     * STONE INFORMATION
+     * ========================================================
+     */
+
+    stoneInfo:
+        String(
+            row[
+                "ADDITIONAL INFORMATION ON STONE"
+            ] ||
+            ""
+        ).trim(),
+
+
+    /*
+     * ========================================================
+     * VETERAN
+     * ========================================================
+     */
+
+    veteran:
+        String(
+            row.VETERAN ||
+            ""
+        ).trim() === "1",
+
+    vetDetails:
+        String(
+            row[
+                "VET DETAILS"
+            ] ||
+            ""
+        ).trim(),
+
+
+    /*
+     * ========================================================
+     * PHYSICAL MARKER
+     * ========================================================
+     */
+
+    markerID:
+        markerID,
+
+
+    /*
+     * ========================================================
+     * MAP POSITION
+     * ========================================================
+     */
+
+    coordinates:
+        !isNaN(lat) &&
+        !isNaN(lon)
+
+            ? [
+                lon,
+                lat
+            ]
+
+            : null
+
+};
 
 
             // -----------------------------------------------
