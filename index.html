@@ -748,6 +748,27 @@
 
 
     /* =====================================================
+       MOBILE SEARCH DIRECTIONS
+       ===================================================== */
+
+    @media (max-width: 700px) {
+
+        .search-direction {
+            max-width: 60vw;
+            padding: 5px 7px 5px 5px;
+            font-size: 11px;
+        }
+
+        .search-direction-arrow {
+            width: 15px;
+            min-width: 15px;
+            font-size: 17px;
+        }
+
+    }
+
+
+    /* =====================================================
        MOBILE
        ===================================================== */
 
@@ -3060,7 +3081,14 @@
 
         const centerX = width / 2;
         const centerY = height / 2;
-        const edgePadding = 18;
+        const isMobile =
+            window.matchMedia("(max-width: 700px)").matches;
+
+        // Mobile screens need the indicators pulled farther inward
+        // so long cemetery names do not get clipped at the map edge.
+        const edgePadding =
+            isMobile ? 50 : 18;
+
         const halfW = width / 2 - edgePadding;
         const halfH = height / 2 - edgePadding;
         const usedPositions = [];
