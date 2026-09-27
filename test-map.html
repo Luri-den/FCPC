@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 
 <html lang="en">
@@ -45,7 +44,6 @@
      ========================================================= -->
 
 <style>
-
 
     * {
         box-sizing: border-box;
@@ -109,19 +107,6 @@
         align-items: center;
 
         z-index: 5;
-    }
-
-
-    /* =====================================================
-       SEARCH RESULTS
-       ===================================================== */
-
-    #search-results {
-        min-width: 150px;
-        color: #5a5045;
-        font-size: 13px;
-        line-height: 1.3;
-        white-space: nowrap;
     }
 
 
@@ -594,135 +579,16 @@
 
 
     /* =====================================================
-       ACCESSIBILITY LEGEND
+       MAP HOVER LABELS
        ===================================================== */
 
-    #accessibility-legend {
-        position: absolute;
-        top: 10px;
-        left: 10px;
-        z-index: 10;
-
-        background: rgba(255, 255, 255, 0.96);
-
-        border: 1px solid #aaa;
-        border-radius: 5px;
-
-        box-shadow:
-            0 2px 8px rgba(0, 0, 0, 0.25);
-
-        overflow: hidden;
-
-        font-family: Arial, Helvetica, sans-serif;
-    }
-
-
-    #legend-toggle {
-        width: 110px;
-
-        padding: 8px 10px;
-
-        border: none;
-        border-radius: 0;
-
-        background: white;
-        color: #3f3528;
-
-        font-size: 13px;
-        font-weight: bold;
-
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-
-        cursor: pointer;
-    }
-
-
-    #legend-toggle:hover {
-        background: #eee9dc;
-        color: #3f3528;
-    }
-
-
-    #legend-content {
-        display: none;
-
-        min-width: 180px;
-
-        padding: 8px 12px 11px 12px;
-
-        border-top: 1px solid #ddd;
-    }
-
-
-    .legend-title {
-        margin-bottom: 7px;
-
-        font-size: 11px;
-        font-weight: bold;
-
-        color: #555;
-    }
-
-
-    .legend-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-
-        margin: 5px 0;
-
-        font-size: 13px;
-        line-height: 1.4;
-
-        white-space: nowrap;
-    }
-
-
-    .legend-circle {
-        display: inline-block;
-
-        width: 14px;
-        height: 14px;
-        min-width: 14px;
-
-        border-radius: 50%;
-
-        border: 1px solid rgba(0, 0, 0, 0.25);
-    }
-
-
-    /* =====================================================
-       OFF-SCREEN SEARCH DIRECTIONS
-       ===================================================== */
-
-    #search-directions {
-        position: absolute;
-        inset: 0;
-        z-index: 3;
-        pointer-events: none;
-        overflow: hidden;
-    }
-
-
-    .search-direction {
-        position: absolute;
-
-        display: flex;
-        align-items: center;
-
-        gap: 5px;
-
-        max-width: 210px;
-
-        padding: 5px 8px 5px 6px;
+    .map-hover-popup .maplibregl-popup-content {
+        padding: 6px 9px;
 
         border: 1px solid rgba(90, 75, 58, 0.55);
-
         border-radius: 14px;
 
-        background: rgba(255, 255, 255, 0.94);
+        background: rgba(255, 255, 255, 0.96);
 
         box-shadow:
             0 2px 7px rgba(0, 0, 0, 0.25);
@@ -730,145 +596,16 @@
         color: #3f3528;
 
         font-size: 12px;
-
         font-weight: bold;
-
         line-height: 1.15;
 
         white-space: nowrap;
-
-        pointer-events: auto;
-
-        cursor: pointer;
-
-        transform-origin: center center;
     }
 
 
-    .search-direction:hover {
-        background: white;
-        border-color: #463a2d;
-    }
-
-
-    .search-direction-arrow {
-        display: inline-block;
-
-        width: 16px;
-        min-width: 16px;
-
-        text-align: center;
-
-        font-size: 18px;
-        line-height: 16px;
-
-        color: #FFD700;
-
-        text-shadow:
-            0 1px 2px rgba(0, 0, 0, 0.65);
-
-        transform-origin: center center;
-    }
-
-
-    .search-direction-name {
-        overflow: hidden;
-
-        text-overflow: ellipsis;
-    }
-
-
-    /* =====================================================
-       SELECTED CEMETERY FLOATING NAME
-       ===================================================== */
-
-    .cemetery-name-label {
-        display: flex;
-
-        align-items: center;
-
-        gap: 5px;
-
-        padding: 5px 8px 5px 6px;
-
-        border:
-            1px solid
-            rgba(90, 75, 58, 0.55);
-
-        border-radius: 14px;
-
-        background:
-            rgba(255, 255, 255, 0.94);
-
-        box-shadow:
-            0 2px 7px
-            rgba(0, 0, 0, 0.25);
-
-        color: #3f3528;
-
-        font-size: 12px;
-
-        font-weight: bold;
-
-        line-height: 1.15;
-
-        white-space: nowrap;
-
-        pointer-events: none;
-
-        transform: translateY(-4px);
-    }
-
-
-    .cemetery-name-label::before {
-        content: "";
-
-        width: 9px;
-        height: 9px;
-
-        min-width: 9px;
-
-        border-radius: 50%;
-
-        background: #01796F;
-
-        border:
-            1px solid
-            rgba(0, 0, 0, 0.25);
-    }
-
-
-    /* =====================================================
-       MOBILE SEARCH DIRECTIONS
-       ===================================================== */
-
-    @media (max-width: 700px) {
-
-        .search-direction {
-            max-width: 60vw;
-
-            padding:
-                5px 7px 5px 5px;
-
-            font-size: 11px;
-        }
-
-
-        .search-direction-arrow {
-            width: 15px;
-
-            min-width: 15px;
-
-            font-size: 17px;
-        }
-
-
-        .cemetery-name-label {
-            max-width: 70vw;
-
-            font-size: 11px;
-        }
-
+    .map-hover-popup .maplibregl-popup-tip {
+        border-top-color: rgba(255, 255, 255, 0.96);
+        border-bottom-color: rgba(255, 255, 255, 0.96);
     }
 
 
@@ -905,14 +642,6 @@
         }
 
 
-        #search-results {
-            width: 100%;
-            flex: 1 1 100%;
-            white-space: normal;
-            padding-left: 2px;
-        }
-
-
         #search-toggles {
             width: 100%;
             flex: 1 1 100%;
@@ -933,38 +662,6 @@
         #year-filter {
             flex: 1;
             width: auto;
-        }
-
-
-        #accessibility-legend {
-            top: 8px;
-            left: 8px;
-        }
-
-
-        #legend-toggle {
-            width: 100px;
-            padding: 8px 9px;
-            font-size: 12px;
-        }
-
-
-        #legend-content {
-            min-width: 165px;
-            padding: 7px 10px 9px 10px;
-        }
-
-
-        .legend-item {
-            font-size: 12px;
-            margin: 4px 0;
-        }
-
-
-        .legend-circle {
-            width: 13px;
-            height: 13px;
-            min-width: 13px;
         }
 
 
@@ -1012,7 +709,6 @@
 
 <body>
 
-
 <!-- =========================================================
      HEADER
      ========================================================= -->
@@ -1037,6 +733,10 @@
 <div id="controls">
 
 
+    <!-- =====================================================
+         SEARCH
+         ===================================================== -->
+
     <div id="search-wrapper">
 
         <input
@@ -1057,12 +757,9 @@
     </div>
 
 
-    <div
-        id="search-results"
-        aria-live="polite"
-        aria-atomic="true"
-    ></div>
-
+    <!-- =====================================================
+         SEARCH TOGGLES
+         ===================================================== -->
 
     <div id="search-toggles">
 
@@ -1095,6 +792,10 @@
     </div>
 
 
+    <!-- =====================================================
+         YEAR FILTER
+         ===================================================== -->
+
     <div id="year-filter-container">
 
         <span id="year-filter-label">
@@ -1119,8 +820,12 @@
     </div>
 
 
-    <button id="reset-btn" type="button">
-        Reset
+    <!-- =====================================================
+         RESET
+         ===================================================== -->
+
+    <button id="reset-btn">
+        Reset Filters
     </button>
 
 </div>
@@ -1133,83 +838,12 @@
 <div id="map">
 
 
-    <div id="search-directions"></div>
-
-
-    <div id="accessibility-legend">
-
-        <button
-            id="legend-toggle"
-            type="button"
-            aria-expanded="false"
-            aria-controls="legend-content"
-        >
-            <span>Legend</span>
-            <span id="legend-arrow">▾</span>
-        </button>
-
-
-        <div id="legend-content">
-
-            <div class="legend-title">
-                ACCESSIBILITY
-            </div>
-
-
-            <div class="legend-item">
-                <span
-                    class="legend-circle"
-                    style="background-color: #01796F;"
-                ></span>
-                <span>Public</span>
-            </div>
-
-
-            <div class="legend-item">
-                <span
-                    class="legend-circle"
-                    style="background-color: #C9A227;"
-                ></span>
-                <span>With Permission</span>
-            </div>
-
-
-            <div class="legend-item">
-                <span
-                    class="legend-circle"
-                    style="background-color: #D2691E;"
-                ></span>
-                <span>Private Land</span>
-            </div>
-
-
-            <div class="legend-item">
-                <span
-                    class="legend-circle"
-                    style="background-color: #8B0000;"
-                ></span>
-                <span>Inaccessible</span>
-            </div>
-
-
-            <div class="legend-item">
-                <span
-                    class="legend-circle"
-                    style="background-color: #777777;"
-                ></span>
-                <span>Unknown</span>
-            </div>
-
-        </div>
-
-    </div>
-
-
     <!-- =====================================================
          FLOATING INFORMATION PANEL
          ===================================================== -->
 
     <div id="info-panel">
+
 
         <button
             id="close-info"
@@ -1239,6 +873,7 @@
 
     <div id="cemetery-lightbox">
 
+
         <button
             id="close-cemetery-lightbox"
             title="Close Cemetery Record"
@@ -1267,24 +902,6 @@
     // ========================================================
     // MAP SETUP
     // ========================================================
-
-    const INITIAL_CENTER = [
-        -85.0626,
-        39.3992
-    ];
-
-
-    const INITIAL_ZOOM = 11;
-
-
-    /*
-     * Maximum zoom available for cemetery mode.
-     *
-     * This allows mapped graves to be viewed very closely.
-     */
-
-    const CEMETERY_MAX_ZOOM = 21;
-
 
     const map =
         new maplibregl.Map({
@@ -1330,21 +947,19 @@
 
             },
 
-            zoom: INITIAL_ZOOM,
+            zoom: 11,
 
-            center: INITIAL_CENTER,
+            center: [
+                -85.0626,
+                39.3992
+            ],
 
             maxBounds: [
                 [-85.50, 39.10],
                 [-84.65, 39.70]
             ],
 
-            /*
-             * Increased from 18 so individual
-             * cemetery/grave locations can be inspected.
-             */
-
-            maxZoom: CEMETERY_MAX_ZOOM
+            maxZoom: 18
 
         });
 
@@ -1367,14 +982,6 @@
 
     const clearSearch =
         document.getElementById("clear-search");
-
-
-    const searchResults =
-        document.getElementById("search-results");
-
-
-    const searchDirections =
-        document.getElementById("search-directions");
 
 
     const cemeteryToggle =
@@ -1429,27 +1036,28 @@
 
     let intermentsLoaded = false;
 
+    // ========================================================
+    // TEST CEMETERY BOUNDARY
+    //
+    // test-cemetery.geojson contains the test polygon under
+    // CEMETERY_ID = TEST001.  That polygon represents the
+    // real cemetery whose cemlist.csv ID is FC0202.
+    // ========================================================
+
+    const TEST_BOUNDARY_CEMETERY_ID = "FC0202";
+    const TEST_BOUNDARY_FILE = "test-cemetery.geojson";
+
+    let testBoundaryData = null;
+
+    let selectedCemeteryFeature = null;
+
+    let hoverPopup = null;
+
     let searchCemetery = true;
 
     let searchPerson = true;
 
     let veteransOnly = false;
-
-
-    /*
-     * The currently selected cemetery feature.
-     *
-     * null means the map is in normal county mode.
-     */
-
-    let selectedCemeteryFeature = null;
-
-
-    /*
-     * DOM marker used for the floating cemetery name.
-     */
-
-    let selectedCemeteryLabelMarker = null;
 
 
     // ========================================================
@@ -1474,105 +1082,16 @@
 
 
     // ========================================================
-    // REMOVE CEMETERY NAME LABEL
-    // ========================================================
-
-    function removeSelectedCemeteryLabel() {
-
-        if (
-            selectedCemeteryLabelMarker
-        ) {
-
-            selectedCemeteryLabelMarker.remove();
-
-            selectedCemeteryLabelMarker =
-                null;
-
-        }
-
-    }
-
-
-    // ========================================================
-    // CREATE CEMETERY NAME LABEL
-    // ========================================================
-
-    function createSelectedCemeteryLabel(
-        feature
-    ) {
-
-        removeSelectedCemeteryLabel();
-
-
-        if (!feature) {
-            return;
-        }
-
-
-        const coordinates =
-            feature.geometry.coordinates;
-
-
-        const props =
-            feature.properties;
-
-
-        const label =
-            document.createElement("div");
-
-
-        label.className =
-            "cemetery-name-label";
-
-
-        label.textContent =
-            props.Cemetery_Name ||
-            "Unnamed Cemetery";
-
-
-        /*
-         * The label is intentionally non-clickable.
-         * The actual cemetery marker remains the
-         * clickable object.
-         */
-
-        label.style.pointerEvents =
-            "none";
-
-
-        selectedCemeteryLabelMarker =
-            new maplibregl.Marker({
-
-                element: label,
-
-                anchor: "bottom"
-
-            })
-
-                .setLngLat(
-                    coordinates
-                )
-
-                .addTo(map);
-
-    }
-
-
-    // ========================================================
     // CLOSE INFORMATION PANEL
-    //
-    // This now also exits cemetery mode.
     // ========================================================
 
     document
         .getElementById("close-info")
         .addEventListener(
             "click",
-            function (event) {
+            function () {
 
-                event.stopPropagation();
-
-                exitCemeteryMode();
+                infoPanel.style.display = "none";
 
             }
         );
@@ -1584,11 +1103,9 @@
 
     function closeCemeteryRecord() {
 
-        cemeteryLightbox.style.display =
-            "none";
+        cemeteryLightbox.style.display = "none";
 
-        cemeteryLightboxFrame.src =
-            "";
+        cemeteryLightboxFrame.src = "";
 
     }
 
@@ -1638,9 +1155,6 @@
             }
 
 
-            event.stopPropagation();
-
-
             const cemeteryID =
                 button.dataset.cemeteryId;
 
@@ -1657,299 +1171,6 @@
 
         }
     );
-
-
-    // ========================================================
-    // CEMETERY BOUNDS
-    //
-    // There are currently no cemetery polygons in the
-    // live cemetery data, so the usable bounds are built
-    // from:
-    //
-    // 1. The cemetery's own coordinates
-    // 2. Every mapped grave belonging to that cemetery
-    //
-    // This gives us a rough "cemetery footprint" for zooming.
-    // ========================================================
-
-    function getCemeteryBounds(
-        feature
-    ) {
-
-        const bounds =
-            new maplibregl.LngLatBounds();
-
-
-        if (!feature) {
-            return null;
-        }
-
-
-        // ----------------------------------------------------
-        // CEMETERY CENTER
-        // ----------------------------------------------------
-
-        const cemeteryCoordinates =
-            feature.geometry.coordinates;
-
-
-        if (
-            Array.isArray(
-                cemeteryCoordinates
-            ) &&
-            cemeteryCoordinates.length >= 2
-        ) {
-
-            bounds.extend(
-                cemeteryCoordinates
-            );
-
-        }
-
-
-        // ----------------------------------------------------
-        // MAPPED GRAVES
-        // ----------------------------------------------------
-
-        const cemeteryID =
-            String(
-                feature.properties.Cemetery_ID ||
-                ""
-            ).trim();
-
-
-        const intermentData =
-            intermentsByCemetery[
-                cemeteryID
-            ];
-
-
-        if (
-            intermentData &&
-            Array.isArray(
-                intermentData.coordinates
-            )
-        ) {
-
-            intermentData.coordinates.forEach(
-                function (coordinate) {
-
-                    if (
-                        Array.isArray(coordinate) &&
-                        coordinate.length >= 2 &&
-                        !isNaN(coordinate[0]) &&
-                        !isNaN(coordinate[1])
-                    ) {
-
-                        bounds.extend(
-                            coordinate
-                        );
-
-                    }
-
-                }
-            );
-
-        }
-
-
-        return bounds;
-    }
-
-
-    // ========================================================
-    // ENTER CEMETERY MODE
-    // ========================================================
-
-    function enterCemeteryMode(
-        feature
-    ) {
-
-        if (!feature) {
-            return;
-        }
-
-
-        selectedCemeteryFeature =
-            feature;
-
-
-        /*
-         * Show the information panel immediately.
-         */
-
-        infoPanel.style.display =
-            "block";
-
-
-        /*
-         * Create the floating cemetery name.
-         */
-
-        createSelectedCemeteryLabel(
-            feature
-        );
-
-
-        /*
-         * Build rough cemetery bounds.
-         */
-
-        const bounds =
-            getCemeteryBounds(
-                feature
-            );
-
-
-        if (!bounds) {
-
-            map.flyTo({
-
-                center:
-                    feature.geometry.coordinates,
-
-                zoom:
-                    CEMETERY_MAX_ZOOM,
-
-                duration:
-                    1000
-
-            });
-
-            return;
-
-        }
-
-
-        /*
-         * If there is effectively only one coordinate,
-         * give the map a very close zoom.
-         *
-         * Otherwise fit the entire grave cluster.
-         */
-
-        const sw =
-            bounds.getSouthWest();
-
-
-        const ne =
-            bounds.getNorthEast();
-
-
-        const longitudeSpan =
-            Math.abs(
-                ne.lng -
-                sw.lng
-            );
-
-
-        const latitudeSpan =
-            Math.abs(
-                ne.lat -
-                sw.lat
-            );
-
-
-        if (
-            longitudeSpan < 0.00001 &&
-            latitudeSpan < 0.00001
-        ) {
-
-            map.flyTo({
-
-                center:
-                    feature.geometry.coordinates,
-
-                zoom:
-                    CEMETERY_MAX_ZOOM,
-
-                duration:
-                    1000
-
-            });
-
-        }
-
-        else {
-
-            map.fitBounds(
-
-                bounds,
-
-                {
-
-                    padding: {
-                        top: 100,
-                        bottom: 100,
-                        left: 100,
-                        right: 350
-                    },
-
-                    maxZoom:
-                        CEMETERY_MAX_ZOOM,
-
-                    duration:
-                        1000
-
-                }
-
-            );
-
-        }
-
-    }
-
-
-    // ========================================================
-    // EXIT CEMETERY MODE
-    // ========================================================
-
-    function exitCemeteryMode(
-        restoreCountyView = true
-    ) {
-
-        selectedCemeteryFeature =
-            null;
-
-
-        removeSelectedCemeteryLabel();
-
-
-        /*
-         * Restore the default information panel.
-         */
-
-        infoPanel.style.display =
-            "block";
-
-
-        showDefaultInfo();
-
-
-        /*
-         * Return to the normal county view.
-         */
-
-        if (
-            restoreCountyView
-        ) {
-
-            map.flyTo({
-
-                center:
-                    INITIAL_CENTER,
-
-                zoom:
-                    INITIAL_ZOOM,
-
-                duration:
-                    700
-
-            });
-
-        }
-
-    }
 
 
     // ========================================================
@@ -1979,55 +1200,6 @@
 
 
             // =================================================
-            // FRANKLIN COUNTY BOUNDARY
-            // =================================================
-
-            map.addSource(
-                "franklin-county",
-                {
-                    type:
-                        "geojson",
-
-                    data:
-                        "franklin-county.geojson"
-                }
-            );
-
-
-            map.addLayer({
-
-                id:
-                    "franklin-county-outline",
-
-                type:
-                    "line",
-
-                source:
-                    "franklin-county",
-
-                paint: {
-
-                    "line-color":
-                        "#555555",
-
-                    "line-width":
-                        1.5,
-
-                    "line-opacity":
-                        0.8,
-
-                    "line-dasharray":
-                        [
-                            2,
-                            2
-                        ]
-
-                }
-
-            });
-
-
-            // =================================================
             // CSV LOCATIONS
             // =================================================
 
@@ -2052,6 +1224,84 @@
                 ).href;
 
 
+            const TEST_BOUNDARY_PATH =
+                new URL(
+                    TEST_BOUNDARY_FILE,
+                    document.baseURI
+                ).href;
+
+
+            // =================================================
+            // LOAD TEST CEMETERY BOUNDARY
+            // =================================================
+
+            fetch(TEST_BOUNDARY_PATH)
+                .then(function (response) {
+
+                    if (!response.ok) {
+                        throw new Error(
+                            "Unable to load " +
+                            TEST_BOUNDARY_FILE
+                        );
+                    }
+
+                    return response.json();
+
+                })
+                .then(function (data) {
+
+                    testBoundaryData = data;
+
+                    map.addSource(
+                        "cemetery-boundaries",
+                        {
+                            type: "geojson",
+                            data: data
+                        }
+                    );
+
+                    map.addLayer({
+                        id: "cemetery-boundary-fill",
+                        type: "fill",
+                        source: "cemetery-boundaries",
+                        layout: {
+                            visibility: "none"
+                        },
+                        paint: {
+                            "fill-color": "#01796F",
+                            "fill-opacity": 0.10
+                        }
+                    });
+
+                    map.addLayer({
+                        id: "cemetery-boundary-outline",
+                        type: "line",
+                        source: "cemetery-boundaries",
+                        layout: {
+                            visibility: "none"
+                        },
+                        paint: {
+                            "line-color": "#01796F",
+                            "line-width": 3,
+                            "line-opacity": 0.95
+                        }
+                    });
+
+                    if (selectedCemeteryFeature) {
+                        updateCemeteryBoundary();
+                    }
+
+                })
+                .catch(function (error) {
+
+                    console.error(
+                        "test-cemetery.geojson loading error:",
+                        error
+                    );
+
+                });
+
+
             // =================================================
             // LOAD MAIN CEMETERY CSV
             // =================================================
@@ -2071,12 +1321,24 @@
                         function (results) {
 
 
+                            // =================================
+                            // STORAGE FOR MAP FEATURES
+                            // =================================
+
                             const mapFeatures = [];
 
+
+                            // =================================
+                            // PROCESS EVERY CSV ROW
+                            // =================================
 
                             results.data.forEach(
                                 function (row) {
 
+
+                                    // -----------------------------
+                                    // COORDINATES
+                                    // -----------------------------
 
                                     const lat =
                                         parseFloat(
@@ -2090,6 +1352,10 @@
                                         );
 
 
+                                    // -----------------------------
+                                    // GRAVE COUNT
+                                    // -----------------------------
+
                                     const graveCount =
                                         row["COUNT"] === undefined ||
                                         String(
@@ -2102,6 +1368,10 @@
                                             );
 
 
+                                    // -----------------------------
+                                    // ACCESSIBILITY
+                                    // -----------------------------
+
                                     const access =
                                         parseInt(
                                             row.ACCESS,
@@ -2109,11 +1379,19 @@
                                         );
 
 
+                                    // -----------------------------
+                                    // APPROXIMATE SIZE
+                                    // -----------------------------
+
                                     const approximateSize =
                                         row[
                                             "APPROXIMATE SIZE"
                                         ] || "";
 
+
+                                    // -----------------------------
+                                    // STATUS
+                                    // -----------------------------
 
                                     const status =
                                         parseInt(
@@ -2122,12 +1400,21 @@
                                         );
 
 
+                                    // -----------------------------
+                                    // VETERANS
+                                    // -----------------------------
+
                                     const vets =
                                         parseInt(
                                             row.VETS,
                                             10
                                         );
 
+
+                                    // -----------------------------
+                                    // ONLY CREATE MARKER
+                                    // IF COORDINATES ARE VALID
+                                    // -----------------------------
 
                                     if (
                                         !isNaN(lat) &&
@@ -2137,8 +1424,7 @@
 
                                         mapFeatures.push({
 
-                                            type:
-                                                "Feature",
+                                            type: "Feature",
 
 
                                             properties: {
@@ -2220,8 +1506,7 @@
 
                                             geometry: {
 
-                                                type:
-                                                    "Point",
+                                                type: "Point",
 
                                                 coordinates: [
                                                     lon,
@@ -2238,9 +1523,17 @@
                             );
 
 
+                            // =================================
+                            // SAVE FEATURES FOR SEARCH
+                            // =================================
+
                             cemeteryFeatures =
                                 mapFeatures;
 
+
+                            // =================================
+                            // ADD CEMETERY DATA SOURCE
+                            // =================================
 
                             map.addSource(
 
@@ -2248,8 +1541,7 @@
 
                                 {
 
-                                    type:
-                                        "geojson",
+                                    type: "geojson",
 
                                     data: {
 
@@ -2266,9 +1558,9 @@
                             );
 
 
-                            // =================================================
+                            // =================================
                             // MAIN CEMETERY MARKER LAYER
-                            // =================================================
+                            // =================================
 
                             map.addLayer({
 
@@ -2289,12 +1581,10 @@
 
                                         [
                                             "<",
-
                                             [
                                                 "get",
                                                 "Grave_Count"
                                             ],
-
                                             0
                                         ],
 
@@ -2334,12 +1624,10 @@
 
                                         [
                                             "<",
-
                                             [
                                                 "get",
                                                 "Grave_Count"
                                             ],
-
                                             0
                                         ],
 
@@ -2385,9 +1673,9 @@
                             });
 
 
-                            // =================================================
+                            // =================================
                             // SEARCH HIGHLIGHT LAYER
-                            // =================================================
+                            // =================================
 
                             map.addLayer({
 
@@ -2455,9 +1743,141 @@
                             });
 
 
-                            // =================================================
+                            // =================================
+                            // CEMETERY HOVER POSITION
+                            // =================================
+
+                            map.on(
+                                "mousemove",
+                                "cemeteries-layer",
+                                function (event) {
+
+                                    if (!desktopHoverEnabled()) {
+                                        return;
+                                    }
+
+                                    const feature = event.features && event.features[0];
+
+                                    if (feature) {
+                                        showHoverLabel(
+                                            feature.properties.Cemetery_Name || "Unnamed Cemetery",
+                                            event.lngLat
+                                        );
+                                    }
+
+                                }
+                            );
+
+
+                            // =================================
+                            // INDIVIDUAL GRAVE DATA SOURCE
+                            // =================================
+
+                            map.addSource(
+                                "graves-data",
+                                {
+                                    type: "geojson",
+                                    data: {
+                                        type: "FeatureCollection",
+                                        features: []
+                                    }
+                                }
+                            );
+
+
+                            map.addLayer({
+                                id: "graves-layer",
+                                type: "circle",
+                                source: "graves-data",
+                                layout: {
+                                    visibility: "none"
+                                },
+                                paint: {
+                                    "circle-radius": 5,
+                                    "circle-color": "#463a2d",
+                                    "circle-opacity": 0.92,
+                                    "circle-stroke-width": 2,
+                                    "circle-stroke-color": "#ffffff"
+                                }
+                            });
+
+
+                            // =================================
+                            // GRAVE CLICK
+                            // =================================
+
+                            map.on(
+                                "click",
+                                "graves-layer",
+                                handleGraveClick
+                            );
+
+
+                            // =================================
+                            // GRAVE HOVER
+                            // =================================
+
+                            map.on(
+                                "mouseenter",
+                                "graves-layer",
+                                function (event) {
+
+                                    if (!desktopHoverEnabled()) {
+                                        return;
+                                    }
+
+                                    map.getCanvas().style.cursor = "pointer";
+
+                                    const feature = event.features && event.features[0];
+
+                                    if (feature) {
+                                        showHoverLabel(
+                                            feature.properties.Person_Name || "Unnamed Interment",
+                                            event.lngLat
+                                        );
+                                    }
+
+                                }
+                            );
+
+
+                            map.on(
+                                "mousemove",
+                                "graves-layer",
+                                function (event) {
+
+                                    if (!desktopHoverEnabled()) {
+                                        return;
+                                    }
+
+                                    const feature = event.features && event.features[0];
+
+                                    if (feature) {
+                                        showHoverLabel(
+                                            feature.properties.Person_Name || "Unnamed Interment",
+                                            event.lngLat
+                                        );
+                                    }
+
+                                }
+                            );
+
+
+                            map.on(
+                                "mouseleave",
+                                "graves-layer",
+                                function () {
+
+                                    map.getCanvas().style.cursor = "";
+                                    removeHoverLabel();
+
+                                }
+                            );
+
+
+                            // =================================
                             // MAIN MARKER CLICK
-                            // =================================================
+                            // =================================
 
                             map.on(
                                 "click",
@@ -2466,18 +1886,25 @@
                             );
 
 
-                            // =================================================
+                            // =================================
                             // MAIN MARKER CURSOR
-                            // =================================================
+                            // =================================
 
                             map.on(
                                 "mouseenter",
                                 "cemeteries-layer",
-                                function () {
+                                function (event) {
 
                                     map.getCanvas()
                                         .style.cursor =
                                         "pointer";
+
+                                    if (desktopHoverEnabled() && event.features && event.features[0]) {
+                                        showHoverLabel(
+                                            event.features[0].properties.Cemetery_Name || "Unnamed Cemetery",
+                                            event.lngLat
+                                        );
+                                    }
 
                                 }
                             );
@@ -2492,13 +1919,15 @@
                                         .style.cursor =
                                         "";
 
+                                    removeHoverLabel();
+
                                 }
                             );
 
 
-                            // =================================================
+                            // =================================
                             // LOAD INTERMENTS
-                            // =================================================
+                            // =================================
 
                             Papa.parse(
 
@@ -2560,6 +1989,9 @@
                                                                 false,
 
                                                             coordinates:
+                                                                [],
+
+                                                            graves:
                                                                 []
 
                                                         };
@@ -2620,41 +2052,42 @@
                                                     }
 
 
-                                                    // =========================================
-                                                    // GRAVE COORDINATES
-                                                    //
-                                                    // These are used for cemetery-mode zooming.
-                                                    // =========================================
+                                                    // =================================
+                                                    // INDIVIDUAL GRAVE COORDINATES
+                                                    // =================================
 
                                                     const graveLat =
-                                                        parseFloat(
-                                                            row.LAT
-                                                        );
-
+                                                        parseFloat(row.LAT);
 
                                                     const graveLon =
-                                                        parseFloat(
-                                                            row.LONG
-                                                        );
-
+                                                        parseFloat(row.LONG);
 
                                                     if (
-                                                        !isNaN(
-                                                            graveLat
-                                                        ) &&
-                                                        !isNaN(
-                                                            graveLon
-                                                        )
+                                                        !isNaN(graveLat) &&
+                                                        !isNaN(graveLon)
                                                     ) {
+
+                                                        const grave = {
+                                                            name: fullName || "Unnamed Interment",
+                                                            firstName: firstName,
+                                                            lastName: lastName,
+                                                            veteran:
+                                                                String(row.VETERAN || "").trim() === "1",
+                                                            coordinates: [
+                                                                graveLon,
+                                                                graveLat
+                                                            ]
+                                                        };
 
                                                         intermentsByCemetery[
                                                             cemeteryID
                                                         ].coordinates.push(
-                                                            [
-                                                                graveLon,
-                                                                graveLat
-                                                            ]
+                                                            grave.coordinates
                                                         );
+
+                                                        intermentsByCemetery[
+                                                            cemeteryID
+                                                        ].graves.push(grave);
 
                                                     }
 
@@ -2665,6 +2098,16 @@
                                             intermentsLoaded =
                                                 true;
 
+
+                                            if (selectedCemeteryFeature) {
+                                                updateCemeteryGraves();
+                                                fitSelectedCemetery();
+                                            }
+
+
+                                            // Refresh search
+                                            // now that people
+                                            // are available.
 
                                             processMapFilters();
 
@@ -2686,9 +2129,9 @@
                             );
 
 
-                            // =================================================
+                            // =================================
                             // LOAD HISTORIC CEMETERIES
-                            // =================================================
+                            // =================================
 
                             Papa.parse(
 
@@ -2722,6 +2165,10 @@
                                                 );
 
 
+                                            // =========================
+                                            // NO HISTORIC RECORDS
+                                            // =========================
+
                                             if (
                                                 lakeCemeteries.length ===
                                                 0
@@ -2734,6 +2181,10 @@
                                             }
 
 
+                                            // =========================
+                                            // REPRESENTATIVE LOCATION
+                                            // =========================
+
                                             const lakeLocation = [
 
                                                 -84.99056446430546,
@@ -2742,6 +2193,10 @@
 
                                             ];
 
+
+                                            // =========================
+                                            // HISTORIC DATA SOURCE
+                                            // =========================
 
                                             map.addSource(
 
@@ -2792,6 +2247,10 @@
                                             );
 
 
+                                            // =========================
+                                            // HISTORIC MARKER
+                                            // =========================
+
                                             map.addLayer({
 
                                                 id:
@@ -2828,82 +2287,9 @@
                                             });
 
 
-                                            // =================================================
-                                            // HISTORIC CEMETERY WATER-WAVE SYMBOL
-                                            // =================================================
-
-                                            const historicWave =
-                                                document.createElement("div");
-
-
-                                            historicWave.style.width =
-                                                "32px";
-
-
-                                            historicWave.style.height =
-                                                "32px";
-
-
-                                            historicWave.style.pointerEvents =
-                                                "none";
-
-
-                                            historicWave.innerHTML = `
-
-                                                <svg
-                                                    width="32"
-                                                    height="32"
-                                                    viewBox="0 0 32 32"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                >
-
-                                                    <path
-                                                        d="M4 12
-                                                           Q8 8 12 12
-                                                           T20 12
-                                                           T28 12"
-                                                        fill="none"
-                                                        stroke="#ffffff"
-                                                        stroke-width="2"
-                                                        stroke-linecap="round"
-                                                    />
-
-                                                    <path
-                                                        d="M4 20
-                                                           Q8 16 12 20
-                                                           T20 20
-                                                           T28 20"
-                                                        fill="none"
-                                                        stroke="#ffffff"
-                                                        stroke-width="2"
-                                                        stroke-linecap="round"
-                                                    />
-
-                                                </svg>
-
-                                            `;
-
-
-                                            new maplibregl.Marker({
-
-                                                element:
-                                                    historicWave,
-
-                                                anchor:
-                                                    "center"
-
-                                            })
-
-                                                .setLngLat(
-                                                    lakeLocation
-                                                )
-
-                                                .addTo(map);
-
-
-                                            // =================================================
+                                            // =========================
                                             // HISTORIC MARKER CLICK
-                                            // =================================================
+                                            // =========================
 
                                             map.on(
 
@@ -2912,19 +2298,6 @@
                                                 "lake-cemeteries-layer",
 
                                                 function () {
-
-
-                                                    /*
-                                                     * Historic cemeteries are not
-                                                     * individual mapped sites yet,
-                                                     * so they do not enter cemetery mode.
-                                                     */
-
-                                                    selectedCemeteryFeature =
-                                                        null;
-
-
-                                                    removeSelectedCemeteryLabel();
 
 
                                                     infoPanel.style.display =
@@ -3111,7 +2484,7 @@
                                                     infoContent.innerHTML = `
 
                                                         <h2>
-                                                            Historic East Fork Valley Cemeteries
+                                                            Historic Fairfield Cemeteries
                                                         </h2>
 
 
@@ -3119,7 +2492,7 @@
 
                                                             Cemeteries affected by
                                                             the construction of
-                                                            Brookville Lake in 1974.
+                                                            Brookville Lake.
 
                                                             Individual former
                                                             cemetery locations are
@@ -3156,9 +2529,9 @@
                                             );
 
 
-                                            // =================================================
+                                            // =========================
                                             // HISTORIC MARKER CURSOR
-                                            // =================================================
+                                            // =========================
 
                                             map.on(
 
@@ -3255,16 +2628,399 @@
 
         }
 
+
     );
+
+
+    // ========================================================
+    // DESKTOP HOVER SUPPORT
+    // ========================================================
+
+    function desktopHoverEnabled() {
+
+        return window.matchMedia(
+            "(hover: hover) and (pointer: fine)"
+        ).matches;
+
+    }
+
+
+    function escapeHtml(value) {
+
+        return String(value == null ? "" : value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/\"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+
+    }
+
+
+    function showHoverLabel(text, coordinates) {
+
+        if (!desktopHoverEnabled()) {
+            return;
+        }
+
+        if (!text) {
+            return;
+        }
+
+        if (!hoverPopup) {
+
+            hoverPopup = new maplibregl.Popup({
+                closeButton: false,
+                closeOnClick: false,
+                offset: 12,
+                className: "map-hover-popup"
+            });
+
+        }
+
+        hoverPopup
+            .setLngLat(coordinates)
+            .setHTML(escapeHtml(text))
+            .addTo(map);
+
+    }
+
+
+    function removeHoverLabel() {
+
+        if (hoverPopup) {
+            hoverPopup.remove();
+        }
+
+    }
+
+
+    // ========================================================
+    // TEST CEMETERY BOUNDARY
+    // ========================================================
+
+    function updateCemeteryBoundary() {
+
+        const visible =
+            selectedCemeteryFeature &&
+            String(
+                selectedCemeteryFeature.properties.Cemetery_ID ||
+                ""
+            ).trim() === TEST_BOUNDARY_CEMETERY_ID;
+
+        if (map.getLayer("cemetery-boundary-fill")) {
+            map.setLayoutProperty(
+                "cemetery-boundary-fill",
+                "visibility",
+                visible ? "visible" : "none"
+            );
+        }
+
+        if (map.getLayer("cemetery-boundary-outline")) {
+            map.setLayoutProperty(
+                "cemetery-boundary-outline",
+                "visibility",
+                visible ? "visible" : "none"
+            );
+        }
+
+    }
+
+
+    function getTestBoundaryBounds() {
+
+        if (!testBoundaryData) {
+            return null;
+        }
+
+        const bounds =
+            new maplibregl.LngLatBounds();
+
+        function extendCoordinates(coords) {
+
+            if (!Array.isArray(coords)) {
+                return;
+            }
+
+            if (
+                coords.length >= 2 &&
+                typeof coords[0] === "number" &&
+                typeof coords[1] === "number"
+            ) {
+                bounds.extend(coords);
+                return;
+            }
+
+            coords.forEach(extendCoordinates);
+
+        }
+
+        (testBoundaryData.features || []).forEach(
+            function (feature) {
+
+                if (
+                    feature.properties &&
+                    String(feature.properties.CEMETERY_ID || "").trim() === "TEST001"
+                ) {
+                    extendCoordinates(
+                        feature.geometry &&
+                        feature.geometry.coordinates
+                    );
+                }
+
+            }
+        );
+
+        return bounds.isEmpty() ? null : bounds;
+
+    }
+
+
+    // ========================================================
+    // INDIVIDUAL GRAVES
+    // ========================================================
+
+    function updateCemeteryGraves() {
+
+        if (!map.getSource("graves-data")) {
+            return;
+        }
+
+        if (!selectedCemeteryFeature) {
+
+            map.getSource("graves-data").setData({
+                type: "FeatureCollection",
+                features: []
+            });
+
+            if (map.getLayer("graves-layer")) {
+                map.setLayoutProperty(
+                    "graves-layer",
+                    "visibility",
+                    "none"
+                );
+            }
+
+            return;
+        }
+
+        const cemeteryID =
+            String(
+                selectedCemeteryFeature.properties.Cemetery_ID ||
+                ""
+            ).trim();
+
+        const data =
+            intermentsByCemetery[cemeteryID] ||
+            { graves: [] };
+
+        const features =
+            (data.graves || []).map(
+                function (grave, index) {
+
+                    return {
+                        type: "Feature",
+                        properties: {
+                            Cemetery_ID: cemeteryID,
+                            Grave_Index: index + 1,
+                            Person_Name: grave.name,
+                            Veteran: grave.veteran
+                        },
+                        geometry: {
+                            type: "Point",
+                            coordinates: grave.coordinates
+                        }
+                    };
+
+                }
+            );
+
+        map.getSource("graves-data").setData({
+            type: "FeatureCollection",
+            features: features
+        });
+
+        if (map.getLayer("graves-layer")) {
+            map.setLayoutProperty(
+                "graves-layer",
+                "visibility",
+                "visible"
+            );
+        }
+
+    }
+
+
+    function fitSelectedCemetery() {
+
+        if (!selectedCemeteryFeature) {
+            return;
+        }
+
+        const cemeteryID =
+            String(
+                selectedCemeteryFeature.properties.Cemetery_ID ||
+                ""
+            ).trim();
+
+        const bounds =
+            cemeteryID === TEST_BOUNDARY_CEMETERY_ID
+                ? getTestBoundaryBounds()
+                : null;
+
+        const intermentData =
+            intermentsByCemetery[cemeteryID] ||
+            {};
+
+        const graveCoordinates =
+            intermentData.coordinates || [];
+
+        if (bounds) {
+
+            graveCoordinates.forEach(
+                function (coordinate) {
+                    bounds.extend(coordinate);
+                }
+            );
+
+            map.fitBounds(
+                bounds,
+                {
+                    padding: 80,
+                    maxZoom: 21,
+                    duration: 1000
+                }
+            );
+
+            return;
+        }
+
+        const fallback =
+            new maplibregl.LngLatBounds(
+                selectedCemeteryFeature.geometry.coordinates,
+                selectedCemeteryFeature.geometry.coordinates
+            );
+
+        graveCoordinates.forEach(
+            function (coordinate) {
+                fallback.extend(coordinate);
+            }
+        );
+
+        map.fitBounds(
+            fallback,
+            {
+                padding: 80,
+                maxZoom: 21,
+                duration: 1000
+            }
+        );
+
+    }
+
+
+    function enterCemeteryMode(feature) {
+
+        selectedCemeteryFeature = feature;
+
+        infoPanel.style.display = "block";
+
+        updateCemeteryBoundary();
+        updateCemeteryGraves();
+        fitSelectedCemetery();
+
+    }
+
+
+    function exitCemeteryMode() {
+
+        selectedCemeteryFeature = null;
+
+        removeHoverLabel();
+
+        updateCemeteryBoundary();
+        updateCemeteryGraves();
+
+        showDefaultInfo();
+
+        infoPanel.style.display = "block";
+
+        map.flyTo({
+            center: [
+                -85.0626,
+                39.3992
+            ],
+            zoom: 11,
+            duration: 800
+        });
+
+    }
+
+
+    // ========================================================
+    // GRAVE CLICK HANDLER
+    // ========================================================
+
+    function handleGraveClick(event) {
+
+        if (
+            !event.features ||
+            !event.features.length
+        ) {
+            return;
+        }
+
+        const props =
+            event.features[0].properties;
+
+        infoPanel.style.display = "block";
+
+        const cemetery =
+            cemeteryFeatures.find(
+                function (feature) {
+                    return String(
+                        feature.properties.Cemetery_ID || ""
+                    ).trim() === String(
+                        props.Cemetery_ID || ""
+                    ).trim();
+                }
+            );
+
+        infoContent.innerHTML = `
+            <h2>${escapeHtml(
+                props.Person_Name ||
+                "Unnamed Interment"
+            )}</h2>
+
+            <h3>Cemetery</h3>
+
+            <p>
+                ${escapeHtml(
+                    cemetery
+                        ? cemetery.properties.Cemetery_Name
+                        : props.Cemetery_ID
+                )}
+            </p>
+
+            <h3>Veteran</h3>
+
+            <p>
+                ${props.Veteran === true ? "Yes" : "No"}
+            </p>
+        `;
+
+        event.originalEvent &&
+            event.originalEvent.stopPropagation();
+
+    }
 
 
     // ========================================================
     // CEMETERY MARKER CLICK HANDLER
     // ========================================================
 
-    function handleCemeteryClick(
-        event
-    ) {
+    function handleCemeteryClick(event) {
+
 
         if (
             !event.features ||
@@ -3279,45 +3035,14 @@
         const feature =
             event.features[0];
 
+        const props =
+            feature.properties;
 
-        /*
-         * Stop this click from also being interpreted
-         * as a click on empty map space.
-         */
 
-        if (
-            event.originalEvent
-        ) {
-
+        if (event.originalEvent) {
             event.originalEvent.stopPropagation();
-
         }
 
-
-        /*
-         * Display the cemetery information and
-         * enter cemetery mode.
-         */
-
-        showCemeteryInformation(
-            feature.properties
-        );
-
-
-        enterCemeteryMode(
-            feature
-        );
-
-    }
-
-
-    // ========================================================
-    // BUILD CEMETERY INFORMATION PANEL
-    // ========================================================
-
-    function showCemeteryInformation(
-        props
-    ) {
 
         infoPanel.style.display =
             "block";
@@ -3653,454 +3378,8 @@
 
         `;
 
-    }
 
-
-    // ========================================================
-    // OFF-SCREEN SEARCH DIRECTIONS
-    // ========================================================
-
-    function updateSearchDirections() {
-
-        searchDirections.innerHTML = "";
-
-
-        /*
-         * Do not display search arrows while viewing
-         * a selected cemetery.
-         */
-
-        if (
-            selectedCemeteryFeature
-        ) {
-
-            return;
-
-        }
-
-
-        const searchIsActive =
-            searchBox.value.trim() !== "" ||
-            veteransOnly;
-
-
-        if (!searchIsActive) {
-            return;
-        }
-
-
-        const filterYear =
-            parseInt(
-                yearSlider.value,
-                10
-            );
-
-
-        const width =
-            map.getContainer().clientWidth;
-
-
-        const height =
-            map.getContainer().clientHeight;
-
-
-        if (
-            !width ||
-            !height
-        ) {
-
-            return;
-
-        }
-
-
-        const centerX =
-            width / 2;
-
-
-        const centerY =
-            height / 2;
-
-
-        const isMobile =
-            window.matchMedia(
-                "(max-width: 700px)"
-            ).matches;
-
-
-        const edgePadding =
-            isMobile ? 8 : 18;
-
-
-        const edgePaddingRight =
-            isMobile ? 85 : 18;
-
-
-        const halfW =
-            width / 2 -
-            (
-                (
-                    edgePadding +
-                    edgePaddingRight
-                ) / 2
-            );
-
-
-        const halfH =
-            height / 2 -
-            edgePadding;
-
-
-        const usedPositions = [];
-
-
-        cemeteryFeatures.forEach(
-            function (feature) {
-
-                const props =
-                    feature.properties;
-
-
-                if (
-                    props.Search_Match !== true
-                ) {
-
-                    return;
-
-                }
-
-
-                const establishedYear =
-                    Number(
-                        props.Established_Year
-                    );
-
-
-                if (
-                    filterYear < 1900 &&
-                    !(
-                        establishedYear > 0 &&
-                        establishedYear <= filterYear
-                    )
-                ) {
-
-                    return;
-
-                }
-
-
-                const coordinates =
-                    feature.geometry.coordinates;
-
-
-                const point =
-                    map.project(
-                        coordinates
-                    );
-
-
-                const isInside =
-                    point.x >= 0 &&
-                    point.x <= width &&
-                    point.y >= 0 &&
-                    point.y <= height;
-
-
-                if (isInside) {
-                    return;
-                }
-
-
-                const dx =
-                    point.x -
-                    centerX;
-
-
-                const dy =
-                    point.y -
-                    centerY;
-
-
-                if (
-                    dx === 0 &&
-                    dy === 0
-                ) {
-
-                    return;
-
-                }
-
-
-                const scaleX =
-                    Math.abs(
-                        halfW / dx
-                    );
-
-
-                const scaleY =
-                    Math.abs(
-                        halfH / dy
-                    );
-
-
-                const edgeScale =
-                    Math.min(
-                        scaleX,
-                        scaleY
-                    );
-
-
-                let x =
-                    centerX +
-                    dx *
-                    edgeScale;
-
-
-                let y =
-                    centerY +
-                    dy *
-                    edgeScale;
-
-
-                x =
-                    Math.max(
-                        edgePadding,
-                        Math.min(
-                            width -
-                            edgePaddingRight,
-                            x
-                        )
-                    );
-
-
-                y =
-                    Math.max(
-                        edgePadding,
-                        Math.min(
-                            height -
-                            edgePadding,
-                            y
-                        )
-                    );
-
-
-                for (
-                    let i = 0;
-                    i < usedPositions.length;
-                    i++
-                ) {
-
-                    const used =
-                        usedPositions[i];
-
-
-                    const distance =
-                        Math.hypot(
-                            x - used.x,
-                            y - used.y
-                        );
-
-
-                    if (
-                        distance < 32
-                    ) {
-
-                        const nudge =
-                            34 -
-                            distance;
-
-
-                        const length =
-                            Math.hypot(
-                                dx,
-                                dy
-                            ) || 1;
-
-
-                        x +=
-                            (
-                                -dy /
-                                length
-                            ) *
-                            nudge;
-
-
-                        y +=
-                            (
-                                dx /
-                                length
-                            ) *
-                            nudge;
-
-                    }
-
-                }
-
-
-                x =
-                    Math.max(
-                        edgePadding,
-                        Math.min(
-                            width -
-                            edgePaddingRight,
-                            x
-                        )
-                    );
-
-
-                y =
-                    Math.max(
-                        edgePadding,
-                        Math.min(
-                            height -
-                            edgePadding,
-                            y
-                        )
-                    );
-
-
-                usedPositions.push({
-                    x: x,
-                    y: y
-                });
-
-
-                const angle =
-                    Math.atan2(
-                        dy,
-                        dx
-                    ) *
-                    180 /
-                    Math.PI;
-
-
-                const zoom =
-                    map.getZoom();
-
-
-                const scaleSize =
-                    Math.max(
-                        0.65,
-                        Math.min(
-                            1.4,
-                            1 +
-                            (
-                                zoom -
-                                INITIAL_ZOOM
-                            ) *
-                            0.10
-                        )
-                    );
-
-
-                const indicator =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                indicator.className =
-                    "search-direction";
-
-
-                indicator.style.left =
-                    x + "px";
-
-
-                indicator.style.top =
-                    y + "px";
-
-
-                indicator.style.transform =
-                    "translate(-50%, -50%) scale(" +
-                    scaleSize +
-                    ")";
-
-
-                indicator.title =
-                    "Go to " +
-                    (
-                        props.Cemetery_Name ||
-                        "Cemetery"
-                    );
-
-
-                const arrow =
-                    document.createElement(
-                        "span"
-                    );
-
-
-                arrow.className =
-                    "search-direction-arrow";
-
-
-                arrow.textContent =
-                    "➤";
-
-
-                arrow.style.transform =
-                    "rotate(" +
-                    angle +
-                    "deg)";
-
-
-                const name =
-                    document.createElement(
-                        "span"
-                    );
-
-
-                name.className =
-                    "search-direction-name";
-
-
-                name.textContent =
-                    props.Cemetery_Name ||
-                    "Unnamed Cemetery";
-
-
-                indicator.appendChild(
-                    arrow
-                );
-
-
-                indicator.appendChild(
-                    name
-                );
-
-
-                indicator.addEventListener(
-                    "click",
-                    function (event) {
-
-                        event.stopPropagation();
-
-
-                        /*
-                         * Search indicators now behave
-                         * exactly like cemetery selection.
-                         */
-
-                        showCemeteryInformation(
-                            props
-                        );
-
-
-                        enterCemeteryMode(
-                            feature
-                        );
-
-                    }
-                );
-
-
-                searchDirections.appendChild(
-                    indicator
-                );
-
-            }
-        );
+        enterCemeteryMode(feature);
 
     }
 
@@ -4111,6 +3390,10 @@
 
     function processMapFilters() {
 
+
+        // ====================================================
+        // READ SEARCH
+        // ====================================================
 
         const searchStr =
             searchBox.value
@@ -4130,11 +3413,19 @@
             veteransOnly;
 
 
+        // ====================================================
+        // CLEAR BUTTON
+        // ====================================================
+
         clearSearch.style.display =
             searchBox.value !== ""
                 ? "block"
                 : "none";
 
+
+        // ====================================================
+        // YEAR DISPLAY
+        // ====================================================
 
         if (
             filterYear < 1900
@@ -4153,16 +3444,9 @@
         }
 
 
-        searchResults.textContent =
-            "";
-
-
-        let cemeteryMatchCount = 0;
-
-        let nameMatchCount = 0;
-
-        let displayedCemeteryCount = 0;
-
+        // ====================================================
+        // CALCULATE SEARCH MATCHES
+        // ====================================================
 
         cemeteryFeatures.forEach(
             function (feature) {
@@ -4174,8 +3458,7 @@
 
                 const cemeteryID =
                     String(
-                        props.Cemetery_ID ||
-                        ""
+                        props.Cemetery_ID || ""
                     ).trim();
 
 
@@ -4201,9 +3484,7 @@
 
                         people: [],
 
-                        veteran: false,
-
-                        coordinates: []
+                        veteran: false
 
                     };
 
@@ -4213,6 +3494,10 @@
                         .join(" ")
                         .toLowerCase();
 
+
+                // ==========================================
+                // TEXT MATCH
+                // ==========================================
 
                 let textMatch =
                     searchStr === "";
@@ -4254,6 +3539,16 @@
                 }
 
 
+                // ==========================================
+                // VETERAN MATCH
+                //
+                // Either:
+                // cemlist.csv VETS = 1
+                //
+                // OR:
+                // interments.csv VETERAN = 1
+                // ==========================================
+
                 const hasVeteran =
                     Number(props.Vets) === 1 ||
                     intermentData.veteran;
@@ -4264,60 +3559,13 @@
                     hasVeteran;
 
 
-                if (
-                    searchStr !== ""
-                ) {
-
-                    if (
-                        searchCemetery &&
-                        cemeteryText.includes(
-                            searchStr
-                        )
-                    ) {
-
-                        cemeteryMatchCount++;
-
-                    }
-
-
-                    if (
-                        searchPerson
-                    ) {
-
-                        nameMatchCount +=
-                            intermentData.people.filter(
-                                function (person) {
-
-                                    return person
-                                        .toLowerCase()
-                                        .includes(
-                                            searchStr
-                                        );
-
-                                }
-                            ).length;
-
-                    }
-
-                }
-
+                // ==========================================
+                // FINAL SEARCH MATCH
+                // ==========================================
 
                 const finalMatch =
                     textMatch &&
                     veteranMatch;
-
-
-                if (
-                    finalMatch &&
-                    (
-                        searchIsActive ||
-                        filterYear < 1900
-                    )
-                ) {
-
-                    displayedCemeteryCount++;
-
-                }
 
 
                 props.Search_Match =
@@ -4331,50 +3579,9 @@
         );
 
 
-        if (
-            searchStr !== ""
-        ) {
-
-            const cemeteryLabel =
-                cemeteryMatchCount === 1
-                    ? "cemetery match"
-                    : "cemetery matches";
-
-
-            const nameLabel =
-                nameMatchCount === 1
-                    ? "name match"
-                    : "name matches";
-
-
-            searchResults.textContent =
-                cemeteryMatchCount +
-                " " +
-                cemeteryLabel +
-                " · " +
-                nameMatchCount +
-                " " +
-                nameLabel;
-
-        }
-
-        else if (
-            veteransOnly
-        ) {
-
-            const label =
-                displayedCemeteryCount === 1
-                    ? "cemetery matches"
-                    : "cemeteries match";
-
-
-            searchResults.textContent =
-                displayedCemeteryCount +
-                " " +
-                label;
-
-        }
-
+        // ====================================================
+        // UPDATE MAP SOURCE
+        // ====================================================
 
         const source =
             map.getSource(
@@ -4397,10 +3604,18 @@
         }
 
 
+        // ====================================================
+        // BUILD MAP FILTER
+        // ====================================================
+
         const activeFilters = [
             "all"
         ];
 
+
+        // ====================================================
+        // YEAR FILTER
+        // ====================================================
 
         if (
             filterYear < 1900
@@ -4412,23 +3627,19 @@
 
                 [
                     ">",
-
                     [
                         "get",
                         "Established_Year"
                     ],
-
                     0
                 ],
 
                 [
                     "<=",
-
                     [
                         "get",
                         "Established_Year"
                     ],
-
                     filterYear
                 ]
 
@@ -4436,6 +3647,10 @@
 
         }
 
+
+        // ====================================================
+        // SEARCH FILTER
+        // ====================================================
 
         if (
             searchIsActive
@@ -4456,6 +3671,10 @@
 
         }
 
+
+        // ====================================================
+        // APPLY MAIN CEMETERY FILTER
+        // ====================================================
 
         if (
             activeFilters.length > 1
@@ -4483,6 +3702,10 @@
 
         }
 
+
+        // ====================================================
+        // APPLY HIGHLIGHT FILTER
+        // ====================================================
 
         if (
             searchIsActive
@@ -4549,110 +3772,42 @@
 
         }
 
-
-        updateSearchDirections();
-
     }
 
 
     // ========================================================
-    // MAP CLICK — EXIT CEMETERY MODE
-    //
-    // This is deliberately AFTER the layer click handlers.
-    //
-    // If the user clicks a cemetery marker, that marker
-    // remains selected.
-    //
-    // If the user clicks ordinary map space, cemetery mode
-    // closes and the county view returns.
+    // MAP-WIDE CLICK TO EXIT CEMETERY MODE
     // ========================================================
 
-    map.on(
-        "click",
-        function (event) {
+    map.on("click", function (event) {
 
-            /*
-             * If a cemetery layer feature exists at the
-             * clicked point, let its own click handler
-             * handle the selection.
-             */
-
-            const cemeteryFeaturesAtPoint =
-                map.queryRenderedFeatures(
-                    event.point,
-                    {
-                        layers: [
-                            "cemeteries-layer"
-                        ]
-                    }
-                );
-
-
-            if (
-                cemeteryFeaturesAtPoint.length
-            ) {
-
-                return;
-
-            }
-
-
-            /*
-             * Likewise, don't treat the historic
-             * cemetery marker as ordinary map space.
-             */
-
-            let historicFeatureFound =
-                false;
-
-
-            if (
-                map.getLayer(
-                    "lake-cemeteries-layer"
-                )
-            ) {
-
-                const historicFeatures =
-                    map.queryRenderedFeatures(
-                        event.point,
-                        {
-                            layers: [
-                                "lake-cemeteries-layer"
-                            ]
-                        }
-                    );
-
-
-                historicFeatureFound =
-                    historicFeatures.length > 0;
-
-            }
-
-
-            if (
-                historicFeatureFound
-            ) {
-
-                return;
-
-            }
-
-
-            /*
-             * Otherwise, clicking/tapping the map
-             * exits cemetery mode.
-             */
-
-            if (
-                selectedCemeteryFeature
-            ) {
-
-                exitCemeteryMode();
-
-            }
-
+        if (!selectedCemeteryFeature) {
+            return;
         }
-    );
+
+        const layers = [
+            "cemeteries-layer",
+            "cemeteries-highlight-layer",
+            "graves-layer",
+            "lake-cemeteries-layer"
+        ].filter(function (id) {
+            return map.getLayer(id);
+        });
+
+        if (layers.length) {
+            const hits = map.queryRenderedFeatures(
+                event.point,
+                { layers: layers }
+            );
+
+            if (hits.length) {
+                return;
+            }
+        }
+
+        exitCemeteryMode();
+
+    });
 
 
     // ========================================================
@@ -4671,9 +3826,7 @@
 
     clearSearch.addEventListener(
         "click",
-        function (event) {
-
-            event.stopPropagation();
+        function () {
 
             searchBox.value = "";
 
@@ -4691,10 +3844,7 @@
 
     cemeteryToggle.addEventListener(
         "click",
-        function (event) {
-
-            event.stopPropagation();
-
+        function () {
 
             searchCemetery =
                 !searchCemetery;
@@ -4718,10 +3868,7 @@
 
     personToggle.addEventListener(
         "click",
-        function (event) {
-
-            event.stopPropagation();
-
+        function () {
 
             searchPerson =
                 !searchPerson;
@@ -4745,10 +3892,7 @@
 
     veteransToggle.addEventListener(
         "click",
-        function (event) {
-
-            event.stopPropagation();
-
+        function () {
 
             veteransOnly =
                 !veteransOnly;
@@ -4777,41 +3921,20 @@
 
 
     // ========================================================
-    // KEEP SEARCH DIRECTIONS IN SYNC WITH MAP
-    // ========================================================
-
-    map.on(
-        "move",
-        updateSearchDirections
-    );
-
-
-    map.on(
-        "resize",
-        updateSearchDirections
-    );
-
-
-    // ========================================================
     // RESET FILTERS
     // ========================================================
 
     resetButton.addEventListener(
         "click",
-        function (event) {
-
-            event.stopPropagation();
+        function () {
 
 
-            // -----------------------------------------------
-            // EXIT CEMETERY MODE
-            // -----------------------------------------------
-
-            selectedCemeteryFeature =
-                null;
-
-
-            removeSelectedCemeteryLabel();
+            if (selectedCemeteryFeature) {
+                selectedCemeteryFeature = null;
+                removeHoverLabel();
+                updateCemeteryBoundary();
+                updateCemeteryGraves();
+            }
 
 
             // -----------------------------------------------
@@ -4872,10 +3995,6 @@
             processMapFilters();
 
 
-            searchDirections.innerHTML =
-                "";
-
-
             // -----------------------------------------------
             // RESTORE INFO PANEL
             // -----------------------------------------------
@@ -4886,121 +4005,6 @@
 
             showDefaultInfo();
 
-
-            // -----------------------------------------------
-            // RESTORE MAP VIEW
-            // -----------------------------------------------
-
-            map.flyTo({
-
-                center:
-                    INITIAL_CENTER,
-
-                zoom:
-                    INITIAL_ZOOM,
-
-                duration:
-                    700
-
-            });
-
-
-            // -----------------------------------------------
-            // CLOSE OPEN RECORD
-            // -----------------------------------------------
-
-            closeCemeteryRecord();
-
-
-            // -----------------------------------------------
-            // COLLAPSE LEGEND
-            // -----------------------------------------------
-
-            legendContent.style.display =
-                "none";
-
-
-            legendArrow.textContent =
-                "▾";
-
-
-            legendToggle.setAttribute(
-                "aria-expanded",
-                "false"
-            );
-
-        }
-    );
-
-
-    // ========================================================
-    // ACCESSIBILITY LEGEND
-    // ========================================================
-
-    const legendToggle =
-        document.getElementById(
-            "legend-toggle"
-        );
-
-
-    const legendContent =
-        document.getElementById(
-            "legend-content"
-        );
-
-
-    const legendArrow =
-        document.getElementById(
-            "legend-arrow"
-        );
-
-
-    legendToggle.addEventListener(
-        "click",
-        function (event) {
-
-            event.stopPropagation();
-
-
-            const isOpen =
-                legendContent.style.display ===
-                "block";
-
-
-            if (isOpen) {
-
-                legendContent.style.display =
-                    "none";
-
-
-                legendArrow.textContent =
-                    "▾";
-
-
-                legendToggle.setAttribute(
-                    "aria-expanded",
-                    "false"
-                );
-
-            }
-
-            else {
-
-                legendContent.style.display =
-                    "block";
-
-
-                legendArrow.textContent =
-                    "▴";
-
-
-                legendToggle.setAttribute(
-                    "aria-expanded",
-                    "true"
-                );
-
-            }
-
         }
     );
 
@@ -5010,4 +4014,3 @@
 </body>
 
 </html>
-```
