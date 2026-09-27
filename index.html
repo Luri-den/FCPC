@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 
 <html lang="en">
@@ -395,6 +396,150 @@
 
 
     /* =====================================================
+       ACCESSIBILITY LEGEND
+       ===================================================== */
+
+    #accessibility-legend {
+        position: absolute;
+
+        top: 10px;
+        right: 60px;
+
+        z-index: 6;
+
+        background: white;
+
+        border: 1px solid #aaa;
+        border-radius: 5px;
+
+        box-shadow:
+            0 2px 8px rgba(0, 0, 0, 0.25);
+
+        overflow: hidden;
+
+        font-family:
+            Arial,
+            Helvetica,
+            sans-serif;
+    }
+
+
+    /* =====================================================
+       LEGEND TOGGLE
+       ===================================================== */
+
+    #legend-toggle {
+        width: 110px;
+
+        padding:
+            8px 10px;
+
+        border: none;
+        border-radius: 0;
+
+        background: white;
+        color: #3f3528;
+
+        display: flex;
+
+        justify-content: space-between;
+        align-items: center;
+
+        font-size: 13px;
+        font-weight: bold;
+
+        cursor: pointer;
+    }
+
+
+    #legend-toggle:hover {
+        background: #eee9dc;
+        color: #3f3528;
+    }
+
+
+    #legend-arrow {
+        font-size: 13px;
+        line-height: 1;
+    }
+
+
+    /* =====================================================
+       LEGEND CONTENT
+       ===================================================== */
+
+    #legend-content {
+        display: none;
+
+        min-width: 185px;
+
+        padding:
+            8px 12px 11px 12px;
+
+        border-top:
+            1px solid #ddd;
+
+        background: white;
+    }
+
+
+    /* =====================================================
+       LEGEND TITLE
+       ===================================================== */
+
+    .legend-title {
+        margin-bottom: 7px;
+
+        color: #555;
+
+        font-size: 11px;
+        font-weight: bold;
+    }
+
+
+    /* =====================================================
+       LEGEND ITEMS
+       ===================================================== */
+
+    .legend-item {
+        display: flex;
+
+        align-items: center;
+
+        gap: 8px;
+
+        margin: 5px 0;
+
+        color: #333;
+
+        font-size: 13px;
+
+        line-height: 1.4;
+
+        white-space: nowrap;
+    }
+
+
+    /* =====================================================
+       LEGEND CIRCLES
+       ===================================================== */
+
+    .legend-circle {
+        width: 14px;
+        height: 14px;
+
+        min-width: 14px;
+
+        display: inline-block;
+
+        border-radius: 50%;
+
+        border:
+            1px solid rgba(0, 0, 0, 0.25);
+    }
+
+
+    /* =====================================================
        INFO PANEL
        ===================================================== */
 
@@ -634,6 +779,49 @@
         }
 
 
+        /* -----------------------------------------------
+           MOBILE LEGEND
+           ----------------------------------------------- */
+
+        #accessibility-legend {
+            top: 10px;
+            right: 50px;
+        }
+
+
+        #legend-toggle {
+            width: 105px;
+
+            padding:
+                8px 10px;
+
+            font-size: 13px;
+        }
+
+
+        #legend-content {
+            min-width: 165px;
+
+            padding:
+                7px 10px 10px 10px;
+        }
+
+
+        .legend-item {
+            margin: 4px 0;
+
+            font-size: 12px;
+        }
+
+
+        .legend-circle {
+            width: 13px;
+            height: 13px;
+
+            min-width: 13px;
+        }
+
+
         #info-panel {
             position: absolute;
 
@@ -806,6 +994,111 @@
      ========================================================= -->
 
 <div id="map">
+
+
+    <!-- =====================================================
+         ACCESSIBILITY LEGEND
+         ===================================================== -->
+
+    <div id="accessibility-legend">
+
+        <button
+            id="legend-toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="legend-content"
+        >
+
+            <span>
+                Legend
+            </span>
+
+            <span id="legend-arrow">
+                ▾
+            </span>
+
+        </button>
+
+
+        <div id="legend-content">
+
+            <div class="legend-title">
+                ACCESSIBILITY
+            </div>
+
+
+            <div class="legend-item">
+
+                <span
+                    class="legend-circle"
+                    style="background-color: #01796F;"
+                ></span>
+
+                <span>
+                    Public
+                </span>
+
+            </div>
+
+
+            <div class="legend-item">
+
+                <span
+                    class="legend-circle"
+                    style="background-color: #C9A227;"
+                ></span>
+
+                <span>
+                    With Permission
+                </span>
+
+            </div>
+
+
+            <div class="legend-item">
+
+                <span
+                    class="legend-circle"
+                    style="background-color: #D2691E;"
+                ></span>
+
+                <span>
+                    Private Land
+                </span>
+
+            </div>
+
+
+            <div class="legend-item">
+
+                <span
+                    class="legend-circle"
+                    style="background-color: #8B0000;"
+                ></span>
+
+                <span>
+                    Inaccessible
+                </span>
+
+            </div>
+
+
+            <div class="legend-item">
+
+                <span
+                    class="legend-circle"
+                    style="background-color: #777777;"
+                ></span>
+
+                <span>
+                    Unknown
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
 
 
     <!-- =====================================================
@@ -997,6 +1290,28 @@
 
 
     // ========================================================
+    // ACCESSIBILITY LEGEND REFERENCES
+    // ========================================================
+
+    const legendToggle =
+        document.getElementById(
+            "legend-toggle"
+        );
+
+
+    const legendContent =
+        document.getElementById(
+            "legend-content"
+        );
+
+
+    const legendArrow =
+        document.getElementById(
+            "legend-arrow"
+        );
+
+
+    // ========================================================
     // APPLICATION STATE
     // ========================================================
 
@@ -1011,6 +1326,58 @@
     let searchPerson = true;
 
     let veteransOnly = false;
+
+
+    // ========================================================
+    // ACCESSIBILITY LEGEND TOGGLE
+    // ========================================================
+
+    legendToggle.addEventListener(
+        "click",
+        function (event) {
+
+            // Prevent the legend click from becoming
+            // a map click.
+            event.stopPropagation();
+
+
+            const isOpen =
+                legendContent.style.display ===
+                "block";
+
+
+            if (isOpen) {
+
+                legendContent.style.display =
+                    "none";
+
+                legendArrow.textContent =
+                    "▾";
+
+                legendToggle.setAttribute(
+                    "aria-expanded",
+                    "false"
+                );
+
+            }
+
+            else {
+
+                legendContent.style.display =
+                    "block";
+
+                legendArrow.textContent =
+                    "▴";
+
+                legendToggle.setAttribute(
+                    "aria-expanded",
+                    "true"
+                );
+
+            }
+
+        }
+    );
 
 
     // ========================================================
@@ -3340,3 +3707,4 @@
 </body>
 
 </html>
+```
