@@ -2071,8 +2071,25 @@
                                                             name: fullName || "Unnamed Interment",
                                                             firstName: firstName,
                                                             lastName: lastName,
+                                                            birth:
+                                                                String(row.BIRTH || "").trim(),
+                                                            death:
+                                                                String(row.DEATH || "").trim(),
+                                                            row:
+                                                                String(row.ROW || "").trim(),
+                                                            plot:
+                                                                String(row.PLOT || "").trim(),
+                                                            stoneInfo:
+                                                                String(
+                                                                    row["ADDITIONAL INFORMATION ON STONE"] ||
+                                                                    ""
+                                                                ).trim(),
                                                             veteran:
                                                                 String(row.VETERAN || "").trim() === "1",
+                                                            vetDetails:
+                                                                String(row["VET DETAILS"] || "").trim(),
+                                                            markerID:
+                                                                String(row.MARKER_ID || "").trim(),
                                                             coordinates: [
                                                                 graveLon,
                                                                 graveLat
@@ -2824,7 +2841,15 @@
                             Cemetery_ID: cemeteryID,
                             Grave_Index: index + 1,
                             Person_Name: grave.name,
-                            Veteran: grave.veteran
+                            Veteran: grave.veteran,
+                            Birth: grave.birth || "",
+                            Death: grave.death || "",
+                            Row: grave.row || "",
+                            Plot: grave.plot || "",
+                            Stone_Info: grave.stoneInfo || "",
+                            Vet_Details: grave.vetDetails || "",
+                            Marker_ID: grave.markerID || "",
+                            Person_Data: JSON.stringify([grave])
                         },
                         geometry: {
                             type: "Point",
@@ -5147,7 +5172,6 @@
         "click",
         function (event) {
 
-
             // -----------------------------------------------
             // INDIVIDUAL PERSON
             // -----------------------------------------------
@@ -5167,14 +5191,12 @@
                             .sharedCemetery
                     );
 
-
                 const markerID =
                     decodeURIComponent(
                         personButton
                             .dataset
                             .sharedMarker
                     );
-
 
                 const index =
                     parseInt(
@@ -5184,140 +5206,46 @@
                         10
                     );
 
-
                 const groups =
                     sharedMarkerState
                         .groupsByCemetery[
                             cemeteryID
                         ];
 
-
                 const group =
                     groups &&
                     groups[markerID];
 
+                const person =
+                    group &&
+                    group[index];
 
-                const person = {
+                if (person) {
 
-    /*
-     * ========================================================
-     * IDENTITY
-     * ========================================================
-     */
+                    handleGraveClick({
 
-    name:
-        fullName ||
-        "Unnamed Interment",
+                        features: [
+                            {
+                                properties: {
+                                    Cemetery_ID:
+                                        cemeteryID,
+                                    Person_Data:
+                                        JSON.stringify([
+                                            person
+                                        ])
+                                }
+                            }
+                        ],
 
-    firstName:
-        firstName,
+                        originalEvent: event
 
-    lastName:
-        lastName,
+                    });
 
+                }
 
-    /*
-     * ========================================================
-     * LIFE DATES
-     * ========================================================
-     */
+                return;
 
-    birth:
-        String(
-            row.BIRTH ||
-            ""
-        ).trim(),
-
-    death:
-        String(
-            row.DEATH ||
-            ""
-        ).trim(),
-
-
-    /*
-     * ========================================================
-     * LOCATION / PLOT
-     * ========================================================
-     */
-
-    row:
-        String(
-            row.ROW ||
-            ""
-        ).trim(),
-
-    plot:
-        String(
-            row.PLOT ||
-            ""
-        ).trim(),
-
-
-    /*
-     * ========================================================
-     * STONE INFORMATION
-     * ========================================================
-     */
-
-    stoneInfo:
-        String(
-            row[
-                "ADDITIONAL INFORMATION ON STONE"
-            ] ||
-            ""
-        ).trim(),
-
-
-    /*
-     * ========================================================
-     * VETERAN
-     * ========================================================
-     */
-
-    veteran:
-        String(
-            row.VETERAN ||
-            ""
-        ).trim() === "1",
-
-    vetDetails:
-        String(
-            row[
-                "VET DETAILS"
-            ] ||
-            ""
-        ).trim(),
-
-
-    /*
-     * ========================================================
-     * PHYSICAL MARKER
-     * ========================================================
-     */
-
-    markerID:
-        markerID,
-
-
-    /*
-     * ========================================================
-     * MAP POSITION
-     * ========================================================
-     */
-
-    coordinates:
-        !isNaN(lat) &&
-        !isNaN(lon)
-
-            ? [
-                lon,
-                lat
-            ]
-
-            : null
-
-};
+            }
 
 
             // -----------------------------------------------
@@ -5328,7 +5256,6 @@
                 event.target.closest(
                     ".shared-marker-view-all-button"
                 );
-
 
             if (viewAllButton) {
 
@@ -5350,11 +5277,12 @@
 
                 );
 
+                return;
+
             }
 
         }
     );
-
 
     // ========================================================
     // CREATE SHARED MARKER LAYERS
@@ -5757,11 +5685,57 @@
                                             fullName ||
                                             "Unnamed Interment",
 
+                                        firstName:
+                                            firstName,
+
+                                        lastName:
+                                            lastName,
+
+                                        birth:
+                                            String(
+                                                row.BIRTH ||
+                                                ""
+                                            ).trim(),
+
+                                        death:
+                                            String(
+                                                row.DEATH ||
+                                                ""
+                                            ).trim(),
+
+                                        row:
+                                            String(
+                                                row.ROW ||
+                                                ""
+                                            ).trim(),
+
+                                        plot:
+                                            String(
+                                                row.PLOT ||
+                                                ""
+                                            ).trim(),
+
+                                        stoneInfo:
+                                            String(
+                                                row[
+                                                    "ADDITIONAL INFORMATION ON STONE"
+                                                ] ||
+                                                ""
+                                            ).trim(),
+
                                         veteran:
                                             String(
                                                 row.VETERAN ||
                                                 ""
                                             ).trim() === "1",
+
+                                        vetDetails:
+                                            String(
+                                                row[
+                                                    "VET DETAILS"
+                                                ] ||
+                                                ""
+                                            ).trim(),
 
                                         markerID:
                                             markerID,
