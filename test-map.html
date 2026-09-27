@@ -4050,13 +4050,15 @@
         }
 
         const layers = [
-            "cemeteries-layer",
-            "cemeteries-highlight-layer",
-            "graves-layer",
-            "lake-cemeteries-layer"
-        ].filter(function (id) {
-            return map.getLayer(id);
-        });
+    "cemeteries-layer",
+    "cemeteries-highlight-layer",
+    "graves-layer",
+    "shared-markers-outer-layer",
+    "shared-markers-inner-layer",
+    "lake-cemeteries-layer"
+].filter(function (id) {
+    return map.getLayer(id);
+});
 
         if (layers.length) {
             const hits = map.queryRenderedFeatures(
