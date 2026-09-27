@@ -2352,162 +2352,101 @@
 
 // =========================================================
 // HISTORIC CEMETERY WATER-WAVE SYMBOL
+// HTML OVERLAY
 // =========================================================
 
-const waveCanvas =
-    document.createElement("canvas");
+const historicWave =
+    document.createElement("div");
 
-waveCanvas.width = 32;
-waveCanvas.height = 32;
+historicWave.id =
+    "historic-water-waves";
 
-const waveContext =
-    waveCanvas.getContext("2d");
+historicWave.innerHTML = `
+    <svg
+        width="32"
+        height="32"
+        viewBox="0 0 32 32"
+        xmlns="http://www.w3.org/2000/svg"
+    >
 
-waveContext.strokeStyle =
-    "#ffffff";
+        <path
+            d="M5 13
+               C8 10, 11 16, 14 13
+               C17 10, 20 16, 23 13
+               C25 11, 27 13, 27 13"
+            fill="none"
+            stroke="white"
+            stroke-width="1.8"
+            stroke-linecap="round"
+        />
 
-waveContext.lineWidth =
-    1.5;
+        <path
+            d="M5 19
+               C8 16, 11 22, 14 19
+               C17 16, 20 22, 23 19
+               C25 17, 27 19, 27 19"
+            fill="none"
+            stroke="white"
+            stroke-width="1.8"
+            stroke-linecap="round"
+        />
 
-waveContext.lineCap =
-    "round";
+    </svg>
+`;
 
+historicWave.style.position =
+    "absolute";
 
-// -------------------------
-// TOP WAVE
-// -------------------------
+historicWave.style.width =
+    "32px";
 
-waveContext.beginPath();
+historicWave.style.height =
+    "32px";
 
-waveContext.moveTo(5, 13);
+historicWave.style.pointerEvents =
+    "none";
 
-waveContext.bezierCurveTo(
-    8, 10,
-    11, 16,
-    14, 13
-);
+historicWave.style.zIndex =
+    "5";
 
-waveContext.bezierCurveTo(
-    17, 10,
-    20, 16,
-    23, 13
-);
-
-waveContext.bezierCurveTo(
-    25, 11,
-    27, 13,
-    27, 13
-);
-
-waveContext.stroke();
-
-
-// -------------------------
-// BOTTOM WAVE
-// -------------------------
-
-waveContext.beginPath();
-
-waveContext.moveTo(5, 19);
-
-waveContext.bezierCurveTo(
-    8, 16,
-    11, 22,
-    14, 19
-);
-
-waveContext.bezierCurveTo(
-    17, 16,
-    20, 22,
-    23, 19
-);
-
-waveContext.bezierCurveTo(
-    25, 17,
-    27, 19,
-    27, 19
-);
-
-waveContext.stroke();
+document
+    .getElementById("map")
+    .appendChild(historicWave);
 
 
 // =========================================================
-// CONVERT CANVAS TO AN IMAGE MAPLIBRE CAN LOAD
+// POSITION THE WAVES OVER THE HISTORIC MARKER
 // =========================================================
 
-const waveImageURL =
-    waveCanvas.toDataURL("image/png");
+function positionHistoricWaves() {
+
+    const point =
+        map.project(lakeLocation);
+
+    historicWave.style.left =
+        (point.x - 16) + "px";
+
+    historicWave.style.top =
+        (point.y - 16) + "px";
+}
 
 
-map.loadImage(
-    waveImageURL,
-    function (error, image) {
-
-        if (error) {
-
-            console.error(
-                "Unable to create historic water-wave image:",
-                error
-            );
-
-            return;
-
-        }
-
-
-        // -------------------------
-        // ADD IMAGE TO MAP
-        // -------------------------
-
-        if (
-            !map.hasImage(
-                "historic-water-waves"
-            )
-        ) {
-
-            map.addImage(
-                "historic-water-waves",
-                image
-            );
-
-        }
-
-
-        // -------------------------
-        // WAVE SYMBOL LAYER
-        // -------------------------
-
-        map.addLayer({
-
-            id:
-                "historic-water-waves-layer",
-
-            type:
-                "symbol",
-
-            source:
-                "lake-cemeteries-data",
-
-            layout: {
-
-                "icon-image":
-                    "historic-water-waves",
-
-                "icon-size":
-                    1,
-
-                "icon-allow-overlap":
-                    true,
-
-                "icon-ignore-placement":
-                    true
-
-            }
-
-        });
-
-    }
+map.on(
+    "move",
+    positionHistoricWaves
 );
+
+map.on(
+    "zoom",
+    positionHistoricWaves
+);
+
+map.on(
+    "resize",
+    positionHistoricWaves
+);
+
+positionHistoricWaves();
                                             
                                             // =========================
                                             // HISTORIC MARKER CLICK
