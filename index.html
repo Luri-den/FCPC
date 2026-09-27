@@ -2353,32 +2353,65 @@
 
 
 // =========================================================
-// HISTORIC CEMETERY MARKER TEST
+// HISTORIC CEMETERY WATER-WAVE SYMBOL
 // =========================================================
 
-const historicWaveTest =
+const historicWave =
     document.createElement("div");
 
-historicWaveTest.style.width =
-    "50px";
+historicWave.style.width =
+    "32px";
 
-historicWaveTest.style.height =
-    "50px";
+historicWave.style.height =
+    "32px";
 
-historicWaveTest.style.background =
-    "red";
-
-historicWaveTest.style.border =
-    "3px solid white";
-
-historicWaveTest.style.pointerEvents =
+historicWave.style.pointerEvents =
     "none";
 
+historicWave.innerHTML = `
+    <svg
+        width="32"
+        height="32"
+        viewBox="0 0 32 32"
+        xmlns="http://www.w3.org/2000/svg"
+    >
+
+        <path
+            d="M4 12
+               Q8 8 12 12
+               T20 12
+               T28 12"
+            fill="none"
+            stroke="#ffffff"
+            stroke-width="2"
+            stroke-linecap="round"
+        />
+
+        <path
+            d="M4 20
+               Q8 16 12 20
+               T20 20
+               T28 20"
+            fill="none"
+            stroke="#ffffff"
+            stroke-width="2"
+            stroke-linecap="round"
+        />
+
+    </svg>
+`;
+
 new maplibregl.Marker({
-    element: historicWaveTest,
-    anchor: "center"
+    element:
+        historicWave,
+
+    anchor:
+        "center"
+
 })
-    .setLngLat(lakeLocation)
+    .setLngLat(
+        lakeLocation
+    )
     .addTo(map);
                                             
                                             // =========================
