@@ -3087,10 +3087,18 @@
         // Mobile screens need the indicators pulled farther inward
         // so long cemetery names do not get clipped at the map edge.
         const edgePadding =
-            isMobile ? 50 : 18;
+    isMobile ? 8 : 18;
 
-        const halfW = width / 2 - edgePadding;
-        const halfH = height / 2 - edgePadding;
+const edgePaddingRight =
+    isMobile ? 85 : 18;
+
+const halfW =
+    width / 2 -
+    ((edgePadding + edgePaddingRight) / 2);
+
+const halfH =
+    height / 2 -
+    edgePadding;
         const usedPositions = [];
 
         cemeteryFeatures.forEach(
@@ -3142,7 +3150,10 @@
                 let x = centerX + dx * edgeScale;
                 let y = centerY + dy * edgeScale;
 
-                x = Math.max(edgePadding, Math.min(width - edgePadding, x));
+                x = Math.max(
+    edgePadding,
+    Math.min(width - edgePaddingRight, x)
+);
                 y = Math.max(edgePadding, Math.min(height - edgePadding, y));
 
                 for (let i = 0; i < usedPositions.length; i++) {
@@ -3160,7 +3171,10 @@
                     }
                 }
 
-                x = Math.max(edgePadding, Math.min(width - edgePadding, x));
+                x = Math.max(
+    edgePadding,
+    Math.min(width - edgePaddingRight, x)
+);
                 y = Math.max(edgePadding, Math.min(height - edgePadding, y));
 
                 usedPositions.push({ x: x, y: y });
