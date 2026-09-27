@@ -45,9 +45,7 @@
 
 <style>
 
-#historic-water-waves {
-    display: block;
-}
+
     
     * {
         box-sizing: border-box;
@@ -2356,7 +2354,6 @@
 
 // =========================================================
 // HISTORIC CEMETERY WATER-WAVE SYMBOL
-// HTML OVERLAY
 // =========================================================
 
 const historicWave =
@@ -2364,6 +2361,15 @@ const historicWave =
 
 historicWave.id =
     "historic-water-waves";
+
+historicWave.style.width =
+    "32px";
+
+historicWave.style.height =
+    "32px";
+
+historicWave.style.pointerEvents =
+    "none";
 
 historicWave.innerHTML = `
     <svg
@@ -2398,61 +2404,26 @@ historicWave.innerHTML = `
     </svg>
 `;
 
-historicWave.style.position =
-    "absolute";
-
-historicWave.style.width =
-    "32px";
-
-historicWave.style.height =
-    "32px";
-
-historicWave.style.pointerEvents =
-    "none";
-
-historicWave.style.zIndex =
-    "5";
-
-document
-    .getElementById("map")
-    .appendChild(historicWave);
-
-                                            historicWave.style.background =
-    "red";
 
 // =========================================================
-// POSITION THE WAVES OVER THE HISTORIC MARKER
+// ADD WAVES AS A MAPLIBRE DOM MARKER
 // =========================================================
 
-function positionHistoricWaves() {
+new maplibregl.Marker({
 
-    const point =
-        map.project(lakeLocation);
+    element:
+        historicWave,
 
-    historicWave.style.left =
-        (point.x - 16) + "px";
+    anchor:
+        "center"
 
-    historicWave.style.top =
-        (point.y - 16) + "px";
-}
+})
 
+    .setLngLat(
+        lakeLocation
+    )
 
-map.on(
-    "move",
-    positionHistoricWaves
-);
-
-map.on(
-    "zoom",
-    positionHistoricWaves
-);
-
-map.on(
-    "resize",
-    positionHistoricWaves
-);
-
-positionHistoricWaves();
+    .addTo(map);
                                             
                                             // =========================
                                             // HISTORIC MARKER CLICK
