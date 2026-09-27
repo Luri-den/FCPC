@@ -3257,6 +3257,35 @@
     function handleCemeteryClick(event) {
 
 
+        // A shared physical marker sits at the same location as
+        // the cemetery marker. If the shared-marker click target
+        // was clicked, let that handler own the click completely.
+        if (
+            map.getLayer("shared-markers-outer-layer")
+        ) {
+
+            const sharedFeatures =
+                map.queryRenderedFeatures(
+                    event.point,
+                    {
+                        layers: [
+                            "shared-markers-outer-layer"
+                        ]
+                    }
+                );
+
+            if (
+                sharedFeatures &&
+                sharedFeatures.length
+            ) {
+
+                return;
+
+            }
+
+        }
+
+
         if (
             !event.features ||
             !event.features.length
