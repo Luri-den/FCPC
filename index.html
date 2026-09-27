@@ -2434,14 +2434,21 @@ waveContext.stroke();
 // ADD TO MAP
 // -------------------------
 
-map.addImage(
-    "historic-water-waves",
+const waveImageData =
     waveContext.getImageData(
         0,
         0,
         32,
         32
-    )
+    );
+
+map.addImage(
+    "historic-water-waves",
+    {
+        width: 32,
+        height: 32,
+        data: waveImageData.data
+    }
 );
 
 
