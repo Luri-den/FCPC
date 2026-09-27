@@ -2353,76 +2353,32 @@
 
 
 // =========================================================
-// HISTORIC CEMETERY WATER-WAVE SYMBOL
+// HISTORIC CEMETERY MARKER TEST
 // =========================================================
 
-const historicWave =
+const historicWaveTest =
     document.createElement("div");
 
-historicWave.id =
-    "historic-water-waves";
+historicWaveTest.style.width =
+    "50px";
 
-historicWave.style.width =
-    "32px";
+historicWaveTest.style.height =
+    "50px";
 
-historicWave.style.height =
-    "32px";
+historicWaveTest.style.background =
+    "red";
 
-historicWave.style.pointerEvents =
+historicWaveTest.style.border =
+    "3px solid white";
+
+historicWaveTest.style.pointerEvents =
     "none";
 
-historicWave.innerHTML = `
-    <svg
-        width="32"
-        height="32"
-        viewBox="0 0 32 32"
-        xmlns="http://www.w3.org/2000/svg"
-    >
-
-        <path
-            d="M5 13
-               C8 10, 11 16, 14 13
-               C17 10, 20 16, 23 13
-               C25 11, 27 13, 27 13"
-            fill="none"
-            stroke="white"
-            stroke-width="1.8"
-            stroke-linecap="round"
-        />
-
-        <path
-            d="M5 19
-               C8 16, 11 22, 14 19
-               C17 16, 20 22, 23 19
-               C25 17, 27 19, 27 19"
-            fill="none"
-            stroke="white"
-            stroke-width="1.8"
-            stroke-linecap="round"
-        />
-
-    </svg>
-`;
-
-
-// =========================================================
-// ADD WAVES AS A MAPLIBRE DOM MARKER
-// =========================================================
-
 new maplibregl.Marker({
-
-    element:
-        historicWave,
-
-    anchor:
-        "center"
-
+    element: historicWaveTest,
+    anchor: "center"
 })
-
-    .setLngLat(
-        lakeLocation
-    )
-
+    .setLngLat(lakeLocation)
     .addTo(map);
                                             
                                             // =========================
