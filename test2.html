@@ -3196,6 +3196,95 @@ map.on("click", function (event) {
     exitCemeteryMode();
 });
 
+// 1. First, declare your global variables (at the very top)
+const DEFAULT_ZOOM = 10;
+const DEFAULT_CENTER = [-85.05, 39.41]; // Centered around Franklin County
+
+// 2. Second, initialize your MapLibre map engine object
+const map = new maplibregl.Map({
+    container: "map",
+    style: {
+        version: 8,
+        sources: {
+            "osm-tiles": { /* ... your street tile settings ... */ },
+            "usgs-tiles": { /* ... your satellite fallback settings ... */ },
+            "indiana-tiles": { /* ... your indiana ortho settings ... */ },
+            
+            // Your historical overlay source goes here!
+            "franklin-1882-local-image": {
+                "type": "image",
+                "url": "https://yourdomain.com", 
+                "coordinates": [
+                    [-85.291771, 39.516008],
+                    [-84.810515, 39.516008],
+                    [-84.810515, 39.314981],
+                    [-85.291771, 39.314981]
+                ]
+            }
+        },
+        layers: [
+            { id: "osm-layer", type: "raster", source: "osm-tiles" },
+            { id: "usgs-layer", type: "raster", source: "usgs-tiles", layout: { visibility: "none" } },
+            { id: "indiana-layer", type: "raster", source: "indiana-tiles", layout: { visibility: "none" } },
+            
+            // Your historical layer configuration goes here!
+            { 
+                "id": "franklin-1882-layer", 
+                "type": "raster", 
+                "source": "franklin-1882-local-image", 
+                "layout": { "visibility": "none" },
+                "paint": { "raster-opacity": 0.80 }
+            }
+        ]
+    },
+    zoom: DEFAULT_ZOOM,
+    center: DEFAULT_CENTER,
+    maxBounds: [[-85.50, 39.10], [-84.65, 39.70]],
+    maxZoom: 30
+});
+
+// 3. Third, place your custom helper function definitions
+function setLayerVisibility(layerId, visibilityState) {
+    if (map.getLayer(layerId)) {
+        map.setLayoutProperty(layerId, "visibility", visibilityState);
+    }
+}
+
+// 4. Fourth, your existing button listener code sections (Info panels, basemaps, etc.)
+document.getElementById("close-info").addEventListener("click", function () {
+    // ... your existing code ...
+});
+
+// 5. 🌟 FINALLY, PASTE THE NEW HISTORICAL JAVASCRIPT CODE HERE (At the very bottom) 🌟
+const historicalCheckbox = document.getElementById("historical-layer-toggle");
+const historicalSlider = document.getElementById("historical-opacity-slider");
+const sliderWrapper = document.getElementById("opacity-slider-wrapper");
+const opacityLabel = document.getElementById("opacity-value-label");
+
+function updateHistoricalOpacity(sliderValue) {
+    const decimalOpacity = parseFloat(sliderValue) / 100;
+    opacityLabel.textContent = sliderValue + "%";
+    
+    // Safely apply changes only if style and layer are loaded
+    if (map && map.isStyleLoaded() && map.getLayer("franklin-1882-layer")) {
+        map.setPaintProperty("franklin-1882-layer", "raster-opacity", decimalOpacity);
+    }
+}
+
+historicalCheckbox.addEventListener("change", function (event) {
+    const isChecked = event.target.checked;
+    setLayerVisibility("franklin-1882-layer", isChecked ? "visible" : "none");
+    sliderWrapper.style.opacity = isChecked ? "1" : "0.5";
+    sliderWrapper.style.pointer-events = isChecked ? "auto" : "none";
+});
+
+historicalSlider.addEventListener("input", function (event) {
+    updateHistoricalOpacity(event.target.value);
+});
+
+map.on("load", function () {
+    updateHistoricalOpacity(historicalSlider.value);
+});
 
 // ============================================================
 // SEARCH / FILTER CONTROLS
