@@ -608,6 +608,183 @@
         border-bottom-color: rgba(255, 255, 255, 0.96);
     }
 
+ /* =====================================================
+       ACCESSIBILITY LEGEND
+       ===================================================== */
+
+    #accessibility-legend {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 10;
+
+        background: rgba(255, 255, 255, 0.96);
+
+        border: 1px solid #aaa;
+        border-radius: 5px;
+
+        box-shadow:
+            0 2px 8px rgba(0, 0, 0, 0.25);
+
+        overflow: hidden;
+
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+
+    #legend-toggle {
+        width: 110px;
+
+        padding: 8px 10px;
+
+        border: none;
+        border-radius: 0;
+
+        background: white;
+        color: #3f3528;
+
+        font-size: 13px;
+        font-weight: bold;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        cursor: pointer;
+    }
+
+
+    #legend-toggle:hover {
+        background: #eee9dc;
+        color: #3f3528;
+    }
+
+
+    #legend-content {
+        display: none;
+
+        min-width: 180px;
+
+        padding: 8px 12px 11px 12px;
+
+        border-top: 1px solid #ddd;
+    }
+
+
+    .legend-title {
+        margin-bottom: 7px;
+
+        font-size: 11px;
+        font-weight: bold;
+
+        color: #555;
+    }
+
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        margin: 5px 0;
+
+        font-size: 13px;
+        line-height: 1.4;
+
+        white-space: nowrap;
+    }
+
+
+    .legend-circle {
+        display: inline-block;
+
+        width: 14px;
+        height: 14px;
+        min-width: 14px;
+
+        border-radius: 50%;
+
+        border: 1px solid rgba(0, 0, 0, 0.25);
+    }
+
+
+    /* =====================================================
+       OFF-SCREEN SEARCH DIRECTIONS
+       ===================================================== */
+
+    #search-directions {
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        pointer-events: none;
+        overflow: hidden;
+    }
+
+    .search-direction {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        max-width: 210px;
+        padding: 5px 8px 5px 6px;
+        border: 1px solid rgba(90, 75, 58, 0.55);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 2px 7px rgba(0, 0, 0, 0.25);
+        color: #3f3528;
+        font-size: 12px;
+        font-weight: bold;
+        line-height: 1.15;
+        white-space: nowrap;
+        pointer-events: auto;
+        cursor: pointer;
+        transform-origin: center center;
+    }
+
+    .search-direction:hover {
+        background: white;
+        border-color: #463a2d;
+    }
+
+    .search-direction-arrow {
+        display: inline-block;
+        width: 16px;
+        min-width: 16px;
+        text-align: center;
+        font-size: 18px;
+        line-height: 16px;
+        color: #FFD700;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
+        transform-origin: center center;
+    }
+
+    .search-direction-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+
+    /* =====================================================
+       MOBILE SEARCH DIRECTIONS
+       ===================================================== */
+
+    @media (max-width: 700px) {
+
+        .search-direction {
+            max-width: 60vw;
+            padding: 5px 7px 5px 5px;
+            font-size: 11px;
+        }
+
+        .search-direction-arrow {
+            width: 15px;
+            min-width: 15px;
+            font-size: 17px;
+        }
+
+    }
+
+    
 
     /* =====================================================
        MOBILE
@@ -837,6 +1014,84 @@
 
 <div id="map">
 
+      <!-- =====================================================
+         OFF-SCREEN SEARCH DIRECTIONS
+         ===================================================== -->
+
+    <div id="search-directions"></div>
+
+
+    <!-- =====================================================
+         ACCESSIBILITY LEGEND
+         ===================================================== -->
+
+    <div id="accessibility-legend">
+
+        <button
+            id="legend-toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="legend-content"
+        >
+            <span>Legend</span>
+            <span id="legend-arrow">▾</span>
+        </button>
+
+
+        <div id="legend-content">
+
+            <div class="legend-title">
+                ACCESSIBILITY
+            </div>
+
+
+            <div class="legend-item">
+                <span
+                    class="legend-circle"
+                    style="background-color: #01796F;"
+                ></span>
+                <span>Public</span>
+            </div>
+
+
+            <div class="legend-item">
+                <span
+                    class="legend-circle"
+                    style="background-color: #C9A227;"
+                ></span>
+                <span>With Permission</span>
+            </div>
+
+
+            <div class="legend-item">
+                <span
+                    class="legend-circle"
+                    style="background-color: #D2691E;"
+                ></span>
+                <span>Private Land</span>
+            </div>
+
+
+            <div class="legend-item">
+                <span
+                    class="legend-circle"
+                    style="background-color: #8B0000;"
+                ></span>
+                <span>Inaccessible</span>
+            </div>
+
+
+            <div class="legend-item">
+                <span
+                    class="legend-circle"
+                    style="background-color: #777777;"
+                ></span>
+                <span>Unknown</span>
+            </div>
+
+        </div>
+
+    </div>
 
     <!-- =====================================================
          FLOATING INFORMATION PANEL
@@ -982,6 +1237,13 @@
 
     const clearSearch =
         document.getElementById("clear-search");
+
+        const searchResults =
+        document.getElementById("search-results");
+
+    
+    const searchDirections =
+        document.getElementById("search-directions");
 
 
     const cemeteryToggle =
@@ -1232,74 +1494,78 @@
 
 
             // =================================================
-            // LOAD TEST CEMETERY BOUNDARY
+            // FRANKLIN COUNTY BOUNDARY
+            //
+            // This is a visual line only. It has no click
+            // or hover handler of its own.
             // =================================================
 
-            fetch(TEST_BOUNDARY_PATH)
-                .then(function (response) {
+            map.addSource(
+                "franklin-county",
+                {
+                    type:
+                        "geojson",
 
-                    if (!response.ok) {
-                        throw new Error(
-                            "Unable to load " +
-                            TEST_BOUNDARY_FILE
-                        );
-                    }
+                    data:
+                        "franklin-county.geojson"
+                }
+            );
 
-                    return response.json();
 
-                })
-                .then(function (data) {
+            map.addLayer({
 
-                    testBoundaryData = data;
+                id:
+                    "franklin-county-outline",
 
-                    map.addSource(
-                        "cemetery-boundaries",
-                        {
-                            type: "geojson",
-                            data: data
-                        }
-                    );
+                type:
+                    "line",
 
-                    map.addLayer({
-                        id: "cemetery-boundary-fill",
-                        type: "fill",
-                        source: "cemetery-boundaries",
-                        layout: {
-                            visibility: "none"
-                        },
-                        paint: {
-                            "fill-color": "#01796F",
-                            "fill-opacity": 0.10
-                        }
-                    });
+                source:
+                    "franklin-county",
 
-                    map.addLayer({
-                        id: "cemetery-boundary-outline",
-                        type: "line",
-                        source: "cemetery-boundaries",
-                        layout: {
-                            visibility: "none"
-                        },
-                        paint: {
-                            "line-color": "#01796F",
-                            "line-width": 3,
-                            "line-opacity": 0.95
-                        }
-                    });
+                paint: {
 
-                    if (selectedCemeteryFeature) {
-                        updateCemeteryBoundary();
-                    }
+                    "line-color":
+                        "#555555",
 
-                })
-                .catch(function (error) {
+                    "line-width":
+                        1.5,
 
-                    console.error(
-                        "test-cemetery.geojson loading error:",
-                        error
-                    );
+                    "line-opacity":
+                        0.8,
 
-                });
+                    "line-dasharray":
+                        [
+                            2,
+                            2
+                        ]
+
+                }
+
+            });
+ // =================================================
+            // CSV LOCATIONS
+            // =================================================
+
+            const CSV_PATH =
+                new URL(
+                    "cemlist.csv",
+                    document.baseURI
+                ).href;
+
+
+            const LAKE_CSV_PATH =
+                new URL(
+                    "lakecems.csv",
+                    document.baseURI
+                ).href;
+
+
+            const INTERMENTS_CSV_PATH =
+                new URL(
+                    "interments.csv",
+                    document.baseURI
+                ).href;
 
 
             // =================================================
@@ -2303,7 +2569,67 @@
 
                                             });
 
+// =========================================================
+// HISTORIC CEMETERY WATER-WAVE SYMBOL
+// =========================================================
 
+const historicWave =
+    document.createElement("div");
+
+historicWave.style.width =
+    "32px";
+
+historicWave.style.height =
+    "32px";
+
+historicWave.style.pointerEvents =
+    "none";
+
+historicWave.innerHTML = `
+    <svg
+        width="32"
+        height="32"
+        viewBox="0 0 32 32"
+        xmlns="http://www.w3.org/2000/svg"
+    >
+
+        <path
+            d="M4 12
+               Q8 8 12 12
+               T20 12
+               T28 12"
+            fill="none"
+            stroke="#ffffff"
+            stroke-width="2"
+            stroke-linecap="round"
+        />
+
+        <path
+            d="M4 20
+               Q8 16 12 20
+               T20 20
+               T28 20"
+            fill="none"
+            stroke="#ffffff"
+            stroke-width="2"
+            stroke-linecap="round"
+        />
+
+    </svg>
+`;
+
+new maplibregl.Marker({
+    element:
+        historicWave,
+
+    anchor:
+        "center"
+
+})
+    .setLngLat(
+        lakeLocation
+    )
+    .addTo(map);
                                             // =========================
                                             // HISTORIC MARKER CLICK
                                             // =========================
@@ -3911,6 +4237,212 @@
 
         }
 
+         // ========================================================
+    // OFF-SCREEN SEARCH DIRECTIONS
+    // ========================================================
+
+    function updateSearchDirections() {
+
+        searchDirections.innerHTML = "";
+
+        const searchIsActive =
+            searchBox.value.trim() !== "" ||
+            veteransOnly;
+
+        if (!searchIsActive) {
+            return;
+        }
+
+        const filterYear =
+            parseInt(yearSlider.value, 10);
+
+        const width = map.getContainer().clientWidth;
+        const height = map.getContainer().clientHeight;
+
+        if (!width || !height) {
+            return;
+        }
+
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const isMobile =
+            window.matchMedia("(max-width: 700px)").matches;
+
+        // Mobile screens need the indicators pulled farther inward
+        // so long cemetery names do not get clipped at the map edge.
+        const edgePadding =
+    isMobile ? 8 : 18;
+
+const edgePaddingRight =
+    isMobile ? 85 : 18;
+
+const halfW =
+    width / 2 -
+    ((edgePadding + edgePaddingRight) / 2);
+
+const halfH =
+    height / 2 -
+    edgePadding;
+        const usedPositions = [];
+
+        cemeteryFeatures.forEach(
+            function (feature) {
+
+                const props = feature.properties;
+
+                if (props.Search_Match !== true) {
+                    return;
+                }
+
+                const establishedYear =
+                    Number(props.Established_Year);
+
+                if (
+                    filterYear < 1900 &&
+                    !(establishedYear > 0 && establishedYear <= filterYear)
+                ) {
+                    return;
+                }
+
+                const coordinates =
+                    feature.geometry.coordinates;
+
+                const point =
+                    map.project(coordinates);
+
+                const isInside =
+                    point.x >= 0 &&
+                    point.x <= width &&
+                    point.y >= 0 &&
+                    point.y <= height;
+
+                if (isInside) {
+                    return;
+                }
+
+                const dx = point.x - centerX;
+                const dy = point.y - centerY;
+
+                if (dx === 0 && dy === 0) {
+                    return;
+                }
+
+                const scaleX = Math.abs(halfW / dx);
+                const scaleY = Math.abs(halfH / dy);
+                const edgeScale = Math.min(scaleX, scaleY);
+
+                let x = centerX + dx * edgeScale;
+                let y = centerY + dy * edgeScale;
+
+                x = Math.max(
+    edgePadding,
+    Math.min(width - edgePaddingRight, x)
+);
+                y = Math.max(edgePadding, Math.min(height - edgePadding, y));
+
+                for (let i = 0; i < usedPositions.length; i++) {
+
+                    const used = usedPositions[i];
+                    const distance = Math.hypot(x - used.x, y - used.y);
+
+                    if (distance < 32) {
+
+                        const nudge = 34 - distance;
+                        const length = Math.hypot(dx, dy) || 1;
+
+                        x += (-dy / length) * nudge;
+                        y += (dx / length) * nudge;
+                    }
+                }
+
+                x = Math.max(
+    edgePadding,
+    Math.min(width - edgePaddingRight, x)
+);
+                y = Math.max(edgePadding, Math.min(height - edgePadding, y));
+
+                usedPositions.push({ x: x, y: y });
+
+                const angle =
+                    Math.atan2(dy, dx) * 180 / Math.PI;
+
+                const zoom = map.getZoom();
+
+                const scaleSize =
+                    Math.max(
+                        0.65,
+                        Math.min(
+                            1.4,
+                            1 + (zoom - INITIAL_ZOOM) * 0.10
+                        )
+                    );
+
+                const indicator =
+                    document.createElement("div");
+
+                indicator.className =
+                    "search-direction";
+
+                indicator.style.left =
+                    x + "px";
+
+                indicator.style.top =
+                    y + "px";
+
+                indicator.style.transform =
+                    "translate(-50%, -50%) scale(" +
+                    scaleSize +
+                    ")";
+
+                indicator.title =
+                    "Go to " +
+                    (props.Cemetery_Name || "Cemetery");
+
+                const arrow =
+                    document.createElement("span");
+
+                arrow.className =
+                    "search-direction-arrow";
+
+                arrow.textContent =
+                    "➤";
+
+                arrow.style.transform =
+                    "rotate(" + angle + "deg)";
+
+                const name =
+                    document.createElement("span");
+
+                name.className =
+                    "search-direction-name";
+
+                name.textContent =
+                    props.Cemetery_Name ||
+                    "Unnamed Cemetery";
+
+                indicator.appendChild(arrow);
+                indicator.appendChild(name);
+
+                indicator.addEventListener(
+                    "click",
+                    function (event) {
+
+                        event.stopPropagation();
+
+                        map.flyTo({
+                            center: coordinates,
+                            duration: 500
+                        });
+
+                    }
+                );
+
+                searchDirections.appendChild(indicator);
+            }
+        );
+    }
+
+
 
         // ====================================================
         // SEARCH FILTER
@@ -4128,6 +4660,8 @@
     );
 
 
+
+    
     // ========================================================
     // PERSON SEARCH TOGGLE
     // ========================================================
@@ -4186,6 +4720,22 @@
     );
 
 
+ // ========================================================
+    // KEEP SEARCH DIRECTIONS IN SYNC WITH THE MAP
+    // ========================================================
+
+    map.on(
+        "move",
+        updateSearchDirections
+    );
+
+
+    map.on(
+        "resize",
+        updateSearchDirections
+    );
+
+    
     // ========================================================
     // RESET FILTERS
     // ========================================================
@@ -5852,6 +6402,97 @@
                                 error
                             );
 
+
+ // -----------------------------------------------
+            // COLLAPSE LEGEND
+            // -----------------------------------------------
+
+            legendContent.style.display =
+                "none";
+
+            legendArrow.textContent =
+                "▾";
+
+            legendToggle.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+
+        }
+    );
+
+
+
+    // ========================================================
+    // ACCESSIBILITY LEGEND TOGGLE
+    // ========================================================
+
+    const legendToggle =
+        document.getElementById(
+            "legend-toggle"
+        );
+
+
+    const legendContent =
+        document.getElementById(
+            "legend-content"
+        );
+
+
+    const legendArrow =
+        document.getElementById(
+            "legend-arrow"
+        );
+
+
+    legendToggle.addEventListener(
+        "click",
+        function (event) {
+
+            // Keep this click from being treated
+            // as a map click.
+            event.stopPropagation();
+
+
+            const isOpen =
+                legendContent.style.display ===
+                "block";
+
+
+            if (isOpen) {
+
+                legendContent.style.display =
+                    "none";
+
+                legendArrow.textContent =
+                    "▾";
+
+                legendToggle.setAttribute(
+                    "aria-expanded",
+                    "false"
+                );
+
+            }
+
+            else {
+
+                legendContent.style.display =
+                    "block";
+
+                legendArrow.textContent =
+                    "▴";
+
+                legendToggle.setAttribute(
+                    "aria-expanded",
+                    "true"
+                );
+
+            }
+
+        }
+    );
+       
+                            
                         }
 
                 }
