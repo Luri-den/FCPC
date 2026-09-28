@@ -541,13 +541,16 @@ let cemeteryFields = [];
 let intermentRows = [];
 let intermentFields = [];
 
-// test-cemetery.geojson contains the test polygon under
-// CEMETERY_ID = TEST001. That polygon represents the real
-// cemetery whose cemlist.csv ID is FC0202.
-const TEST_BOUNDARY_CEMETERY_ID = "FC0202";
-const TEST_BOUNDARY_FILE = "test-cemetery.geojson";
+// Cemetery outlines live in one GeoJSON file. Every polygon needs a
+// CEMETERY_ID property that matches the ID column in cemlist.csv
+// (for example "FC0202"). A cemetery may have more than one polygon.
+const BOUNDARY_FILE = "test-cemetery.geojson";
 
-let testBoundaryData = null;
+// The original test polygon is labeled TEST001 but stands for FC0202.
+// Once it is relabeled FC0202 in the file, this line can be deleted.
+const BOUNDARY_ID_ALIASES = { TEST001: "FC0202" };
+
+let boundaryData = null;
 let selectedCemeteryFeature = null;
 let hoverPopup = null;
 
@@ -827,36 +830,53 @@ infoContent.addEventListener("click", function (event) {
 
 
 // ============================================================
-// CEMETERY BOUNDARY (test polygon)
+// CEMETERY BOUNDARIES
+//
+// Only the selected cemetery's outline is drawn.
 // ============================================================
 
-function updateCemeteryBoundary() {
+function boundaryIDOf(feature) {
 
-    const visible =
-        !!selectedCemeteryFeature &&
-        cleanString(selectedCemeteryFeature.properties.Cemetery_ID) ===
-            TEST_BOUNDARY_CEMETERY_ID;
+    const id = cleanString(feature.properties && feature.properties.CEMETERY_ID);
 
-    ["cemetery-boundary-casing", "cemetery-boundary-outline"].forEach(function (id) {
-        setLayerVisibility(id, visible ? "visible" : "none");
-    });
+    return BOUNDARY_ID_ALIASES[id] || id;
 }
 
-function testBoundaryFeatures() {
+function boundaryFeaturesFor(cemeteryID) {
 
-    if (!testBoundaryData) {
+    if (!boundaryData || !cemeteryID) {
         return [];
     }
 
-    return (testBoundaryData.features || []).filter(function (feature) {
-        return feature.properties &&
-            cleanString(feature.properties.CEMETERY_ID) === "TEST001";
+    return (boundaryData.features || []).filter(function (feature) {
+        return feature.geometry && boundaryIDOf(feature) === cemeteryID;
     });
 }
 
-function loadTestBoundary() {
+function updateCemeteryBoundary() {
 
-    fetch(new URL(TEST_BOUNDARY_FILE, document.baseURI).href)
+    const cemeteryID = selectedCemeteryFeature
+        ? cleanString(selectedCemeteryFeature.properties.Cemetery_ID)
+        : "";
+
+    const features = boundaryFeaturesFor(cemeteryID);
+
+    const source = map.getSource("cemetery-boundary");
+
+    if (source) {
+        source.setData({ type: "FeatureCollection", features: features });
+    }
+
+    const visibility = features.length ? "visible" : "none";
+
+    ["cemetery-boundary-casing", "cemetery-boundary-outline"].forEach(function (id) {
+        setLayerVisibility(id, visibility);
+    });
+}
+
+function loadBoundaries() {
+
+    fetch(new URL(BOUNDARY_FILE, document.baseURI).href)
         .then(function (response) {
             if (!response.ok) {
                 throw new Error("HTTP " + response.status);
@@ -865,16 +885,7 @@ function loadTestBoundary() {
         })
         .then(function (data) {
 
-            testBoundaryData = data;
-
-            const source = map.getSource("cemetery-boundary");
-
-            if (source) {
-                source.setData({
-                    type: "FeatureCollection",
-                    features: testBoundaryFeatures()
-                });
-            }
+            boundaryData = data;
 
             // If a cemetery was clicked before this finished loading.
             updateCemeteryBoundary();
@@ -884,13 +895,13 @@ function loadTestBoundary() {
             }
         })
         .catch(function (error) {
-            console.error(TEST_BOUNDARY_FILE + " loading error:", error);
+            console.error(BOUNDARY_FILE + " loading error:", error);
         });
 }
 
-function getTestBoundaryBounds() {
+function getBoundaryBounds(cemeteryID) {
 
-    const features = testBoundaryFeatures();
+    const features = boundaryFeaturesFor(cemeteryID);
 
     if (!features.length) {
         return null;
@@ -917,7 +928,7 @@ function getTestBoundaryBounds() {
     }
 
     features.forEach(function (feature) {
-        extendCoordinates(feature.geometry && feature.geometry.coordinates);
+        extendCoordinates(feature.geometry.coordinates);
     });
 
     return bounds.isEmpty() ? null : bounds;
@@ -1057,10 +1068,7 @@ function fitSelectedCemetery() {
 
     const cemeteryID = cleanString(selectedCemeteryFeature.properties.Cemetery_ID);
 
-    const bounds =
-        cemeteryID === TEST_BOUNDARY_CEMETERY_ID
-            ? getTestBoundaryBounds()
-            : null;
+    const bounds = getBoundaryBounds(cemeteryID);
 
     const graveCoordinates =
         (intermentsByCemetery[cemeteryID] || {}).coordinates || [];
@@ -2251,7 +2259,7 @@ map.on("load", function () {
         paint: { "line-color": "#01796F", "line-width": 2.5, "line-opacity": 0.9 }
     });
 
-    loadTestBoundary();
+    loadBoundaries();
 
     // ---- shared physical marker layers (hidden until needed) ----
     map.addSource("shared-markers-data", { type: "geojson", data: EMPTY_COLLECTION });
