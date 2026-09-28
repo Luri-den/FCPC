@@ -213,6 +213,18 @@
 
     .search-direction-name { overflow: hidden; text-overflow: ellipsis; }
 
+    /* On-screen name label for a lake/lost cemetery point (no arrow;
+       sits directly above the point instead of at the map edge). */
+    .lake-site-label { position: absolute; transform: translate(-50%, calc(-100% - 12px)); }
+
+    .lake-goto-button {
+        display: block; width: 100%; margin-top: 8px; padding: 10px 14px;
+        border: 1px solid #8d8375; border-radius: 4px;
+        background: #01796F; color: white; font-size: 14px; font-weight: bold;
+        text-align: center; cursor: pointer;
+    }
+    .lake-goto-button:hover { background: #463a2d; }
+
     /* ---------- HEADER LINK ---------- */
     header a { color: white; text-decoration: underline; }
     header a:hover { opacity: 0.8; }
@@ -277,6 +289,7 @@
         #notices-box { padding: 16px 16px; }
 
         .search-direction { max-width: 60vw; padding: 5px 7px 5px 5px; font-size: 11px; }
+        .lake-site-label { max-width: 50vw; }
         .search-direction-arrow { width: 15px; min-width: 15px; font-size: 17px; }
 
         header { padding: 11px 13px; }
@@ -340,6 +353,7 @@
 <div id="map">
 
     <div id="search-directions"></div>
+    <div id="lake-site-labels"></div>
 
     <div id="accessibility-legend">
         <button id="legend-toggle" type="button" aria-expanded="false" aria-controls="legend-content">
@@ -503,6 +517,7 @@ const infoContent = document.getElementById("info-content");
 const searchBox = document.getElementById("search");
 const clearSearch = document.getElementById("clear-search");
 const searchDirections = document.getElementById("search-directions");
+const lakeSiteLabels = document.getElementById("lake-site-labels");
 const searchResultsBox = document.getElementById("search-results");
 const noticesOverlay = document.getElementById("notices-overlay");
 const cemeteryToggle = document.getElementById("search-cemetery");
@@ -560,6 +575,9 @@ let veteransOnly = false;
 
 let searchResultsOpen = false;
 let currentSearchResults = [];
+
+// movedPeopleByOrigin[LKC001] = [{ person, cemeteryID }]  (people moved from a former cemetery)
+let movedPeopleByOrigin = {};
 
 
 // ============================================================
@@ -778,6 +796,45 @@ infoContent.addEventListener("click", function (event) {
         cemeteryLightboxFrame.src =
             "cemetery.html?id=" + encodeURIComponent(seeMore.dataset.cemeteryId);
         cemeteryLightbox.style.display = "flex";
+        return;
+    }
+
+    // ---- HISTORIC (LAKE) CEMETERIES ----
+    const lakeButton = event.target.closest(".lake-cemetery-button");
+
+    if (lakeButton) {
+        showLakeCemeteryPanel(lakeButton.dataset.lakeId);
+        return;
+    }
+
+    if (event.target.closest(".lake-back-button")) {
+        showLakeListPanel();
+        return;
+    }
+
+    const gotoButton = event.target.closest(".lake-goto-button");
+
+    if (gotoButton) {
+        const destination = findCemetery(gotoButton.dataset.gotoCemeteryId);
+
+        if (destination) {
+            showCemeteryPanel(destination);
+        }
+
+        return;
+    }
+
+    const lakePersonButton = event.target.closest(".lake-person-button");
+
+    if (lakePersonButton) {
+
+        const entry = currentLakePeople[parseInt(lakePersonButton.dataset.index, 10)];
+        const host = entry && findCemetery(entry.cemeteryID);
+
+        if (host) {
+            selectSearchResult({ type: "person", feature: host, person: entry.person });
+        }
+
         return;
     }
 
@@ -1087,6 +1144,8 @@ function fitSelectedCemetery() {
 
 function enterCemeteryMode(feature) {
 
+    hideLakeSpokes();
+
     selectedCemeteryFeature = feature;
     infoPanel.style.display = "block";
 
@@ -1166,6 +1225,11 @@ function handleGraveClick(event) {
     let html = `<h2>${escapeHtml(person.name || "Unnamed Interment")}</h2>`;
 
     html += section("Cemetery", cemeteryName || "");
+
+    if (person.originalCemeteryID) {
+        const formerRow = lakeRowByID(person.originalCemeteryID);
+        html += section("Originally Buried At", formerRow ? formerRow.NAME : person.originalCemeteryID);
+    }
 
     if (person.birth) { html += section("Birth", person.birth); }
     if (person.death) { html += section("Death", person.death); }
@@ -1825,6 +1889,8 @@ function loadInterments(path) {
 
             intermentsByCemetery = {};
 
+            movedPeopleByOrigin = {};
+
             intermentRows = results.data;
             intermentFields = (results.meta && results.meta.fields) || [];
 
@@ -1869,6 +1935,7 @@ function loadInterments(path) {
                     veteran: cleanString(row.VETERAN) === "1",
                     vetDetails: cleanString(row["VET DETAILS"]),
                     markerID: markerID,
+                    originalCemeteryID: cleanString(row["ORIGINAL CEMETERY ID"]),
                     coordinates: hasCoordinates ? [lon, lat] : null
                 };
 
@@ -1885,6 +1952,21 @@ function loadInterments(path) {
                 }
 
                 entry.rows.push(person);
+
+                // A person moved from a former (historic) cemetery is stored ONCE,
+                // under the cemetery where they now lie, and indexed by where
+                // they were originally buried.
+                if (person.originalCemeteryID) {
+
+                    if (!movedPeopleByOrigin[person.originalCemeteryID]) {
+                        movedPeopleByOrigin[person.originalCemeteryID] = [];
+                    }
+
+                    movedPeopleByOrigin[person.originalCemeteryID].push({
+                        person: person,
+                        cemeteryID: cemeteryID
+                    });
+                }
 
                 // Only nonblank MARKER_ID values enter a group.
                 if (markerID) {
@@ -2064,7 +2146,443 @@ document.getElementById("export-all-btn").addEventListener("click", function () 
 
 // ============================================================
 // HISTORIC (LAKE) CEMETERIES
+//
+// One marker in the lake stands for all of the former cemeteries.
+// Activating it draws each MAPPED former cemetery as its own point,
+// joined to the main marker by a line. Selecting one lists the
+// people who were moved and links to where they now rest. No grave
+// data is drawn and the map does not zoom in on these sites.
+//
+// lakecems.csv columns used:
+//   LOST CEM ID (LKC001...), NAME, ALTERNATE NAME, DESIGNATION, TRACT NO.,
+//   RECORDED LOCATION, TOWNSHIP, NOTES, LAT, LONG,
+//   MOVED TO (destination cemetery name), MOVE ID (destination cemetery ID
+//   from cemlist.csv, e.g. FC0163)
+//
+// interments.csv: put the former cemetery's ID (LKC001...) in the
+// ORIGINAL CEMETERY ID column of each moved person. The person's own
+// CEMETERY_ID stays the cemetery where they now lie.
 // ============================================================
+
+const LAKE_LOCATION = [-84.99056446430546, 39.471294950413316];
+
+let lakeCemeteries = [];
+let lakeSpokesVisible = false;
+let currentLakePeople = [];
+
+function lakeRowByID(id) {
+    const wanted = cleanString(id);
+
+    return lakeCemeteries.find(function (row) {
+        return row.lakeID === wanted;
+    });
+}
+
+// Works out where a former cemetery's people were moved.
+function lakeMovedTo(row) {
+
+    const idText = cleanString(row["MOVE ID"]);
+    const nameText = cleanString(row["MOVED TO"]);
+
+    let feature = idText ? findCemetery(idText) : null;
+
+    // Also accept the ID typed into MOVED TO, or an exact cemetery name.
+    if (!feature && nameText) {
+        feature = findCemetery(nameText) ||
+            cemeteryFeatures.find(function (f) {
+                return cleanString(f.properties.Cemetery_Name).toLowerCase() ===
+                    nameText.toLowerCase();
+            }) ||
+            null;
+    }
+
+    return {
+        feature: feature,
+        label: feature
+            ? (feature.properties.Cemetery_Name || feature.properties.Cemetery_ID)
+            : (nameText || idText)
+    };
+}
+
+function clearCemeterySelection() {
+
+    if (!selectedCemeteryFeature) {
+        return;
+    }
+
+    selectedCemeteryFeature = null;
+    removeHoverLabel();
+    updateCemeteryBoundary();
+    updateCemeteryGraves();
+}
+
+function hideLakeSpokes() {
+
+    lakeSpokesVisible = false;
+
+    lakeSiteLabels.innerHTML = "";
+
+    ["lake-sites-data", "lake-lines-data"].forEach(function (id) {
+        const source = map.getSource(id);
+
+        if (source) {
+            source.setData(EMPTY_COLLECTION);
+        }
+    });
+
+    ["lake-lines-casing", "lake-lines-layer", "lake-sites-layer"].forEach(function (id) {
+        setLayerVisibility(id, "none");
+    });
+}
+
+function showLakeSpokes() {
+
+    const sites = map.getSource("lake-sites-data");
+    const lines = map.getSource("lake-lines-data");
+
+    const mapped = lakeCemeteries.filter(function (row) {
+        return row.lakeCoordinates && row.lakeID;
+    });
+
+    if (!sites || !lines || !mapped.length) {
+        return;
+    }
+
+    sites.setData({
+        type: "FeatureCollection",
+        features: mapped.map(function (row) {
+            return {
+                type: "Feature",
+                properties: { Lake_ID: row.lakeID, Lake_Name: row.NAME || "" },
+                geometry: { type: "Point", coordinates: row.lakeCoordinates }
+            };
+        })
+    });
+
+    lines.setData({
+        type: "FeatureCollection",
+        features: mapped.map(function (row) {
+            return {
+                type: "Feature",
+                properties: { Lake_ID: row.lakeID },
+                geometry: { type: "LineString", coordinates: [LAKE_LOCATION, row.lakeCoordinates] }
+            };
+        })
+    });
+
+    ["lake-lines-casing", "lake-lines-layer", "lake-sites-layer"].forEach(function (id) {
+        setLayerVisibility(id, "visible");
+    });
+
+    lakeSpokesVisible = true;
+
+    updateLakeSiteLabels();
+
+    // Only move the map if some points are out of view. This is not a
+    // zoom-in on a cemetery; it just makes sure all of them can be seen.
+    const view = map.getBounds();
+
+    const allVisible = mapped.every(function (row) {
+        return view.contains(row.lakeCoordinates);
+    });
+
+    if (!allVisible) {
+
+        const bounds = new maplibregl.LngLatBounds(LAKE_LOCATION, LAKE_LOCATION);
+
+        mapped.forEach(function (row) {
+            bounds.extend(row.lakeCoordinates);
+        });
+
+        const isMobile = window.matchMedia("(max-width: 700px)").matches;
+
+        const padding = isMobile
+            ? { top: 60, bottom: Math.round(map.getContainer().clientHeight * 0.45), left: 40, right: 40 }
+            : { top: 60, bottom: 60, left: 60, right: 360 };
+
+        map.fitBounds(bounds, { padding: padding, maxZoom: 15, duration: 800 });
+    }
+}
+
+
+// Persistent name labels for the points spawned by the lake marker,
+// styled like a search result: a plain pill above a point that is on
+// screen, or an off-screen arrow (reusing the same look as the text
+// search's off-screen indicators) for a point that currently isn't.
+function updateLakeSiteLabels() {
+
+    lakeSiteLabels.innerHTML = "";
+
+    if (!lakeSpokesVisible) {
+        return;
+    }
+
+    const mapped = lakeCemeteries.filter(function (row) {
+        return row.lakeCoordinates && row.lakeID;
+    });
+
+    const width = map.getContainer().clientWidth;
+    const height = map.getContainer().clientHeight;
+
+    if (!width || !height || !mapped.length) {
+        return;
+    }
+
+    const centerX = width / 2;
+    const centerY = height / 2;
+
+    const isMobile = window.matchMedia("(max-width: 700px)").matches;
+
+    const edgePadding = isMobile ? 8 : 18;
+    const edgePaddingRight = isMobile ? 85 : 18;
+
+    const halfW = width / 2 - (edgePadding + edgePaddingRight) / 2;
+    const halfH = height / 2 - edgePadding;
+
+    const usedPositions = [];
+
+    function clampX(x) {
+        return Math.max(edgePadding, Math.min(width - edgePaddingRight, x));
+    }
+
+    function clampY(y) {
+        return Math.max(edgePadding, Math.min(height - edgePadding, y));
+    }
+
+    function goToSite(row) {
+        clearCemeterySelection();
+        showLakeCemeteryPanel(row.lakeID);
+    }
+
+    mapped.forEach(function (row) {
+
+        const coordinates = row.lakeCoordinates;
+        const point = map.project(coordinates);
+
+        const isInside = point.x >= 0 && point.x <= width && point.y >= 0 && point.y <= height;
+
+        // -------- on screen: a plain name label above the point --------
+        if (isInside) {
+
+            const label = document.createElement("div");
+            label.className = "search-direction lake-site-label";
+            label.style.left = point.x + "px";
+            label.style.top = point.y + "px";
+            label.title = row.NAME || "Historic Cemetery";
+
+            const name = document.createElement("span");
+            name.className = "search-direction-name";
+            name.textContent = row.NAME || "Unnamed Cemetery";
+
+            label.appendChild(name);
+
+            label.addEventListener("click", function (event) {
+                event.stopPropagation();
+                goToSite(row);
+            });
+
+            lakeSiteLabels.appendChild(label);
+            return;
+        }
+
+        // -------- off screen: the same directional arrow as search --------
+        const dx = point.x - centerX;
+        const dy = point.y - centerY;
+
+        if (dx === 0 && dy === 0) {
+            return;
+        }
+
+        const edgeScale = Math.min(Math.abs(halfW / dx), Math.abs(halfH / dy));
+
+        let x = clampX(centerX + dx * edgeScale);
+        let y = clampY(centerY + dy * edgeScale);
+
+        for (let i = 0; i < usedPositions.length; i++) {
+
+            const used = usedPositions[i];
+            const distance = Math.hypot(x - used.x, y - used.y);
+
+            if (distance < 32) {
+
+                const nudge = 34 - distance;
+                const length = Math.hypot(dx, dy) || 1;
+
+                x += (-dy / length) * nudge;
+                y += (dx / length) * nudge;
+            }
+        }
+
+        x = clampX(x);
+        y = clampY(y);
+
+        usedPositions.push({ x: x, y: y });
+
+        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+        const indicator = document.createElement("div");
+        indicator.className = "search-direction";
+        indicator.style.left = x + "px";
+        indicator.style.top = y + "px";
+        indicator.style.transform = "translate(-50%, -50%)";
+        indicator.title = "Go to " + (row.NAME || "Historic Cemetery");
+
+        const arrow = document.createElement("span");
+        arrow.className = "search-direction-arrow";
+        arrow.textContent = "➤";
+        arrow.style.transform = "rotate(" + angle + "deg)";
+
+        const name = document.createElement("span");
+        name.className = "search-direction-name";
+        name.textContent = row.NAME || "Unnamed Cemetery";
+
+        indicator.appendChild(arrow);
+        indicator.appendChild(name);
+
+        // The arrow brings the point into view; it does not zoom in
+        // or open the panel by itself.
+        indicator.addEventListener("click", function (event) {
+            event.stopPropagation();
+            map.flyTo({ center: coordinates, duration: 500 });
+        });
+
+        lakeSiteLabels.appendChild(indicator);
+    });
+}
+
+function showLakeListPanel() {
+
+    infoPanel.style.display = "block";
+    currentLakePeople = [];
+
+    const mappedCount = lakeCemeteries.filter(function (row) {
+        return row.lakeCoordinates && row.lakeID;
+    }).length;
+
+    let list = "";
+
+    lakeCemeteries.forEach(function (row) {
+
+        const moved = lakeMovedTo(row);
+        const detail = moved.label ? "Moved to " + moved.label : (row["RECORDED LOCATION"] || "");
+        const titleHtml = escapeHtml(row.NAME || "Unnamed Cemetery");
+        const detailHtml = detail ? `<span class="search-result-detail">${escapeHtml(detail)}</span>` : "";
+
+        // No LOST CEM ID means nothing else in the data can link to this
+        // row, so it's listed for reference but isn't clickable.
+        list += row.lakeID
+            ? `
+                <button type="button" class="search-result lake-cemetery-button"
+                        data-lake-id="${escapeHtml(row.lakeID)}">
+                    <span class="search-result-title">${titleHtml}</span>
+                    ${detailHtml}
+                </button>`
+            : `
+                <div class="search-result" style="cursor: default;">
+                    <span class="search-result-title">${titleHtml}</span>
+                    ${detailHtml}
+                </div>`;
+    });
+
+    infoContent.innerHTML = `
+        <h2>Historic Fairfield Cemeteries</h2>
+
+        <p class="lake-introduction">
+            Cemeteries affected by the construction of Brookville Lake.
+            ${mappedCount
+                ? "Select one below, or on the map, to see who was interred there and where they were moved."
+                : "Individual former cemetery locations are not currently mapped."}
+        </p>
+
+        <p class="lake-introduction">
+            <strong>${lakeCemeteries.length}</strong>
+            documented ${lakeCemeteries.length === 1 ? "cemetery" : "cemeteries"}.
+        </p>
+
+        ${list}`;
+}
+
+function showLakeCemeteryPanel(lakeID) {
+
+    const row = lakeRowByID(lakeID);
+
+    if (!row) {
+        return;
+    }
+
+    infoPanel.style.display = "block";
+
+    const moved = lakeMovedTo(row);
+
+    const entries = (movedPeopleByOrigin[row.lakeID] || []).slice().sort(function (a, b) {
+        return compareText(a.person.lastName, b.person.lastName) ||
+               compareText(a.person.firstName, b.person.firstName);
+    });
+
+    currentLakePeople = entries;
+
+    let html = `
+        <button type="button" class="export-button lake-back-button"
+                style="margin: 0 0 12px 0;">&larr; All Historic Cemeteries</button>
+
+        <h2>${escapeHtml(row.NAME || "Unnamed Cemetery")}</h2>`;
+
+    [
+        ["ALTERNATE NAME", "Alternate Name"],
+        ["DESIGNATION", "Designation"],
+        ["TRACT NO.", "Tract No."],
+        ["RECORDED LOCATION", "Recorded Location"],
+        ["TOWNSHIP", "Township"],
+        ["NOTES", "Notes"]
+    ].forEach(function (field) {
+        if (row[field[0]]) {
+            html += popupField(field[1], row[field[0]]);
+        }
+    });
+
+    if (!row.lakeCoordinates) {
+        html += `<p class="lake-introduction">This cemetery's location is not yet mapped.</p>`;
+    }
+
+    // Some lost cemeteries have no recorded destination at all.
+    // Leave the section out entirely rather than showing a blank or guess.
+    if (moved.label) {
+
+        html += `<h3>Moved To</h3>`;
+        html += `<p>${escapeHtml(moved.label)}</p>`;
+
+        if (moved.feature) {
+            html += `
+                <button type="button" class="lake-goto-button"
+                        data-goto-cemetery-id="${escapeHtml(moved.feature.properties.Cemetery_ID)}"
+                >VIEW ON MAP</button>`;
+        }
+    }
+
+    html += `<h3>People (${entries.length})</h3>`;
+
+    if (!entries.length) {
+        html += `<p>No individual records have been entered yet.</p>`;
+    }
+
+    entries.forEach(function (entry, index) {
+
+        const host = findCemetery(entry.cemeteryID);
+
+        const detail = [
+            [entry.person.birth, entry.person.death].filter(Boolean).join(" – "),
+            "Now at " + (host ? host.properties.Cemetery_Name : entry.cemeteryID)
+        ].filter(Boolean).join(" · ");
+
+        html += `
+            <button type="button" class="search-result lake-person-button" data-index="${index}">
+                <span class="search-result-title">${escapeHtml(entry.person.name)}</span>
+                <span class="search-result-detail">${escapeHtml(detail)}</span>
+            </button>`;
+    });
+
+    infoContent.innerHTML = html;
+}
 
 function loadLakeCemeteries(path) {
 
@@ -2076,18 +2594,32 @@ function loadLakeCemeteries(path) {
 
         complete: function (lakeResults) {
 
-            const lakeCemeteries = lakeResults.data.filter(function (row) {
-                return cleanString(row.NAME) !== "";
-            });
+            lakeCemeteries = lakeResults.data
+                .filter(function (row) {
+                    return cleanString(row.NAME) !== "";
+                })
+                .map(function (row, index) {
+
+                    // If LOST CEM ID is blank, leave it blank rather than
+                    // guessing one. A row with no ID still appears in the
+                    // list, but it has no map point and isn't clickable,
+                    // since nothing else in the data could link to it.
+                    row.lakeID = cleanString(row["LOST CEM ID"]);
+
+                    const lat = parseFloat(row.LAT);
+                    const lon = parseFloat(row.LONG);
+
+                    row.lakeCoordinates = !isNaN(lat) && !isNaN(lon) ? [lon, lat] : null;
+
+                    return row;
+                });
 
             if (lakeCemeteries.length === 0) {
                 processMapFilters();
                 return;
             }
 
-            // Representative location
-            const lakeLocation = [-84.99056446430546, 39.471294950413316];
-
+            // ---- main marker in the lake ----
             map.addSource("lake-cemeteries-data", {
                 type: "geojson",
                 data: {
@@ -2095,7 +2627,7 @@ function loadLakeCemeteries(path) {
                     features: [{
                         type: "Feature",
                         properties: { Cemetery_Count: lakeCemeteries.length },
-                        geometry: { type: "Point", coordinates: lakeLocation }
+                        geometry: { type: "Point", coordinates: LAKE_LOCATION }
                     }]
                 }
             });
@@ -2106,7 +2638,7 @@ function loadLakeCemeteries(path) {
                 source: "lake-cemeteries-data",
                 paint: {
                     "circle-radius": 16,
-                    "circle-color": "#555555",
+                    "circle-color": "#090a59",
                     "circle-opacity": 0.65,
                     "circle-stroke-width": 3,
                     "circle-stroke-color": "#222222",
@@ -2114,7 +2646,42 @@ function loadLakeCemeteries(path) {
                 }
             });
 
-            // Water-wave symbol drawn on top of the marker
+            // ---- lines and points for the individual former cemeteries ----
+            map.addSource("lake-lines-data", { type: "geojson", data: EMPTY_COLLECTION });
+            map.addSource("lake-sites-data", { type: "geojson", data: EMPTY_COLLECTION });
+
+            // Lines are placed beneath the main marker.
+            map.addLayer({
+                id: "lake-lines-casing",
+                type: "line",
+                source: "lake-lines-data",
+                layout: { visibility: "none" },
+                paint: { "line-color": "#ffffff", "line-width": 4.5, "line-opacity": 0.8 }
+            }, "lake-cemeteries-layer");
+
+            map.addLayer({
+                id: "lake-lines-layer",
+                type: "line",
+                source: "lake-lines-data",
+                layout: { visibility: "none" },
+                paint: { "line-color": "#222222", "line-width": 2, "line-dasharray": [2, 2] }
+            }, "lake-cemeteries-layer");
+
+            map.addLayer({
+                id: "lake-sites-layer",
+                type: "circle",
+                source: "lake-sites-data",
+                layout: { visibility: "none" },
+                paint: {
+                    "circle-radius": 8,
+                    "circle-color": "#5c5efa",
+                    "circle-opacity": 0.95,
+                    "circle-stroke-width": 2.5,
+                    "circle-stroke-color": "#222222"
+                }
+            });
+
+            // Water-wave symbol drawn on top of the main marker
             const historicWave = document.createElement("div");
             historicWave.style.width = "32px";
             historicWave.style.height = "32px";
@@ -2129,54 +2696,31 @@ function loadLakeCemeteries(path) {
                 </svg>`;
 
             new maplibregl.Marker({ element: historicWave, anchor: "center" })
-                .setLngLat(lakeLocation)
+                .setLngLat(LAKE_LOCATION)
                 .addTo(map);
 
-            // ---- click: list every historic cemetery ----
+            // ---- main marker click: list all, draw lines and points ----
             map.on("click", "lake-cemeteries-layer", function () {
+                clearCemeterySelection();
+                showLakeListPanel();
+                showLakeSpokes();
+            });
 
-                infoPanel.style.display = "block";
+            // ---- individual former cemetery click: details only, no zoom ----
+            map.on("click", "lake-sites-layer", function (event) {
 
-                const optionalFields = [
-                    ["ALTERNATE NAME", "Alternate Name"],
-                    ["DESIGNATION", "Designation"],
-                    ["ORIGINAL LOCATION", "Original Location"],
-                    ["TOWNSHIP", "Township"],
-                    ["MOVED TO", "Moved To"],
-                    ["NOTES", "Notes"]
-                ];
+                const feature = event.features && event.features[0];
 
-                let cemeteryList = "";
+                if (!feature) {
+                    return;
+                }
 
-                lakeCemeteries.forEach(function (row) {
+                clearCemeterySelection();
+                showLakeCemeteryPanel(feature.properties.Lake_ID);
 
-                    cemeteryList += `
-                        <div class="lake-cemetery">
-                            <h3>${escapeHtml(row.NAME || "Unnamed Cemetery")}</h3>`;
-
-                    optionalFields.forEach(function (field) {
-                        if (row[field[0]]) {
-                            cemeteryList += popupField(field[1], row[field[0]]);
-                        }
-                    });
-
-                    cemeteryList += `</div>`;
-                });
-
-                infoContent.innerHTML = `
-                    <h2>Historic Fairfield Cemeteries</h2>
-
-                    <p class="lake-introduction">
-                        Cemeteries affected by the construction of Brookville Lake.
-                        Individual former cemetery locations are not currently mapped.
-                    </p>
-
-                    <p class="lake-introduction">
-                        <strong>${lakeCemeteries.length}</strong>
-                        documented ${lakeCemeteries.length === 1 ? "cemetery" : "cemeteries"}.
-                    </p>
-
-                    ${cemeteryList}`;
+                if (event.originalEvent) {
+                    event.originalEvent.stopPropagation();
+                }
             });
 
             map.on("mouseenter", "lake-cemeteries-layer", function () {
@@ -2185,6 +2729,26 @@ function loadLakeCemeteries(path) {
 
             map.on("mouseleave", "lake-cemeteries-layer", function () {
                 map.getCanvas().style.cursor = "";
+            });
+
+            function lakeSiteHover(event) {
+                const feature = event.features && event.features[0];
+
+                if (feature) {
+                    showHoverLabel(feature.properties.Lake_Name || "Historic Cemetery", event.lngLat);
+                }
+            }
+
+            map.on("mouseenter", "lake-sites-layer", function (event) {
+                map.getCanvas().style.cursor = "pointer";
+                lakeSiteHover(event);
+            });
+
+            map.on("mousemove", "lake-sites-layer", lakeSiteHover);
+
+            map.on("mouseleave", "lake-sites-layer", function () {
+                map.getCanvas().style.cursor = "";
+                removeHoverLabel();
             });
 
             processMapFilters();
@@ -2534,6 +3098,22 @@ map.on("load", function () {
 
 map.on("click", function (event) {
 
+    // Clicking empty map hides the historic-cemetery lines and points.
+    if (lakeSpokesVisible) {
+
+        const lakeLayers = ["lake-cemeteries-layer", "lake-sites-layer"].filter(function (id) {
+            return map.getLayer(id);
+        });
+
+        const lakeHits = lakeLayers.length
+            ? map.queryRenderedFeatures(event.point, { layers: lakeLayers })
+            : [];
+
+        if (!lakeHits.length) {
+            hideLakeSpokes();
+        }
+    }
+
     if (!selectedCemeteryFeature) {
         return;
     }
@@ -2544,7 +3124,8 @@ map.on("click", function (event) {
         "graves-layer",
         "shared-markers-outer-layer",
         "shared-markers-inner-layer",
-        "lake-cemeteries-layer"
+        "lake-cemeteries-layer",
+        "lake-sites-layer"
     ].filter(function (id) {
         return map.getLayer(id);
     });
@@ -2638,12 +3219,17 @@ yearSlider.addEventListener("input", processMapFilters);
 map.on("move", updateSearchDirections);
 map.on("resize", updateSearchDirections);
 
+map.on("move", updateLakeSiteLabels);
+map.on("resize", updateLakeSiteLabels);
+
 
 // ============================================================
 // RESET FILTERS
 // ============================================================
 
 resetButton.addEventListener("click", function () {
+
+    hideLakeSpokes();
 
     if (selectedCemeteryFeature) {
         selectedCemeteryFeature = null;
