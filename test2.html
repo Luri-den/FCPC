@@ -2718,27 +2718,25 @@ map.on("load", function () {
         }
     });
 
-    // ---- 1882 historical map overlay ----
-    // PLACEHOLDER: replace the tile URL below with the real 1882 source
-    // when it's available. The layer is added with visibility: "none"
-    // and the checkbox in the legend turns it on.
-    map.addSource("franklin-1882", {
-        type: "raster",
-        tiles: [
-            // TODO: replace with the real 1882 Franklin County tile URL
-            "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-        ],
-        tileSize: 256,
-        attribution: "1882 Franklin County map (placeholder source)"
-    });
+   // ---- 1882 historical map overlay (single georeferenced image) ----
+map.addSource("franklin-1882", {
+    type: "image",
+    url: "https://raw.githubusercontent.com/Luri-den/FCPC/main/cropped-franklin-1882.png",
+    coordinates: [
+        [-85.50, 39.70],  // top-left  [lng, lat]
+        [-84.65, 39.70],  // top-right [lng, lat]
+        [-84.65, 39.10],  // bottom-right [lng, lat]
+        [-85.50, 39.10]   // bottom-left [lng, lat]
+    ]
+});
 
-    map.addLayer({
-        id: "franklin-1882-layer",
-        type: "raster",
-        source: "franklin-1882",
-        layout: { visibility: "none" },
-        paint: { "raster-opacity": 0.8 }
-    }, "franklin-county-outline");  // sits above basemap, below the county line
+map.addLayer({
+    id: "franklin-1882-layer",
+    type: "raster",
+    source: "franklin-1882",
+    layout: { visibility: "none" },
+    paint: { "raster-opacity": 0.8 }
+}, "franklin-county-outline");
 
     // Apply the slider's initial value now that the layer exists.
     updateHistoricalOpacity(historicalSlider.value);
