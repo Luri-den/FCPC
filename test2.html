@@ -364,14 +364,7 @@
             <div id="basemap-toggle" role="group" aria-label="Basemap">
                 <button type="button" class="basemap-option active" data-basemap="street">Street</button>
                 <button type="button" class="basemap-option" data-basemap="aerial">Aerial</button>
-                        <div class="legend-title" style="margin-top: 12px;">HISTORICAL OVERLAY</div>
-            <div id="historical-toggle-container" style="padding: 2px 4px 6px 4px;">
-                <div style="display: flex; align-items: center; margin-bottom: 6px;">
-                    <label style="cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: normal; color: #333;">
-                        <input type="checkbox" id="historical-layer-toggle" style="cursor: pointer; margin: 0;">
-                        1882 Franklin Co. Map
-                    </label>
-                </div>
+           
 
                 
             </div>
@@ -2735,8 +2728,8 @@ map.on("load", function () {
 // ratio in Web Mercator, so the image is not stretched.
 const IMG_URL = "https://raw.githubusercontent.com/Luri-den/FCPC/main/cropped-franklin-1882.png";
 
-const IMG_TOP_LEFT_LON = -85.50;   // county NW corner, longitude
-const IMG_TOP_LEFT_LAT = 39.70;    // county NW corner, latitude
+const IMG_TOP_LEFT_LON = -85.1780;   // county NW corner, longitude
+const IMG_TOP_LEFT_LAT = 39.5240;    // county NW corner, latitude
 
 const IMG_WIDTH_PX  = 2000;        // <-- set to your image's actual pixel width
 const IMG_HEIGHT_PX = 1500;        // <-- set to your image's actual pixel height
