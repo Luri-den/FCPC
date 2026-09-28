@@ -1543,30 +1543,6 @@
                 }
 
             });
- // =================================================
-            // CSV LOCATIONS
-            // =================================================
-
-            const CSV_PATH =
-                new URL(
-                    "cemlist.csv",
-                    document.baseURI
-                ).href;
-
-
-            const LAKE_CSV_PATH =
-                new URL(
-                    "lakecems.csv",
-                    document.baseURI
-                ).href;
-
-
-            const INTERMENTS_CSV_PATH =
-                new URL(
-                    "interments.csv",
-                    document.baseURI
-                ).href;
-
 
             // =================================================
             // LOAD MAIN CEMETERY CSV
@@ -3973,7 +3949,410 @@ new maplibregl.Marker({
 
     }
 
+// ========================================================
+// OFF-SCREEN SEARCH DIRECTIONS
+// ========================================================
 
+function updateSearchDirections() {
+
+    searchDirections.innerHTML = "";
+
+    const searchIsActive =
+        searchBox.value.trim() !== "" ||
+        veteransOnly;
+
+    if (!searchIsActive) {
+        return;
+    }
+
+    const filterYear =
+        parseInt(
+            yearSlider.value,
+            10
+        );
+
+    const width =
+        map.getContainer().clientWidth;
+
+    const height =
+        map.getContainer().clientHeight;
+
+    if (!width || !height) {
+        return;
+    }
+
+    const centerX =
+        width / 2;
+
+    const centerY =
+        height / 2;
+
+    const isMobile =
+        window.matchMedia(
+            "(max-width: 700px)"
+        ).matches;
+
+    /*
+     * Keep the indicators slightly inside
+     * the edge of the map.
+     */
+    const edgePadding =
+        isMobile ? 8 : 18;
+
+    /*
+     * On mobile, the right side has to stay
+     * farther inward because of the controls/info.
+     */
+    const edgePaddingRight =
+        isMobile ? 85 : 18;
+
+    const halfW =
+        width / 2 -
+        (
+            (edgePadding + edgePaddingRight) /
+            2
+        );
+
+    const halfH =
+        height / 2 -
+        edgePadding;
+
+    const usedPositions = [];
+
+
+    cemeteryFeatures.forEach(
+        function (feature) {
+
+            const props =
+                feature.properties;
+
+
+            /*
+             * Only matched cemeteries should
+             * receive an indicator.
+             */
+            if (
+                props.Search_Match !== true
+            ) {
+                return;
+            }
+
+
+            /*
+             * Respect the year filter.
+             */
+            const establishedYear =
+                Number(
+                    props.Established_Year
+                );
+
+            if (
+                filterYear < 1900 &&
+                !(
+                    establishedYear > 0 &&
+                    establishedYear <= filterYear
+                )
+            ) {
+                return;
+            }
+
+
+            const coordinates =
+                feature.geometry.coordinates;
+
+
+            const point =
+                map.project(
+                    coordinates
+                );
+
+
+            /*
+             * If the cemetery is currently
+             * visible, no arrow is needed.
+             */
+            const isInside =
+                point.x >= 0 &&
+                point.x <= width &&
+                point.y >= 0 &&
+                point.y <= height;
+
+            if (isInside) {
+                return;
+            }
+
+
+            /*
+             * Direction from map center
+             * toward the cemetery.
+             */
+            const dx =
+                point.x - centerX;
+
+            const dy =
+                point.y - centerY;
+
+
+            if (
+                dx === 0 &&
+                dy === 0
+            ) {
+                return;
+            }
+
+
+            /*
+             * Find where that direction
+             * intersects the map edge.
+             */
+            const scaleX =
+                Math.abs(
+                    halfW / dx
+                );
+
+            const scaleY =
+                Math.abs(
+                    halfH / dy
+                );
+
+            const edgeScale =
+                Math.min(
+                    scaleX,
+                    scaleY
+                );
+
+
+            let x =
+                centerX +
+                dx * edgeScale;
+
+            let y =
+                centerY +
+                dy * edgeScale;
+
+
+            /*
+             * Keep the indicator inside
+             * the visible map area.
+             */
+            x =
+                Math.max(
+                    edgePadding,
+                    Math.min(
+                        width -
+                        edgePaddingRight,
+                        x
+                    )
+                );
+
+            y =
+                Math.max(
+                    edgePadding,
+                    Math.min(
+                        height -
+                        edgePadding,
+                        y
+                    )
+                );
+
+
+            /*
+             * Prevent multiple indicators
+             * from sitting directly on top
+             * of one another.
+             */
+            for (
+                let i = 0;
+                i < usedPositions.length;
+                i++
+            ) {
+
+                const used =
+                    usedPositions[i];
+
+                const distance =
+                    Math.hypot(
+                        x - used.x,
+                        y - used.y
+                    );
+
+
+                if (
+                    distance < 32
+                ) {
+
+                    const nudge =
+                        34 - distance;
+
+                    const length =
+                        Math.hypot(
+                            dx,
+                            dy
+                        ) || 1;
+
+
+                    x +=
+                        (-dy / length) *
+                        nudge;
+
+                    y +=
+                        (dx / length) *
+                        nudge;
+
+                }
+
+            }
+
+
+            /*
+             * Clamp again after any nudge.
+             */
+            x =
+                Math.max(
+                    edgePadding,
+                    Math.min(
+                        width -
+                        edgePaddingRight,
+                        x
+                    )
+                );
+
+            y =
+                Math.max(
+                    edgePadding,
+                    Math.min(
+                        height -
+                        edgePadding,
+                        y
+                    )
+                );
+
+
+            usedPositions.push({
+                x: x,
+                y: y
+            });
+
+
+            /*
+             * Calculate the direction
+             * the arrow should point.
+             */
+            const angle =
+                Math.atan2(
+                    dy,
+                    dx
+                ) *
+                180 /
+                Math.PI;
+
+
+            /*
+             * Create indicator.
+             */
+            const indicator =
+                document.createElement(
+                    "div"
+                );
+
+            indicator.className =
+                "search-direction";
+
+
+            indicator.style.left =
+                x + "px";
+
+            indicator.style.top =
+                y + "px";
+
+
+            indicator.style.transform =
+                "translate(-50%, -50%)";
+
+
+            indicator.title =
+                "Go to " +
+                (
+                    props.Cemetery_Name ||
+                    "Cemetery"
+                );
+
+
+            /*
+             * Arrow.
+             */
+            const arrow =
+                document.createElement(
+                    "span"
+                );
+
+            arrow.className =
+                "search-direction-arrow";
+
+            arrow.textContent =
+                "➤";
+
+
+            arrow.style.transform =
+                "rotate(" +
+                angle +
+                "deg)";
+
+
+            /*
+             * Cemetery name.
+             */
+            const name =
+                document.createElement(
+                    "span"
+                );
+
+            name.className =
+                "search-direction-name";
+
+            name.textContent =
+                props.Cemetery_Name ||
+                "Unnamed Cemetery";
+
+
+            indicator.appendChild(
+                arrow
+            );
+
+            indicator.appendChild(
+                name
+            );
+
+
+            /*
+             * Clicking the indicator
+             * brings the cemetery into view.
+             */
+            indicator.addEventListener(
+                "click",
+                function (event) {
+
+                    event.stopPropagation();
+
+                    map.flyTo({
+                        center:
+                            coordinates,
+                        duration:
+                            500
+                    });
+
+                }
+            );
+
+
+            searchDirections.appendChild(
+                indicator
+            );
+
+        }
+    );
+}
+    
     // ========================================================
     // SEARCH / FILTER PROCESSOR
     // ========================================================
@@ -4237,210 +4616,7 @@ new maplibregl.Marker({
 
         }
 
-         // ========================================================
-    // OFF-SCREEN SEARCH DIRECTIONS
-    // ========================================================
 
-    function updateSearchDirections() {
-
-        searchDirections.innerHTML = "";
-
-        const searchIsActive =
-            searchBox.value.trim() !== "" ||
-            veteransOnly;
-
-        if (!searchIsActive) {
-            return;
-        }
-
-        const filterYear =
-            parseInt(yearSlider.value, 10);
-
-        const width = map.getContainer().clientWidth;
-        const height = map.getContainer().clientHeight;
-
-        if (!width || !height) {
-            return;
-        }
-
-        const centerX = width / 2;
-        const centerY = height / 2;
-        const isMobile =
-            window.matchMedia("(max-width: 700px)").matches;
-
-        // Mobile screens need the indicators pulled farther inward
-        // so long cemetery names do not get clipped at the map edge.
-        const edgePadding =
-    isMobile ? 8 : 18;
-
-const edgePaddingRight =
-    isMobile ? 85 : 18;
-
-const halfW =
-    width / 2 -
-    ((edgePadding + edgePaddingRight) / 2);
-
-const halfH =
-    height / 2 -
-    edgePadding;
-        const usedPositions = [];
-
-        cemeteryFeatures.forEach(
-            function (feature) {
-
-                const props = feature.properties;
-
-                if (props.Search_Match !== true) {
-                    return;
-                }
-
-                const establishedYear =
-                    Number(props.Established_Year);
-
-                if (
-                    filterYear < 1900 &&
-                    !(establishedYear > 0 && establishedYear <= filterYear)
-                ) {
-                    return;
-                }
-
-                const coordinates =
-                    feature.geometry.coordinates;
-
-                const point =
-                    map.project(coordinates);
-
-                const isInside =
-                    point.x >= 0 &&
-                    point.x <= width &&
-                    point.y >= 0 &&
-                    point.y <= height;
-
-                if (isInside) {
-                    return;
-                }
-
-                const dx = point.x - centerX;
-                const dy = point.y - centerY;
-
-                if (dx === 0 && dy === 0) {
-                    return;
-                }
-
-                const scaleX = Math.abs(halfW / dx);
-                const scaleY = Math.abs(halfH / dy);
-                const edgeScale = Math.min(scaleX, scaleY);
-
-                let x = centerX + dx * edgeScale;
-                let y = centerY + dy * edgeScale;
-
-                x = Math.max(
-    edgePadding,
-    Math.min(width - edgePaddingRight, x)
-);
-                y = Math.max(edgePadding, Math.min(height - edgePadding, y));
-
-                for (let i = 0; i < usedPositions.length; i++) {
-
-                    const used = usedPositions[i];
-                    const distance = Math.hypot(x - used.x, y - used.y);
-
-                    if (distance < 32) {
-
-                        const nudge = 34 - distance;
-                        const length = Math.hypot(dx, dy) || 1;
-
-                        x += (-dy / length) * nudge;
-                        y += (dx / length) * nudge;
-                    }
-                }
-
-                x = Math.max(
-    edgePadding,
-    Math.min(width - edgePaddingRight, x)
-);
-                y = Math.max(edgePadding, Math.min(height - edgePadding, y));
-
-                usedPositions.push({ x: x, y: y });
-
-                const angle =
-                    Math.atan2(dy, dx) * 180 / Math.PI;
-
-                const zoom = map.getZoom();
-
-                const scaleSize =
-                    Math.max(
-                        0.65,
-                        Math.min(
-                            1.4,
-                            1 + (zoom - INITIAL_ZOOM) * 0.10
-                        )
-                    );
-
-                const indicator =
-                    document.createElement("div");
-
-                indicator.className =
-                    "search-direction";
-
-                indicator.style.left =
-                    x + "px";
-
-                indicator.style.top =
-                    y + "px";
-
-                indicator.style.transform =
-                    "translate(-50%, -50%) scale(" +
-                    scaleSize +
-                    ")";
-
-                indicator.title =
-                    "Go to " +
-                    (props.Cemetery_Name || "Cemetery");
-
-                const arrow =
-                    document.createElement("span");
-
-                arrow.className =
-                    "search-direction-arrow";
-
-                arrow.textContent =
-                    "➤";
-
-                arrow.style.transform =
-                    "rotate(" + angle + "deg)";
-
-                const name =
-                    document.createElement("span");
-
-                name.className =
-                    "search-direction-name";
-
-                name.textContent =
-                    props.Cemetery_Name ||
-                    "Unnamed Cemetery";
-
-                indicator.appendChild(arrow);
-                indicator.appendChild(name);
-
-                indicator.addEventListener(
-                    "click",
-                    function (event) {
-
-                        event.stopPropagation();
-
-                        map.flyTo({
-                            center: coordinates,
-                            duration: 500
-                        });
-
-                    }
-                );
-
-                searchDirections.appendChild(indicator);
-            }
-        );
-    }
 
 
 
@@ -4526,7 +4702,14 @@ const halfH =
                         true
 
                     ],
+ );
 
+        }
+                // ====================================================
+        // UPDATE OFF-SCREEN SEARCH DIRECTIONS
+        // ====================================================
+
+        updateSearchDirections();
                     [
                         "==",
 
