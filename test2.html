@@ -3399,6 +3399,12 @@ resetButton.addEventListener("click", function () {
     infoPanel.style.display = "block";
     showDefaultInfo();
 });
+// Add this helper function at the absolute bottom of your script block:
+function setLayerVisibility(layerId, visibilityState) {
+    if (map && map.getLayer(layerId)) {
+        map.setLayoutProperty(layerId, "visibility", visibilityState);
+    }
+}
 
 </script>
 
