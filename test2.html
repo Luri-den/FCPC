@@ -256,7 +256,7 @@
 
     /* ---------- BASEMAP SWITCH (inside the legend panel) ---------- */
     #basemap-toggle { display: flex; gap: 4px; }
-
+   
     .basemap-option {
         flex: 1; padding: 6px 10px; border: 1px solid #aaa; border-radius: 4px;
         background: #ddd8cc; color: #463a2d; font-size: 13px; font-weight: normal; cursor: pointer;
@@ -350,32 +350,37 @@
 
 </div>
 
-<div id="map">
+<div id="legend-content">
+    <div class="legend-title">BASEMAP</div>
+    <div id="basemap-toggle" role="group" aria-label="Basemap">
+        <button type="button" class="basemap-option active" data-basemap="street">Street</button>
+        <button type="button" class="basemap-option" data-basemap="aerial">Aerial</button>
+    </div>
 
-    <div id="search-directions"></div>
-    <div id="lake-site-labels"></div>
-
-    <div id="accessibility-legend">
-        <button id="legend-toggle" type="button" aria-expanded="false" aria-controls="legend-content">
-            <span>Layers &amp; Legend</span>
-            <span id="legend-arrow">▾</span>
-        </button>
-
-        <div id="legend-content">
-            <div class="legend-title">BASEMAP</div>
-            <div id="basemap-toggle" role="group" aria-label="Basemap">
-                <button type="button" class="basemap-option active" data-basemap="street">Street</button>
-                <button type="button" class="basemap-option" data-basemap="aerial">Aerial</button>
-            </div>
-
-            <div class="legend-title" style="margin-top: 12px;">ACCESSIBILITY</div>
-            <div class="legend-item"><span class="legend-circle" style="background-color: #01796F;"></span><span>Public</span></div>
-            <div class="legend-item"><span class="legend-circle" style="background-color: #C9A227;"></span><span>With Permission</span></div>
-            <div class="legend-item"><span class="legend-circle" style="background-color: #D2691E;"></span><span>Private Land</span></div>
-            <div class="legend-item"><span class="legend-circle" style="background-color: #8B0000;"></span><span>Inaccessible</span></div>
-            <div class="legend-item"><span class="legend-circle" style="background-color: #777777;"></span><span>Unknown</span></div>
+    <!-- 🌟 NEW: HISTORICAL OVERLAY SECTION 🌟 -->
+    <div class="legend-title" style="margin-top: 12px;">HISTORICAL OVERLAY</div>
+    <div id="historical-toggle-container" style="padding: 2px 4px 6px 4px;">
+        <div style="display: flex; align-items: center; margin-bottom: 6px;">
+            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: normal; color: #333;">
+                <input type="checkbox" id="historical-layer-toggle" style="cursor: pointer; margin: 0;">
+                1882 Franklin Co. Map
+            </label>
+        </div>
+        
+        <!-- Opacity Slider Container (dims out visually when the map is unchecked) -->
+        <div id="opacity-slider-wrapper" style="opacity: 0.5; pointer-events: none; display: flex; flex-direction: column; gap: 2px; padding-left: 22px;">
+            <span style="font-size: 11px; color: #666; font-family: sans-serif;">Opacity: <span id="opacity-value-label">80%</span></span>
+            <input type="range" id="historical-opacity-slider" min="0" max="100" step="1" value="80" style="width: 100%; cursor: pointer; margin: 0;">
         </div>
     </div>
+
+    <div class="legend-title" style="margin-top: 12px;">ACCESSIBILITY</div>
+    <div class="legend-item"><span class="legend-circle" style="background-color: #01796F;"></span><span>Public</span></div>
+    <div class="legend-item"><span class="legend-circle" style="background-color: #C9A227;"></span><span>With Permission</span></div>
+    <div class="legend-item"><span class="legend-circle" style="background-color: #D2691E;"></span><span>Private Land</span></div>
+    <div class="legend-item"><span class="legend-circle" style="background-color: #8B0000;"></span><span>Inaccessible</span></div>
+    <div class="legend-item"><span class="legend-circle" style="background-color: #777777;"></span><span>Unknown</span></div>
+</div>
 
     <div id="info-panel">
         <button id="close-info" title="Close Panel">&times;</button>
@@ -535,6 +540,48 @@ const legendArrow = document.getElementById("legend-arrow");
 
 
 // ============================================================
+// HISTORICAL OVERLAY INTERACTIVITY (Checkbox & Opacity Slider)
+// ============================================================
+
+const historicalCheckbox = document.getElementById("historical-layer-toggle");
+const historicalSlider = document.getElementById("historical-opacity-slider");
+const sliderWrapper = document.getElementById("opacity-slider-wrapper");
+const opacityLabel = document.getElementById("opacity-value-label");
+
+// Utility function to sync percent label text and MapLibre layers
+function updateHistoricalOpacity(sliderValue) {
+    const decimalOpacity = parseFloat(sliderValue) / 100;
+    opacityLabel.textContent = sliderValue + "%";
+    
+    if (map.getLayer("franklin-1882-layer")) {
+        map.setPaintProperty("franklin-1882-layer", "raster-opacity", decimalOpacity);
+    }
+}
+
+// Checkbox: Toggles map presence and activates/deactivates slider visibility
+historicalCheckbox.addEventListener("change", function (event) {
+    const isChecked = event.target.checked;
+    
+    // Uses your native style method definition pattern
+    setLayerVisibility("franklin-1882-layer", isChecked ? "visible" : "none");
+
+    // Dim or light up the slider control panel
+    sliderWrapper.style.opacity = isChecked ? "1" : "0.5";
+    sliderWrapper.style.pointer-events = isChecked ? "auto" : "none";
+});
+
+// Slider: Processes real-time opacity changes during slide adjustments
+historicalSlider.addEventListener("input", function (event) {
+    updateHistoricalOpacity(event.target.value);
+});
+
+// Sync values to start properly when your main Map engine initializes
+map.on("load", function () {
+    updateHistoricalOpacity(historicalSlider.value);
+});
+   
+   
+   // ============================================================
 // APPLICATION STATE
 // ============================================================
 
@@ -584,7 +631,15 @@ let movedPeopleByOrigin = {};
 // SMALL HELPERS
 // ============================================================
 
-function desktopHoverEnabled() {
+// Custom wrapper function to toggle layer visibility in MapLibre
+function setLayerVisibility(layerId, visibilityState) {
+    if (map.getLayer(layerId)) {
+        map.setLayoutProperty(layerId, "visibility", visibilityState);
+    }
+}
+
+   
+   function desktopHoverEnabled() {
     return window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 }
 
