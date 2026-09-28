@@ -2729,18 +2729,49 @@ map.on("load", function () {
         }
     });
 
-   // ---- 1882 historical map overlay (single georeferenced image) ----
+// ---- 1882 historical map overlay (single georeferenced image) ----
+// Anchor: top-left corner of the image sits at the county's NW corner.
+// The other three corners are computed to preserve the image's aspect
+// ratio in Web Mercator, so the image is not stretched.
+const IMG_URL = "https://raw.githubusercontent.com/Luri-den/FCPC/main/cropped-franklin-1882.png";
+
+const IMG_TOP_LEFT_LON = -85.50;   // county NW corner, longitude
+const IMG_TOP_LEFT_LAT = 39.70;    // county NW corner, latitude
+
+const IMG_WIDTH_PX  = 2000;        // <-- set to your image's actual pixel width
+const IMG_HEIGHT_PX = 1500;        // <-- set to your image's actual pixel height
+
+const IMG_LON_SPAN  = 0.85;        // <-- how many degrees of longitude the image spans (tune by eye)
+
+// Web Mercator helpers
+const mercatorY    = (lat) => Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI / 180) / 2));
+const invMercatorY = (y)   => (2 * Math.atan(Math.exp(y)) - Math.PI / 2) * 180 / Math.PI;
+
+const topY    = mercatorY(IMG_TOP_LEFT_LAT);
+const bottomY = topY - (IMG_LON_SPAN * Math.PI / 180) * (IMG_HEIGHT_PX / IMG_WIDTH_PX);
+const bottomLat = invMercatorY(bottomY);
+const rightLon  = IMG_TOP_LEFT_LON + IMG_LON_SPAN;
+
 map.addSource("franklin-1882", {
     type: "image",
-    url: "https://raw.githubusercontent.com/Luri-den/FCPC/main/cropped-franklin-1882.png",
+    url: IMG_URL,
     coordinates: [
-        [-85.50, 39.70],  // top-left  [lng, lat]
-        [-84.65, 39.70],  // top-right [lng, lat]
-        [-84.65, 39.10],  // bottom-right [lng, lat]
-        [-85.50, 39.10]   // bottom-left [lng, lat]
+        [IMG_TOP_LEFT_LON, IMG_TOP_LEFT_LAT],  // top-left  (anchored)
+        [rightLon,         IMG_TOP_LEFT_LAT],  // top-right
+        [rightLon,         bottomLat],         // bottom-right
+        [IMG_TOP_LEFT_LON, bottomLat]          // bottom-left
     ]
 });
 
+map.addLayer({
+    id: "franklin-1882-layer",
+    type: "raster",
+    source: "franklin-1882",
+    layout: { visibility: "none" },
+    paint: { "raster-opacity": 0.8 }
+}, "franklin-county-outline");
+
+updateHistoricalOpacity(historicalSlider.value);
 map.addLayer({
     id: "franklin-1882-layer",
     type: "raster",
