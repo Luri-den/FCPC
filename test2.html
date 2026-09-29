@@ -196,7 +196,7 @@
         display: inline-block; width: 14px; height: 14px; min-width: 14px;
         border-radius: 50%; border: 1px solid rgba(0, 0, 0, 0.25);
     }
-       .legend-marker { display: inline-block; width: 16px; height: 16px; min-width: 16px; }
+    .legend-marker { display: inline-block; width: 16px; height: 16px; min-width: 16px; }
 
     /* ---------- OFF-SCREEN SEARCH DIRECTIONS ---------- */
     #search-directions { position: absolute; inset: 0; z-index: 3; pointer-events: none; overflow: hidden; }
@@ -381,7 +381,7 @@
             <div class="legend-item"><span class="legend-circle" style="background-color: #8B0000;"></span><span>Inaccessible</span></div>
             <div class="legend-item"><span class="legend-circle" style="background-color: #777777;"></span><span>Unknown</span></div>
 
-                       <div class="legend-title" style="margin-top: 12px;">GRAVE MARKERS</div>
+            <div class="legend-title" style="margin-top: 12px;">GRAVE MARKERS</div>
             <div class="legend-item">
                 <svg class="legend-marker" viewBox="0 0 16 16" aria-hidden="true">
                     <circle cx="8" cy="8" r="5.5" fill="#463a2d"/>
@@ -393,7 +393,7 @@
                     <circle cx="8" cy="8" r="6" fill="none" stroke="#463a2d" stroke-width="2"/>
                     <circle cx="8" cy="8" r="3" fill="#463a2d"/>
                 </svg>
-                <span>Multiple   (Single Marker)</span>
+                <span>Multiple (Single Marker)</span>
             </div>
             <div class="legend-item">
                 <svg class="legend-marker" viewBox="0 0 16 16" aria-hidden="true">
@@ -408,7 +408,6 @@
                 </svg>
                 <span>Structure (Multiple Interments)</span>
             </div>
-           
         </div>
     </div>
 
@@ -445,7 +444,7 @@
         <h3>Access and Private Property</h3>
         <p>
             A cemetery's appearance on this map, no matter the rating assigned,
-            does not give anyone the right to enter it. Many of these sites 
+            does not give anyone the right to enter it. Many of these sites
             are on private land, those land owners control access. Mistakes can
             happen with labels, so always obtain the landowner's permission before
             entering.
@@ -455,20 +454,20 @@
         <p>
             Please do not disturb, move, remove, or damage any marker, stone, or other
             feature. Even if you mean well, Indiana law protects cemeteries and there are
-            people trying to document and survey many sites. Please contact the DNR or 
+            people trying to document and survey many sites. Please contact the DNR or
             a local representative if anything is amiss.
         </p>
         <p>
-            If you find human remains, or think you may have found human remains, 
+            If you find human remains, or think you may have found human remains,
             leave them undisturbed and report them immediately to the County Coroner.
         </p>
 
         <h3>About This Information</h3>
         <p>
             This is a work in progress. Records come from ongoing and historical
-            surveys both, and as such they may be incomplete or contain errors. 
-            Locations should always be taken as approximate and must not be used for legal, 
-            boundary, or property purposes. Contact information and correction information 
+            surveys both, and as such they may be incomplete or contain errors.
+            Locations should always be taken as approximate and must not be used for legal,
+            boundary, or property purposes. Contact information and correction information
             will be added when the site is published.
         </p>
 
@@ -596,13 +595,6 @@ let movedPeopleByOrigin = {};
 
 // ============================================================
 // HISTORICAL OVERLAYS
-//
-// Each entry is one historical map image, georeferenced by four
-// control points. To add another map, append an object with the
-// same shape. Only one overlay is shown at a time.
-//
-// Control points: [pixelX, pixelY, longitude, latitude]
-// Order: NW, NE, SE, SW.
 // ============================================================
 
 const HISTORICAL_OVERLAYS = [
@@ -613,67 +605,48 @@ const HISTORICAL_OVERLAYS = [
         width: 3497,
         height: 2926,
         controlPoints: [
-            [475,  850, -85.298653, 39.525454],  // NW
-            [3105, 825, -84.810676, 39.521903],  // NE
-            [3080, 2310, -84.815210, 39.309328], // SE
-            [465, 2610, -85.299317, 39.267088]   // SW
+            [475,  850, -85.298653, 39.525454],
+            [3105, 825, -84.810676, 39.521903],
+            [3080, 2310, -84.815210, 39.309328],
+            [465, 2610, -85.299317, 39.267088]
         ]
-      },
-   {
-      id: "franklin-1910-layer",
+    },
+    {
+        id: "franklin-1910-layer",
         label: "1910 Franklin Co. Map",
         url: "https://raw.githubusercontent.com/Luri-den/FCPC/main/franklin-1910.jpg",
         width: 11556,
         height: 9198,
         controlPoints: [
-            [1221, 2525, -85.298653, 39.525454],  // NW
-            [8876, 2577, -84.810676, 39.521903],  // NE
-            [8902, 7159, -84.815210, 39.309328], // SE
-            [1334, 8000, -85.299317, 39.267088]   // SW
-         ]
+            [1221, 2525, -85.298653, 39.525454],
+            [8876, 2577, -84.810676, 39.521903],
+            [8902, 7159, -84.815210, 39.309328],
+            [1334, 8000, -85.299317, 39.267088]
+        ]
     },
-   {
-      id: "franklin-1936-layer",
+    {
+        id: "franklin-1936-layer",
         label: "1936 Franklin Co. Map",
         url: "https://raw.githubusercontent.com/Luri-den/FCPC/main/franklin-1936.jpg",
         width: 12811,
         height: 10791,
         controlPoints: [
-            [2721 , 1624, -85.298653, 39.525454],  // NW
-            [10390 , 1686, -84.810676, 39.521903],  // NE
-            [10390 , 6190, -84.815210, 39.309328], // SE
-            [2750 , 6940, -85.299317, 39.267088]   // SW
-         ]
+            [2721, 1624, -85.298653, 39.525454],
+            [10390, 1686, -84.810676, 39.521903],
+            [10390, 6190, -84.815210, 39.309328],
+            [2750, 6940, -85.299317, 39.267088]
+        ]
     }
-
-    // To add another map, add a comma after the closing brace above
-    // and uncomment an entry like this:
-    //
-    // ,{
-    //     id: "franklin-1840-layer",
-    //     label: "1840 Franklin Co. Map",
-    //     url: "https://example.com/your-map.jpg",
-    //     width: 3000,
-    //     height: 2400,
-    //     controlPoints: [
-    //         [x, y, lon, lat],  // NW
-    //         [x, y, lon, lat],  // NE
-    //         [x, y, lon, lat],  // SE
-    //         [x, y, lon, lat]   // SW
-    //     ]
-    // }
 ];
 
-let activeOverlayId = null;   // which overlay is currently shown, if any
-let overlayOpacity = 0.8;     // shared opacity, applied to whichever is active
+let activeOverlayId = null;
+let overlayOpacity = 0.8;
 
 
 // ============================================================
 // AFFINE FIT AND CORNER COMPUTATION
 // ============================================================
 
-// Fit an affine transform (lon = a*x + b*y + c; lat = d*x + e*y + f)
-// using least squares over the four control points.
 function fitAffine(points) {
     let Sxx=0, Sxy=0, Sx=0, Syy=0, Sy=0, n=0;
     let Sxl=0, Syl=0, Sl=0;
@@ -720,7 +693,6 @@ function fitAffine(points) {
     };
 }
 
-// Compute the geographic positions of the image's four LITERAL corners.
 function buildOverlayCorners(overlay) {
     const affine = fitAffine(overlay.controlPoints);
     if (!affine) {
@@ -738,10 +710,6 @@ function buildOverlayCorners(overlay) {
 
 // ============================================================
 // HISTORICAL OVERLAY CONTROLS
-//
-// Only one overlay is shown at a time. Checking a checkbox turns
-// that overlay on and any others off. The shared opacity slider
-// applies to whichever overlay is active.
 // ============================================================
 
 function setActiveOverlay(overlayId) {
@@ -770,7 +738,6 @@ function applyOverlayOpacity(sliderValue) {
     });
 }
 
-// Build the checkbox list from HISTORICAL_OVERLAYS.
 HISTORICAL_OVERLAYS.forEach(function (overlay) {
     const wrapper = document.createElement("div");
     wrapper.style.cssText = "display: flex; align-items: center; margin-bottom: 6px;";
@@ -882,6 +849,126 @@ function findCemetery(cemeteryID) {
     const id = cleanString(cemeteryID);
     return cemeteryFeatures.find(function (feature) {
         return cleanString(feature.properties.Cemetery_ID) === id;
+    });
+}
+
+
+// ============================================================
+// CANVAS-GENERATED GRAVE SYMBOLS
+//
+// One function generates every variant from four flags:
+//   shape:   "circle" | "square"
+//   dot:     boolean — center dot
+//   veteran: boolean — dotted outer ring
+//   pioneer: boolean — horizontal line through center
+//
+// Drawn at 64x64, registered with pixelRatio 2 (32 CSS px on screen).
+// ============================================================
+
+function makeGraveSymbol(opts) {
+
+    const size = 64;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+
+    const ctx = canvas.getContext("2d");
+    const half = size / 2;
+
+    const FILL   = "#463a2d";
+    const STROKE = "#ffffff";
+
+    const ringGap     = 5;
+    const ringWidth   = 3;
+    const ringDashOn  = 3;
+    const ringDashOff = 3;
+
+    if (opts.veteran) {
+        const ringRadius = half - ringWidth / 2 - 1;
+        ctx.save();
+        ctx.strokeStyle = FILL;
+        ctx.lineWidth = ringWidth;
+        ctx.setLineDash([ringDashOn, ringDashOff]);
+        ctx.beginPath();
+        ctx.arc(half, half, ringRadius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    const borderWidth = 4;
+    const shapeRadius = half - ringGap - borderWidth - 1;
+
+    ctx.fillStyle = FILL;
+    ctx.strokeStyle = STROKE;
+    ctx.lineWidth = borderWidth;
+
+    if (opts.shape === "circle") {
+        ctx.beginPath();
+        ctx.arc(half, half, shapeRadius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+    }
+    else {
+        const side = shapeRadius * 2 * 0.85;
+        const inset = half - side / 2;
+        ctx.fillRect(inset, inset, side, side);
+        ctx.strokeRect(inset, inset, side, side);
+    }
+
+    if (opts.pioneer) {
+        const lineY = half;
+        const lineX0 = ringGap;
+        const lineX1 = size - ringGap;
+        ctx.save();
+        ctx.strokeStyle = STROKE;
+        ctx.lineWidth = borderWidth;
+        ctx.beginPath();
+        ctx.moveTo(lineX0, lineY);
+        ctx.lineTo(lineX1, lineY);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    if (opts.dot) {
+        ctx.beginPath();
+        ctx.arc(half, half, shapeRadius * 0.45, 0, Math.PI * 2);
+        ctx.fillStyle = STROKE;
+        ctx.fill();
+    }
+
+    const imageData = ctx.getImageData(0, 0, size, size);
+
+    return { width: size, height: size, data: imageData.data };
+}
+
+function registerGraveSymbols() {
+    const shapes = ["circle", "square"];
+
+    shapes.forEach(function (shape) {
+        [false, true].forEach(function (dot) {
+            [false, true].forEach(function (veteran) {
+                [false, true].forEach(function (pioneer) {
+
+                    const name = "grave-" + shape +
+                                 (dot ? "-dot" : "") +
+                                 (veteran ? "-vet" : "") +
+                                 (pioneer ? "-pio" : "");
+
+                    if (!map.hasImage(name)) {
+                        map.addImage(
+                            name,
+                            makeGraveSymbol({
+                                shape: shape,
+                                dot: dot,
+                                veteran: veteran,
+                                pioneer: pioneer
+                            }),
+                            { pixelRatio: 2 }
+                        );
+                    }
+                });
+            });
+        });
     });
 }
 
@@ -1232,12 +1319,16 @@ function updateCemeteryGraves() {
             sharedSource.setData(EMPTY_COLLECTION);
         }
 
-       setLayerVisibility("graves-tap-layer", "none");
-setLayerVisibility("graves-symbol-layer", "none");
-setLayerVisibility("graves-maus-layer", "none");
-setLayerVisibility("shared-markers-tap-layer", "none");
-setLayerVisibility("shared-markers-symbol-layer", "none");
-setLayerVisibility("shared-markers-maus-layer", "none");
+        [
+            "graves-tap-layer",
+            "graves-symbol-layer",
+            "graves-maus-layer",
+            "shared-markers-tap-layer",
+            "shared-markers-symbol-layer",
+            "shared-markers-maus-layer"
+        ].forEach(function (id) {
+            setLayerVisibility(id, "none");
+        });
 
         return;
     }
@@ -1262,11 +1353,12 @@ setLayerVisibility("shared-markers-maus-layer", "none");
 
         graveFeatures.push({
             type: "Feature",
-                        properties: {
+            properties: {
                 Cemetery_ID: cemeteryID,
                 Grave_Index: index + 1,
                 Person_Name: person.name,
                 Veteran: person.veteran,
+                Pioneer: person.pioneer === true,
                 Birth: person.birth || "",
                 Death: person.death || "",
                 Row: person.row || "",
@@ -1275,19 +1367,19 @@ setLayerVisibility("shared-markers-maus-layer", "none");
                 Vet_Details: person.vetDetails || "",
                 Marker_ID: person.markerID || "",
                 Mausoleum: person.mausoleum === true,
-                Pioneer: person.pioneer === true,
                 Person_Data: JSON.stringify([person])
             },
             geometry: { type: "Point", coordinates: person.coordinates }
         });
     });
 
-        gravesSource.setData({ type: "FeatureCollection", features: graveFeatures });
+    gravesSource.setData({ type: "FeatureCollection", features: graveFeatures });
+
     setLayerVisibility("graves-tap-layer", "visible");
     setLayerVisibility("graves-symbol-layer", "visible");
     setLayerVisibility("graves-maus-layer", "visible");
 
-        if (sharedSource) {
+    if (sharedSource) {
 
         const sharedFeatures = [];
 
@@ -1313,11 +1405,14 @@ setLayerVisibility("shared-markers-maus-layer", "none");
                     Cemetery_ID: cemeteryID,
                     Marker_ID: markerID,
                     Person_Count: group.length,
-                    Mausoleum: group.some(function (member) {
-                        return member.mausoleum === true,
+                    Veteran: group.some(function (member) {
+                        return member.veteran === true;
+                    }),
                     Pioneer: group.some(function (member) {
                         return member.pioneer === true;
-})
+                    }),
+                    Mausoleum: group.some(function (member) {
+                        return member.mausoleum === true;
                     })
                 },
                 geometry: { type: "Point", coordinates: representative.coordinates }
@@ -1327,11 +1422,11 @@ setLayerVisibility("shared-markers-maus-layer", "none");
         sharedSource.setData({ type: "FeatureCollection", features: sharedFeatures });
 
         setLayerVisibility("shared-markers-tap-layer", "visible");
-setLayerVisibility("shared-markers-symbol-layer", "visible");
-setLayerVisibility("shared-markers-maus-layer", "visible");
+        setLayerVisibility("shared-markers-symbol-layer", "visible");
+        setLayerVisibility("shared-markers-maus-layer", "visible");
     }
 }
-   
+
 function fitSelectedCemetery() {
 
     if (!selectedCemeteryFeature) {
@@ -1419,6 +1514,7 @@ function handleGraveClick(event) {
         person = {
             name: props.Person_Name || "Unnamed Interment",
             veteran: props.Veteran === true,
+            pioneer: props.Pioneer === true,
             birth: props.Birth || "",
             death: props.Death || "",
             row: props.Row || "",
@@ -1563,11 +1659,14 @@ const VETS_LABELS = { 1: "Yes", 2: "No" };
 
 function handleCemeteryClick(event) {
 
-        if (map.getLayer("shared-markers-outer-layer")) {
+    const sharedHitLayers = [
+        "shared-markers-tap-layer",
+        "shared-markers-maus-layer",
+        "graves-tap-layer",
+        "graves-maus-layer"
+    ].filter(function (id) { return map.getLayer(id); });
 
-        const sharedHitLayers = ["shared-markers-tap-layer", "shared-markers-maus-layer", "graves-tap-layer", "graves-maus-layer"]
-            .filter(function (id) { return map.getLayer(id); });
-
+    if (sharedHitLayers.length) {
         const sharedHits = map.queryRenderedFeatures(event.point, {
             layers: sharedHitLayers
         });
@@ -2902,180 +3001,9 @@ map.on("load", function () {
         setBasemap("street");
     }
 
-    // ---- Canvas-generated MAUS icons (square / square-with-dot) ----
+    registerGraveSymbols();
 
-    function makeMausIcon(size, withDot) {
-
-    const canvas = document.createElement("canvas");
-
-    canvas.width = size;
-    canvas.height = size;
-
-    const ctx = canvas.getContext("2d");
-
-    const half = size / 2;
-
-    ctx.fillStyle = "#463a2d";
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = size * 0.125;   // scales with canvas; 4 at size 32 → 2 CSS px
-
-    // Square fills the whole canvas; stroke drawn inward so the
-    // outer edge lands exactly at the canvas bounds.
-    const inset = ctx.lineWidth / 2;
-    ctx.fillRect(0, 0, size, size);
-    ctx.strokeRect(inset, inset, size - ctx.lineWidth, size - ctx.lineWidth);
-
-    if (withDot) {
-        ctx.beginPath();
-        ctx.arc(half, half, size * 0.25, 0, Math.PI * 2);   // 8px on screen at size 32
-        ctx.fillStyle = "#ffffff";
-        ctx.fill();
-    }
-
-    const imageData = ctx.getImageData(0, 0, size, size);
-
-    return { width: size, height: size, data: imageData.data };
-
-    }
-   
     map.addControl(
-
-       // ---- Canvas-generated grave symbols ----
-//
-// One function generates every variant from four flags:
-//   shape:    "circle" | "square"
-//   dot:      boolean — center dot (multiple interments / multiple people)
-//   veteran:  boolean — dotted outer ring
-//   pioneer:  boolean — horizontal line through the center
-//
-// The icon is drawn at 64x64 and registered with pixelRatio: 2,
-// giving 32 CSS pixels on screen.
-
-function makeGraveSymbol(opts) {
-
-    const size   = 64;
-    const PR     = 2;                 // pixelRatio
-
-    const canvas = document.createElement("canvas");
-    canvas.width  = size;
-    canvas.height = size;
-
-    const ctx  = canvas.getContext("2d");
-    const half = size / 2;
-
-    const FILL   = "#463a2d";
-    const STROKE = "#ffffff";
-
-    // ---- outer dotted ring (veteran) ----
-    // Drawn first so the rest of the symbol sits on top of it.
-    // Only the border is drawn here; the primary shape is
-    // inset so the ring has room to breathe.
-    const ringGap    = 5;   // px between primary border and ring
-    const ringWidth  = 3;
-    const ringDashOn = 3;
-    const ringDashOff = 3;
-
-    if (opts.veteran) {
-        const ringRadius = half - ringWidth / 2 - 1;
-        ctx.save();
-        ctx.strokeStyle = FILL;
-        ctx.lineWidth   = ringWidth;
-        ctx.setLineDash([ringDashOn, ringDashOff]);
-        ctx.beginPath();
-        ctx.arc(half, half, ringRadius, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
-    }
-
-    // ---- primary shape (circle or square) ----
-    // Inset from the canvas edge so the veteran ring, if present,
-    // has clear space. If no ring, we still inset by the same
-    // amount so all variants occupy the same footprint.
-    const borderWidth = 4;
-    const shapeRadius = half - ringGap - borderWidth - 1;
-
-    ctx.fillStyle   = FILL;
-    ctx.strokeStyle = STROKE;
-    ctx.lineWidth   = borderWidth;
-
-    if (opts.shape === "circle") {
-        ctx.beginPath();
-        ctx.arc(half, half, shapeRadius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-    }
-    else {
-        // Square: side length = 2 * shapeRadius (so the diagonal
-        // is larger than the circle, but the "visual mass" is
-        // comparable to the circle variant).
-        const side  = shapeRadius * 2 * 0.85;
-        const inset = half - side / 2;
-        ctx.fillRect(inset, inset, side, side);
-        ctx.strokeRect(inset, inset, side, side);
-    }
-
-    // ---- pioneer line (horizontal, end to end, through center) ----
-    // Drawn before the dot so the dot sits cleanly on top.
-    if (opts.pioneer) {
-        const lineY  = half;
-        const lineX0 = ringGap;
-        const lineX1 = size - ringGap;
-        ctx.save();
-        ctx.strokeStyle = STROKE;
-        ctx.lineWidth   = borderWidth;
-        ctx.beginPath();
-        ctx.moveTo(lineX0, lineY);
-        ctx.lineTo(lineX1, lineY);
-        ctx.stroke();
-        ctx.restore();
-    }
-
-    // ---- center dot (multiple) ----
-    if (opts.dot) {
-        ctx.beginPath();
-        ctx.arc(half, half, shapeRadius * 0.45, 0, Math.PI * 2);
-        ctx.fillStyle = STROKE;
-        ctx.fill();
-    }
-
-    const imageData = ctx.getImageData(0, 0, size, size);
-
-    return { width: size, height: size, data: imageData.data };
-}
-
-// Register every variant. Names are deterministic:
-//   grave-{shape}-{single|dot}[-vet][-pio]
-function registerGraveSymbols() {
-    const shapes = ["circle", "square"];
-
-    shapes.forEach(function (shape) {
-        [false, true].forEach(function (dot) {
-            [false, true].forEach(function (veteran) {
-                [false, true].forEach(function (pioneer) {
-
-                    const name = "grave-" + shape +
-                                 (dot ? "-dot" : "") +
-                                 (veteran ? "-vet" : "") +
-                                 (pioneer ? "-pio" : "");
-
-                    if (!map.hasImage(name)) {
-                        map.addImage(name,
-                            makeGraveSymbol({
-                                shape: shape,
-                                dot: dot,
-                                veteran: veteran,
-                                pioneer: pioneer
-                            }),
-                            { pixelRatio: PR }
-                        );
-                    }
-                });
-            });
-        });
-    });
-}
-
-registerGraveSymbols();
         new maplibregl.NavigationControl({ showCompass: false }),
         "top-right"
     );
@@ -3122,7 +3050,6 @@ registerGraveSymbols();
         }, "franklin-county-outline");
     });
 
-    // Apply the slider's initial value to the freshly added layers.
     applyOverlayOpacity(historicalSlider.value);
 
     // ---- Cemetery boundary (hidden until a cemetery is selected) ----
@@ -3262,134 +3189,112 @@ registerGraveSymbols();
                 }
             });
 
-                  // ---- Helper: pick an icon name from a feature's properties ----
-// Used in an icon-image expression so one layer handles all
-// sixteen variants.
-function iconNameExpression(baseShape) {
-    return [
-        "concat",
-        "grave-", baseShape,
-        ["case", ["get", "Multiple"], "-dot", ""],
-        ["case", ["get", "Veteran"], "-vet", ""],
-        ["case", ["get", "Pioneer"], "-pio", ""]
-    ];
-}
+            // ---- Tap-target circles (own the click and hover handlers) ----
+            map.addLayer({
+                id: "graves-tap-layer",
+                type: "circle",
+                source: "graves-data",
+                layout: { visibility: "none" },
+                paint: {
+                    "circle-radius": 14,
+                    "circle-opacity": 0
+                }
+            });
 
-// But "Multiple" isn't a property we set — it's whether the
-// feature came from the shared-markers source. So instead we
-// use two separate expressions, one per source.
+            map.addLayer({
+                id: "shared-markers-tap-layer",
+                type: "circle",
+                source: "shared-markers-data",
+                layout: { visibility: "none" },
+                paint: {
+                    "circle-radius": 14,
+                    "circle-opacity": 0
+                }
+            });
 
-const CIRCLE_GRAVE_ICON = [
-    "concat", "grave-circle",
-    ["case", ["get", "Veteran"], "-vet", ""],
-    ["case", ["get", "Pioneer"], "-pio", ""]
-];
+            // ---- Visible grave symbols ----
+            const SINGLE_GRAVE_ICON = [
+                "concat", "grave-circle",
+                ["case", ["get", "Veteran"], "-vet", ""],
+                ["case", ["get", "Pioneer"], "-pio", ""]
+            ];
 
-const CIRCLE_MULTI_ICON = [
-    "concat", "grave-circle-dot",
-    ["case", ["get", "Veteran"], "-vet", ""],
-    ["case", ["get", "Pioneer"], "-pio", ""]
-];
+            const SINGLE_GRAVE_MAUS_ICON = [
+                "concat", "grave-square",
+                ["case", ["get", "Veteran"], "-vet", ""],
+                ["case", ["get", "Pioneer"], "-pio", ""]
+            ];
 
-const SQUARE_GRAVE_ICON = [
-    "concat", "grave-square",
-    ["case", ["get", "Veteran"], "-vet", ""],
-    ["case", ["get", "Pioneer"], "-pio", ""]
-];
+            const SHARED_GRAVE_ICON = [
+                "concat", "grave-circle-dot",
+                ["case", ["get", "Veteran"], "-vet", ""],
+                ["case", ["get", "Pioneer"], "-pio", ""]
+            ];
 
-const SQUARE_MULTI_ICON = [
-    "concat", "grave-square-dot",
-    ["case", ["get", "Veteran"], "-vet", ""],
-    ["case", ["get", "Pioneer"], "-pio", ""]
-];
+            const SHARED_GRAVE_MAUS_ICON = [
+                "concat", "grave-square-dot",
+                ["case", ["get", "Veteran"], "-vet", ""],
+                ["case", ["get", "Pioneer"], "-pio", ""]
+            ];
 
-// ---- Transparent tap-target circles ----
-// Own the click handlers; sized generously so tapping is easy
-// regardless of icon size.
-map.addLayer({
-    id: "graves-tap-layer",
-    type: "circle",
-    source: "graves-data",
-    layout: { visibility: "none" },
-    paint: {
-        "circle-radius": 14,
-        "circle-opacity": 0
-    }
-});
+            map.addLayer({
+                id: "graves-symbol-layer",
+                type: "symbol",
+                source: "graves-data",
+                filter: ["!=", ["get", "Mausoleum"], true],
+                layout: {
+                    visibility: "none",
+                    "icon-image": SINGLE_GRAVE_ICON,
+                    "icon-allow-overlap": true,
+                    "icon-ignore-placement": true
+                }
+            });
 
-map.addLayer({
-    id: "shared-markers-tap-layer",
-    type: "circle",
-    source: "shared-markers-data",
-    layout: { visibility: "none" },
-    paint: {
-        "circle-radius": 14,
-        "circle-opacity": 0
-    }
-});
+            map.addLayer({
+                id: "graves-maus-layer",
+                type: "symbol",
+                source: "graves-data",
+                filter: ["==", ["get", "Mausoleum"], true],
+                layout: {
+                    visibility: "none",
+                    "icon-image": SINGLE_GRAVE_MAUS_ICON,
+                    "icon-allow-overlap": true,
+                    "icon-ignore-placement": true
+                }
+            });
 
-// ---- Visible symbol layers ----
-// Single-interment graves (non-mausoleum, non-shared)
-map.addLayer({
-    id: "graves-symbol-layer",
-    type: "symbol",
-    source: "graves-data",
-    filter: ["!=", ["get", "Mausoleum"], true],
-    layout: {
-        visibility: "none",
-        "icon-image": CIRCLE_GRAVE_ICON,
-        "icon-allow-overlap": true,
-        "icon-ignore-placement": true
-    }
-});
+            map.addLayer({
+                id: "shared-markers-symbol-layer",
+                type: "symbol",
+                source: "shared-markers-data",
+                filter: ["!=", ["get", "Mausoleum"], true],
+                layout: {
+                    visibility: "none",
+                    "icon-image": SHARED_GRAVE_ICON,
+                    "icon-allow-overlap": true,
+                    "icon-ignore-placement": true
+                }
+            });
 
-// Mausoleum graves (single-interment, structure)
-map.addLayer({
-    id: "graves-maus-layer",
-    type: "symbol",
-    source: "graves-data",
-    filter: ["==", ["get", "Mausoleum"], true],
-    layout: {
-        visibility: "none",
-        "icon-image": SQUARE_GRAVE_ICON,
-        "icon-allow-overlap": true,
-        "icon-ignore-placement": true
-    }
-});
-
-// Shared markers (multiple interments, single physical marker)
-map.addLayer({
-    id: "shared-markers-symbol-layer",
-    type: "symbol",
-    source: "shared-markers-data",
-    filter: ["!=", ["get", "Mausoleum"], true],
-    layout: {
-        visibility: "none",
-        "icon-image": CIRCLE_MULTI_ICON,
-        "icon-allow-overlap": true,
-        "icon-ignore-placement": true
-    }
-});
-
-map.addLayer({
-    id: "shared-markers-maus-layer",
-    type: "symbol",
-    source: "shared-markers-data",
-    filter: ["==", ["get", "Mausoleum"], true],
-    layout: {
-        visibility: "none",
-        "icon-image": SQUARE_MULTI_ICON,
-        "icon-allow-overlap": true,
-        "icon-ignore-placement": true
-    }
-});
+            map.addLayer({
+                id: "shared-markers-maus-layer",
+                type: "symbol",
+                source: "shared-markers-data",
+                filter: ["==", ["get", "Mausoleum"], true],
+                layout: {
+                    visibility: "none",
+                    "icon-image": SHARED_GRAVE_MAUS_ICON,
+                    "icon-allow-overlap": true,
+                    "icon-ignore-placement": true
+                }
+            });
 
             // ---------------- CLICK HANDLERS ----------------
             map.on("click", "cemeteries-layer", handleCemeteryClick);
             map.on("click", "graves-tap-layer", handleGraveClick);
-map.on("click", "shared-markers-tap-layer", handleSharedMarkerClick);
+            map.on("click", "shared-markers-tap-layer", handleSharedMarkerClick);
+            map.on("click", "graves-maus-layer", handleGraveClick);
             map.on("click", "shared-markers-maus-layer", handleSharedMarkerClick);
-           map.on("click", "graves-maus-layer", handleGraveClick);
 
             // ---------------- HOVER: cemeteries ----------------
             function cemeteryHover(event) {
@@ -3415,7 +3320,7 @@ map.on("click", "shared-markers-tap-layer", handleSharedMarkerClick);
                 removeHoverLabel();
             });
 
-            // ---------------- HOVER: graves ----------------
+            // ---------------- HOVER: graves (single, non-mausoleum) ----------------
             function graveHover(event) {
                 const feature = event.features && event.features[0];
 
@@ -3427,14 +3332,14 @@ map.on("click", "shared-markers-tap-layer", handleSharedMarkerClick);
                 }
             }
 
-                        map.on("mouseenter", "graves-layer", function (event) {
+            map.on("mouseenter", "graves-tap-layer", function (event) {
                 map.getCanvas().style.cursor = "pointer";
                 graveHover(event);
             });
 
-            map.on("mousemove", "graves-layer", graveHover);
+            map.on("mousemove", "graves-tap-layer", graveHover);
 
-            map.on("mouseleave", "graves-layer", function () {
+            map.on("mouseleave", "graves-tap-layer", function () {
                 map.getCanvas().style.cursor = "";
                 removeHoverLabel();
             });
@@ -3463,14 +3368,14 @@ map.on("click", "shared-markers-tap-layer", handleSharedMarkerClick);
                 }
             }
 
-                        map.on("mouseenter", "shared-markers-outer-layer", function (event) {
+            map.on("mouseenter", "shared-markers-tap-layer", function (event) {
                 map.getCanvas().style.cursor = "pointer";
                 sharedHover(event);
             });
 
-            map.on("mousemove", "shared-markers-outer-layer", sharedHover);
+            map.on("mousemove", "shared-markers-tap-layer", sharedHover);
 
-            map.on("mouseleave", "shared-markers-outer-layer", function () {
+            map.on("mouseleave", "shared-markers-tap-layer", function () {
                 map.getCanvas().style.cursor = "";
                 removeHoverLabel();
             });
@@ -3536,20 +3441,21 @@ map.on("click", function (event) {
         return;
     }
 
-       const layers = [
-    "cemeteries-layer",
-    "cemeteries-highlight-layer",
-    "graves-tap-layer",
-    "graves-symbol-layer",
-    "graves-maus-layer",
-    "shared-markers-tap-layer",
-    "shared-markers-symbol-layer",
-    "shared-markers-maus-layer",
-    "lake-cemeteries-layer",
-    "lake-sites-layer"
-].filter(function (id) {
-    return map.getLayer(id);
-});
+    const layers = [
+        "cemeteries-layer",
+        "cemeteries-highlight-layer",
+        "graves-tap-layer",
+        "graves-symbol-layer",
+        "graves-maus-layer",
+        "shared-markers-tap-layer",
+        "shared-markers-symbol-layer",
+        "shared-markers-maus-layer",
+        "lake-cemeteries-layer",
+        "lake-sites-layer"
+    ].filter(function (id) {
+        return map.getLayer(id);
+    });
+
     if (layers.length) {
         const hits = map.queryRenderedFeatures(event.point, { layers: layers });
 
