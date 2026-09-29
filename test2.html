@@ -126,6 +126,64 @@
         padding: 14px; z-index: 4;
     }
 
+    /* ---------- GRAVE LEGEND (cemetery mode only) ---------- */
+    #grave-legend {
+        display: none;
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        max-width: 520px;
+        background: rgba(255, 255, 255, 0.96);
+        border: 1px solid #aaa;
+        border-radius: 5px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+        padding: 10px 32px 10px 14px;
+        z-index: 4;
+    }
+
+    #close-grave-legend {
+        position: absolute; top: 5px; right: 7px;
+        width: 24px; height: 24px; padding: 0;
+        border: none; border-radius: 50%;
+        background: transparent; color: #5a4b3a;
+        font-size: 20px; line-height: 24px; cursor: pointer;
+    }
+    #close-grave-legend:hover { background: #e5e0d5; color: #2f281f; }
+
+    #grave-legend-content {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 16px;
+        align-items: center;
+        font-size: 13px;
+        color: #3f3528;
+    }
+
+    .grave-legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+
+    .grave-legend-item svg {
+        display: block;
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+    }
+
+    @media (max-width: 700px) {
+        #grave-legend {
+            left: 8px;
+            right: 8px;
+            bottom: 8px;
+            transform: none;
+            max-width: none;
+        }
+    }
+   
     #close-info {
         position: absolute; top: 5px; right: 7px; width: 28px; height: 28px; padding: 0;
         border: none; border-radius: 50%; background: transparent; color: #5a4b3a;
@@ -141,6 +199,10 @@
     .placeholder { color: #666; font-size: 14px; line-height: 1.4; }
     .error-message { color: #8b0000; font-size: 14px; line-height: 1.45; }
 
+    document.getElementById("close-grave-legend").addEventListener("click", function () {
+    document.getElementById("grave-legend").style.display = "none";
+});
+   
     /* ---------- LIGHTBOX ---------- */
     #cemetery-lightbox {
         display: none; position: absolute; inset: 0;
@@ -424,7 +486,10 @@
         <button id="close-cemetery-lightbox" title="Close Cemetery Record" aria-label="Close Cemetery Record">&times;</button>
         <iframe id="cemetery-lightbox-frame" title="Cemetery Record"></iframe>
     </div>
-
+    <div id="grave-legend">
+        <button id="close-grave-legend" title="Close Legend" aria-label="Close Legend">&times;</button>
+        <div id="grave-legend-content"></div>
+    </div>
 </div>
 
 <!-- =====================================================
@@ -852,6 +917,143 @@ function findCemetery(cemeteryID) {
     });
 }
 
+   // Build a small inline SVG matching one grave-symbol variant.
+// The geometry mirrors makeGraveSymbol, scaled down to 18x18.
+function legendSVG(opts) {
+    const size = 18;
+    const half = size / 2;
+
+    const FILL = "#463a2d";
+    const STROKE = "#ffffff";
+
+    // Scale factors chosen to match the canvas symbols visually.
+    const ringGap = 1.5;
+    const ringWidth = 1;
+    const borderWidth = 1.4;
+    const shapeRadius = half - ringGap - borderWidth / 2;
+
+    let s = '<svg viewBox="0 0 ' + size + ' ' + size +
+            '" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">';
+
+    if (opts.veteran) {
+        s += '<circle cx="' + half + '" cy="' + half +
+             '" r="' + (half - ringWidth / 2 - 0.2) +
+             '" fill="none" stroke="' + FILL +
+             '" stroke-width="' + ringWidth +
+             '" stroke-dasharray="1 1"/>';
+    }
+
+    if (opts.shape === "circle") {
+        s += '<circle cx="' + half + '" cy="' + half +
+             '" r="' + shapeRadius +
+             '" fill="' + FILL +
+             '" stroke="' + STROKE +
+             '" stroke-width="' + borderWidth + '"/>';
+    }
+    else {
+        const side = shapeRadius * 2 * 0.85;
+        const inset = half - side / 2;
+        s += '<rect x="' + inset + '" y="' + inset +
+             '" width="' + side + '" height="' + side +
+             '" fill="' + FILL +
+             '" stroke="' + STROKE +
+             '" stroke-width="' + borderWidth + '"/>';
+    }
+
+    if (opts.pioneer) {
+        s += '<line x1="' + ringGap + '" y1="' + half +
+             '" x2="' + (size - ringGap) + '" y2="' + half +
+             '" stroke="' + STROKE +
+             '" stroke-width="' + borderWidth + '"/>';
+    }
+
+    if (opts.dot) {
+        s += '<circle cx="' + half + '" cy="' + half +
+             '" r="' + (shapeRadius * 0.45) +
+             '" fill="' + STROKE + '"/>';
+    }
+
+    s += '</svg>';
+    return s;
+}
+
+// Compute which legend rows apply to this cemetery, and render them.
+function updateGraveLegend(cemeteryID) {
+
+    const container = document.getElementById("grave-legend-content");
+    if (!container) return;
+
+    const data = intermentsByCemetery[cemeteryID] || { rows: [], groups: {} };
+    const rows = data.rows || [];
+    const groups = data.groups || {};
+
+    // Which base shapes appear? Start all false.
+    const seen = {
+        circleSingle:  false,
+        circleDot:     false,
+        squareSingle:  false,
+        squareDot:     false,
+        veteran:       false,
+        pioneer:       false
+    };
+
+    // Walk the individual (non-shared) interments.
+    rows.forEach(function (person) {
+        const group = person.markerID ? groups[person.markerID] : null;
+        if (group && group.length >= 2) return;   // handled as shared below
+
+        if (person.mausoleum) {
+            seen.squareSingle = true;
+        } else {
+            seen.circleSingle = true;
+        }
+
+        if (person.veteran) seen.veteran = true;
+        if (person.pioneer) seen.pioneer = true;
+    });
+
+    // Walk the shared markers.
+    Object.keys(groups).forEach(function (markerID) {
+        const group = groups[markerID];
+        if (!group || group.length < 2) return;
+
+        const isMaus = group.some(function (p) { return p.mausoleum === true; });
+
+        if (isMaus) {
+            seen.squareDot = true;
+        } else {
+            seen.circleDot = true;
+        }
+
+        if (group.some(function (p) { return p.veteran === true; })) seen.veteran = true;
+        if (group.some(function (p) { return p.pioneer === true; })) seen.pioneer = true;
+    });
+
+    // Build the rows.
+    let html = "";
+
+    function row(svgOpts, label) {
+        html += '<div class="grave-legend-item">' +
+                legendSVG(svgOpts) +
+                '<span>' + label + '</span></div>';
+    }
+
+    if (seen.circleSingle) row({ shape: "circle" }, "Single");
+    if (seen.circleDot)    row({ shape: "circle", dot: true }, "Multiple");
+    if (seen.squareSingle) row({ shape: "square" }, "Structure");
+    if (seen.squareDot)    row({ shape: "square", dot: true }, "Structure, Multiple");
+    if (seen.veteran)      row({ shape: "circle", veteran: true }, "Veteran");
+    if (seen.pioneer)      row({ shape: "circle", pioneer: true }, "Pioneer");
+
+    if (html === "") {
+        // Nothing to show — hide the panel entirely.
+        document.getElementById("grave-legend").style.display = "none";
+        return;
+    }
+
+    container.innerHTML = html;
+    document.getElementById("grave-legend").style.display = "block";
+}
 
 // ============================================================
 // CANVAS-GENERATED GRAVE SYMBOLS
@@ -1593,11 +1795,14 @@ function enterCemeteryMode(feature) {
     updateCemeteryBoundary();
     updateCemeteryGraves();
     fitSelectedCemetery();
+
+    updateGraveLegend(cleanString(feature.properties.Cemetery_ID));
 }
 
 function exitCemeteryMode() {
 
     selectedCemeteryFeature = null;
+    document.getElementById("grave-legend").style.display = "none";
     removeHoverLabel();
 
     updateCemeteryBoundary();
