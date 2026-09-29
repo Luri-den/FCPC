@@ -1,22 +1,22 @@
-CEMETERY_ID,MARKER_ID,LAST NAME,FIRST NAME,BIRTH,DEATH,ROW,PLOT,ADDITIONAL INFORMATION ON STONE,VETERAN,VET DETAILS,LAT,LONG
-FC0031,,Briggs,Mary,,"February 10, 1905",,,Wife of William,0,,,
-FC0031,,Briggs,William,,"March 12, 1905",,,,0,,,
-FC0031,,Higgs,Mary,"December 25, 1784","August 16, 1849",,,,0,,,
-FC0031,,Higgs,William,"February 9, 1778","April 4, 1852",,,,0,,,
-FC0031,,Stewart,Elizabeth,"April 4, 1845","May 9, 1874",,,Wife of George W. Stewart,0,,,
-FC0031,,Stewart,George,"October 16, 1850","November 18, 1879",,,Son of A & F Stewart,0,,,
-FC0031,,Stewart,Martha J.,"July 27, 1864","September 12, 1864",,,Daughter of George and Elizabeth,0,,,
-FC0031,,Stewart,Mathew,"March 21, 1814","January 27, 1856",,,,0,,,
-FC0031,,Stewart,Infant,"August 2, 1872","August 23, 1872",,,Son of George and Elizabeth,0,,,
-FC0031,,Warne,Elizabeth,"May 6, 1836","April 14, 1864",,,,0,,,
-FC0031,,Warne,Elijah,"January 1, 1890","December 18, 1956",1,1,,1,"Company C, 58th Indiana Infantry (American Civil War)",,
-FC0202,M0201,Smith,Bill,"January 2, 1890","December 19, 1956",2,2,,0,,39.424239,-85.045349
-FC0202,M0202,Smith,Will,"January 3, 1890","December 20, 1956",3,3,,0,,39.424239,-85.045342
-FC0202,M0203,Smith,Phil,"January 4, 1890","December 21, 1956",4,4,,0,,39.424239,-85.045335
-FC0202,M0203,Smith,Gill,"January 5, 1890","December 22, 1956",5,5,,0,,39.424239,-85.045335
-FC0202,M0204,Smith,Millie,"January 6, 1890","December 23, 1956",6,6,,0,,39.424239,-85.045321
-FC0202,M0205,Smith,Nellie,"January 7, 1890","December 24, 1956",7,7,,0,,39.424255,-85.045349
-FC0202,M0206,Smith,Sarah,"January 8, 1890","December 25, 1956",8,8,,0,,39.424255,-85.045342
-FC0202,M0207,Smith,Farah,"January 9, 1890","December 26, 1956",9,9,,0,,39.424255,-85.045335
-FC0202,M0208,Smith,Frank,"January 10, 1890","December 27, 1956",10,10,,0,,39.424255,-85.045328
-FC0202,M0209,Smith,Hank,"January 11, 1890","December 28, 1956",11,11,,0,,39.424255,-85.045321
+CEMETERY_ID,LAST NAME,FIRST NAME,BIRTH,DEATH,ROW,PLOT,ADDITIONAL INFORMATION ON STONE,VETERAN,WAR,VET DETAILS,MAUS,LAT,LONG,PIONEER
+FC0031,Briggs,Mary,,"February 10, 1905",,,Wife of William,0,0,,0,,,1
+FC0031,Briggs,William,,"March 12, 1905",,,,0,0,,0,,,1
+FC0031,Higgs,Martha,"December 25, 1784","August 16, 1849",,,,0,0,,0,,,1
+FC0031,Higgs,William,"February 9, 1778","April 4, 1852",,,,0,0,,0,,,1
+FC0031,Stewart,Elizabeth,"April 4, 1845","May 9, 1874",,,Wife of George W. Stewart,0,0,,0,,,1
+FC0031,Stewart,George,"October 16, 1850","November 18, 1879",,,Son of A & F Stewart,0,0,,0,,,1
+FC0031,Stewart,Martha J.,"July 27, 1864","September 12, 1864",,,Daughter of George and Elizabeth,0,0,,0,,,1
+FC0031,Stewart,Mathew,"March 21, 1814","January 27, 1856",,,,0,0,,0,,,1
+FC0031,Stewart,Infant,"August 2, 1872","August 23, 1872",,,Son of George and Elizabeth,0,0,,0,,,1
+FC0031,Warne,Elizabeth,"May 6, 1836","April 14, 1864",,,,0,0,,0,,,1
+FC0031,Warne,Elijah,"January 1, 1890","December 18, 1956",1,1,,1,American Civil War,"Company C, 58th Indiana Infantry",0,,,1
+FC0202,Test,Bill,"January 2, 1890","December 19, 1956",2,2,,0,0,,0,39.424239,-85.045349,0
+FC0202,Test,Will,"January 3, 1890","December 20, 1956",3,3,,0,0,,0,39.424239,-85.045342,0
+FC0202,Test,Phil,"January 4, 1890","December 21, 1956",4,4,,0,0,,0,39.424239,-85.045335,0
+FC0202,Test,Gill,"January 5, 1890","December 22, 1956",5,5,,0,0,,0,39.424239,-85.045328,0
+FC0202,Test,Millie,"January 6, 1890","December 23, 1956",6,6,,0,0,,0,39.424239,-85.045321,0
+FC0202,Test,Nellie,"January 7, 1890","December 24, 1956",7,7,,0,0,,0,39.424255,-85.045349,0
+FC0202,Test,Sarah,"January 8, 1890","December 25, 1956",8,8,,0,0,,0,39.424255,-85.045342,0
+FC0202,Test,Farah,"January 9, 1890","December 26, 1956",9,9,,0,0,,0,39.424255,-85.045335,0
+FC0202,Test,Frank,"January 10, 1890","December 27, 1956",10,10,,0,0,,0,39.424255,-85.045328,0
+FC0202,Test,Hank,"January 11, 1800","December 28, 1956",11,11,,1,American Civil War,"Company Z, 110th Hawaii Cavalry",0,39.424255,-85.045321,1
