@@ -125,6 +125,16 @@ h2 {
 }
 
 
+.person-name-left {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 0;
+
+}
+   
 /* ============================================================
    PERSON NAME
    ============================================================ */
@@ -175,7 +185,7 @@ h2 {
 
     object-fit: contain;
 
-    margin-left: 12px;
+    margin-right: 12px;
 
 }
 
@@ -1270,15 +1280,17 @@ function displayInterments(
                     <div class="interment">
 
 
-                        <div class="person-name">
+                                                <div class="person-name">
 
-                            <span>
+                            <span class="person-name-left">
+
+                                ${pioneerIcon}
+
                                 ${firstName} ${lastName}
+
                             </span>
 
                             ${veteranIcon}
-
-                            ${pioneerIcon}
 
                         </div>
 
