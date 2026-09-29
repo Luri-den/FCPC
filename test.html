@@ -1287,7 +1287,9 @@ function updateCemeteryGraves() {
                 geometry: { type: "Point", coordinates: representative.coordinates }
             });
 
-                sharedSource.setData({ type: "FeatureCollection", features: sharedFeatures });
+                                sharedSource.setData({ type: "FeatureCollection", features: sharedFeatures });
+        });
+
         setLayerVisibility("shared-markers-outer-layer", "visible");
         setLayerVisibility("shared-markers-inner-layer", "visible");
         setLayerVisibility("shared-markers-maus-layer", "visible");
