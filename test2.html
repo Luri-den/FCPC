@@ -864,10 +864,10 @@ function findCemetery(cemeteryID) {
 //
 // Drawn at 64x64, registered with pixelRatio 2 (32 CSS px on screen).
 // ============================================================
-
 function makeGraveSymbol(opts) {
 
     const size = 64;
+
     const canvas = document.createElement("canvas");
     canvas.width = size;
     canvas.height = size;
@@ -883,103 +883,193 @@ function makeGraveSymbol(opts) {
     const ringDashOn  = 3;
     const ringDashOff = 3;
 
-const ringDashOn  = 3;
-const ringDashOff = 3;
+    /*
+     * ============================================================
+     * VETERAN INDICATOR
+     *
+     * Circle marker → dotted circle
+     * Square marker → dotted square
+     * ============================================================
+     */
 
-if (opts.veteran) {
+    if (opts.veteran) {
 
-    const ringRadius = half - ringWidth / 2 - 1;
+        const ringRadius = half - ringWidth / 2 - 1;
 
-    ctx.save();
-    ctx.strokeStyle = FILL;
-    ctx.lineWidth = ringWidth;
-    ctx.setLineDash([ringDashOn, ringDashOff]);
-
-    ctx.beginPath();
-
-    if (opts.shape === "circle") {
-
-        // Veteran ring around circle
-        ctx.arc(
-            half,
-            half,
-            ringRadius,
-            0,
-            Math.PI * 2
-        );
-
-    } else {
-
-        // Veteran ring around square / MAUS marker
-        const ringSide = ringRadius * 2;
-        const ringInset = half - ringSide / 2;
-
-        ctx.rect(
-            ringInset,
-            ringInset,
-            ringSide,
-            ringSide
-        );
-    }
-
-    ctx.stroke();
-    ctx.restore();
-}
-
-const borderWidth = 4;
-const shapeRadius = half - ringGap - borderWidth - 1;
-    if (opts.shape === "circle") {
-
-        // Veteran ring around circular marker
-        ctx.arc(
-            half,
-            half,
-            ringRadius,
-            0,
-            Math.PI * 2
-        );
-
-    } else {
-
-        // Veteran ring around square marker
-        const ringSide = ringRadius * 2;
-        const ringInset = half - ringSide / 2;
-
-        ctx.rect(
-            ringInset,
-            ringInset,
-            ringSide,
-            ringSide
-        );
-    }
-
-    ctx.stroke();
-    ctx.restore();
-}
-    if (opts.pioneer) {
-        const lineY = half;
-        const lineX0 = ringGap;
-        const lineX1 = size - ringGap;
         ctx.save();
-        ctx.strokeStyle = STROKE;
-        ctx.lineWidth = borderWidth;
+
+        ctx.strokeStyle = FILL;
+        ctx.lineWidth = ringWidth;
+        ctx.setLineDash([ringDashOn, ringDashOff]);
+
         ctx.beginPath();
-        ctx.moveTo(lineX0, lineY);
-        ctx.lineTo(lineX1, lineY);
+
+        if (opts.shape === "circle") {
+
+            ctx.arc(
+                half,
+                half,
+                ringRadius,
+                0,
+                Math.PI * 2
+            );
+
+        } else {
+
+            const ringSide = ringRadius * 2;
+            const ringInset = half - ringSide / 2;
+
+            ctx.rect(
+                ringInset,
+                ringInset,
+                ringSide,
+                ringSide
+            );
+        }
+
         ctx.stroke();
+
         ctx.restore();
     }
 
-    if (opts.dot) {
+
+    /*
+     * ============================================================
+     * BASE MARKER
+     * ============================================================
+     */
+
+    const borderWidth = 4;
+
+    const shapeRadius =
+        half - ringGap - borderWidth - 1;
+
+    ctx.fillStyle = FILL;
+    ctx.strokeStyle = STROKE;
+    ctx.lineWidth = borderWidth;
+
+    ctx.setLineDash([]);
+
+
+    if (opts.shape === "circle") {
+
         ctx.beginPath();
-        ctx.arc(half, half, shapeRadius * 0.45, 0, Math.PI * 2);
+
+        ctx.arc(
+            half,
+            half,
+            shapeRadius,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+        ctx.stroke();
+
+    } else {
+
+        const side = shapeRadius * 2 * 0.85;
+        const inset = half - side / 2;
+
+        ctx.fillRect(
+            inset,
+            inset,
+            side,
+            side
+        );
+
+        ctx.strokeRect(
+            inset,
+            inset,
+            side,
+            side
+        );
+    }
+
+
+    /*
+     * ============================================================
+     * PIONEER INDICATOR
+     *
+     * Horizontal line across the marker
+     * ============================================================
+     */
+
+    if (opts.pioneer) {
+
+        const lineY = half;
+
+        const lineX0 = ringGap;
+        const lineX1 = size - ringGap;
+
+        ctx.save();
+
+        ctx.strokeStyle = STROKE;
+        ctx.lineWidth = borderWidth;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            lineX0,
+            lineY
+        );
+
+        ctx.lineTo(
+            lineX1,
+            lineY
+        );
+
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+
+    /*
+     * ============================================================
+     * SHARED / MULTIPLE INTERMENT INDICATOR
+     *
+     * Center dot
+     * ============================================================
+     */
+
+    if (opts.dot) {
+
+        ctx.beginPath();
+
+        ctx.arc(
+            half,
+            half,
+            shapeRadius * 0.45,
+            0,
+            Math.PI * 2
+        );
+
         ctx.fillStyle = STROKE;
+
         ctx.fill();
     }
 
-    const imageData = ctx.getImageData(0, 0, size, size);
 
-    return { width: size, height: size, data: imageData.data };
+    /*
+     * ============================================================
+     * RETURN IMAGE DATA TO MAPLIBRE
+     * ============================================================
+     */
+
+    const imageData =
+        ctx.getImageData(
+            0,
+            0,
+            size,
+            size
+        );
+
+    return {
+        width: size,
+        height: size,
+        data: imageData.data
+    };
 }
 
 function registerGraveSymbols() {
