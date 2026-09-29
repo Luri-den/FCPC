@@ -2729,17 +2729,17 @@ const IMG_WIDTH  = 3497;
 const IMG_HEIGHT = 2926;
 
 const CONTROL_POINTS = [
-    // NW:
-    [425, 840, -85.298653, 39.525454],  
-    
-    // NE: 
-    [3074, 825, -84.815581, 39.508418],  
-    
-    // SE: 
-    [3074, 2300, -84.819442, 39.305188], 
-    
-    // SW:
-    [483, 2209, -85.296327, 39.268335]   
+    // NW: top-left corner of the pink county wash
+    [475,  850, -85.298653, 39.525454],
+
+    // NE: top-right corner of the pink county wash
+    [3105, 825, -84.815581, 39.508418],
+
+    // SE: bottom-right corner of the pink county wash
+    [3080, 2310, -84.819442, 39.305188],
+
+    // SW: bottom-left corner of the pink county wash (the taper point)
+    [465, 2610, -85.296327, 39.268335]
 ];
 
 // Fit an affine transform (lon = a*x + b*y + c; lat = d*x + e*y + f)
