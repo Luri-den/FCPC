@@ -2929,10 +2929,6 @@ map.on("load", function () {
 
     return { width: size, height: size, data: imageData.data };
 }
-        const imageData = ctx.getImageData(0, 0, size, size);
-
-        return { width: size, height: size, data: imageData.data };
-    }
 
         if (!map.hasImage("maus-square")) {
         map.addImage("maus-square", makeMausIcon(20, false), { pixelRatio: 2 });
