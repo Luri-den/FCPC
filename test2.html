@@ -2722,39 +2722,100 @@ map.on("load", function () {
         }
     });
 
-// ---- 1882 historical map overlay (single georeferenced image) ----
-// Anchor: top-left corner of the image sits at the county's NW corner.
-// The other three corners are computed to preserve the image's aspect
-// ratio in Web Mercator, so the image is not stretched.
+// ---- 1882 historical map overlay (four-point georeference) ----
+// Control points: [pixelX, pixelY, longitude, latitude]
+// Pinned to the drawn county corners on the 1882 sheet.
 const IMG_URL = "https://raw.githubusercontent.com/Luri-den/FCPC/main/cropped-franklin-1882.png";
+const IMG_WIDTH  = 3497;
+const IMG_HEIGHT = 2926;
 
-const IMG_TOP_LEFT_LON = -85.298653;   // county NW corner, longitude
-const IMG_TOP_LEFT_LAT = 39.525454;    // county NW corner, latitude
+const CONTROL_POINTS = [
+    [ 488,  838, -85.298653, 39.525454],  // NW
+    [3060,  835, -84.815581, 39.508418],  // NE
+    [3055, 2347, -84.819442, 39.305188],  // SE
+    [ 504, 2600, -85.296432, 39.268204]   // SW
+];
 
-const IMG_WIDTH_PX  = 1920;        // <-- set to your image's actual pixel width
-const IMG_HEIGHT_PX = 927;        // <-- set to your image's actual pixel height
+// Fit an affine transform (lon = a*x + b*y + c; lat = d*x + e*y + f)
+// using least squares over the four control points.
+function fitAffine(points) {
+    // Build the normal equations for [x y 1] -> lon and -> lat.
+    // For 4 points with 3 unknowns, solve the 3x3 system directly.
+    let Sxx=0, Sxy=0, Sx=0, Syy=0, Sy=0, n=0;
+    let Sxl=0, Syl=0, Sl=0;   // for longitude
+    let Sxt=0, Syt=0, St=0;   // for latitude
 
-const IMG_LON_SPAN  = 0.230563;        // <-- how many degrees of longitude the image spans (tune by eye)
+    for (const [x, y, lon, lat] of points) {
+        Sxx += x*x; Sxy += x*y; Sx += x;
+        Syy += y*y; Sy  += y;   n  += 1;
+        Sxl += x*lon; Syl += y*lon; Sl += lon;
+        Sxt += x*lat; Syt += y*lat; St += lat;
+    }
 
-// Web Mercator helpers
-const mercatorY    = (lat) => Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI / 180) / 2));
-const invMercatorY = (y)   => (2 * Math.atan(Math.exp(y)) - Math.PI / 2) * 180 / Math.PI;
+    // Solve the 3x3 system for longitude coefficients [a, b, c]
+    function solve3x3(M, v) {
+        // M is 3x3, v is length 3. Gaussian elimination.
+        const A = [
+            [M[0][0], M[0][1], M[0][2], v[0]],
+            [M[1][0], M[1][1], M[1][2], v[1]],
+            [M[2][0], M[2][1], M[2][2], v[2]]
+        ];
+        for (let i = 0; i < 3; i++) {
+            let p = i;
+            for (let r = i+1; r < 3; r++) if (Math.abs(A[r][i]) > Math.abs(A[p][i])) p = r;
+            [A[i], A[p]] = [A[p], A[i]];
+            const piv = A[i][i];
+            if (Math.abs(piv) < 1e-12) return null;
+            for (let j = i; j < 4; j++) A[i][j] /= piv;
+            for (let r = 0; r < 3; r++) {
+                if (r === i) continue;
+                const f = A[r][i];
+                for (let j = i; j < 4; j++) A[r][j] -= f * A[i][j];
+            }
+        }
+        return [A[0][3], A[1][3], A[2][3]];
+    }
 
-const topY    = mercatorY(IMG_TOP_LEFT_LAT);
-const bottomY = topY - (IMG_LON_SPAN * Math.PI / 180) * (IMG_HEIGHT_PX / IMG_WIDTH_PX);
-const bottomLat = invMercatorY(bottomY);
-const rightLon  = IMG_TOP_LEFT_LON + IMG_LON_SPAN;
+    const M = [[Sxx, Sxy, Sx], [Sxy, Syy, Sy], [Sx, Sy, n]];
+    const lonCoef = solve3x3(M, [Sxl, Syl, Sl]);
+    const latCoef = solve3x3(M, [Sxt, Syt, St]);
+
+    if (!lonCoef || !latCoef) return null;
+
+    return {
+        lon: (x, y) => lonCoef[0]*x + lonCoef[1]*y + lonCoef[2],
+        lat: (x, y) => latCoef[0]*x + latCoef[1]*y + latCoef[2]
+    };
+}
+
+const affine = fitAffine(CONTROL_POINTS);
+if (!affine) {
+    console.error("1882 overlay: affine fit failed; check control points.");
+}
+
+// MapLibre needs the geographic position of the image's LITERAL corners.
+const imgCorners = affine ? [
+    [affine.lon(0,            0),            affine.lat(0,            0)],            // top-left of file
+    [affine.lon(IMG_WIDTH,    0),            affine.lat(IMG_WIDTH,    0)],            // top-right of file
+    [affine.lon(IMG_WIDTH,    IMG_HEIGHT),   affine.lat(IMG_WIDTH,    IMG_HEIGHT)],   // bottom-right of file
+    [affine.lon(0,            IMG_HEIGHT),   affine.lat(0,            IMG_HEIGHT)]    // bottom-left of file
+] : [[-85.30, 39.53], [-84.81, 39.51], [-84.82, 39.27], [-85.30, 39.27]]; // fallback
 
 map.addSource("franklin-1882", {
     type: "image",
     url: IMG_URL,
-    coordinates: [
-        [IMG_TOP_LEFT_LON, IMG_TOP_LEFT_LAT],  // top-left  (anchored)
-        [rightLon,         IMG_TOP_LEFT_LAT],  // top-right
-        [rightLon,         bottomLat],         // bottom-right
-        [IMG_TOP_LEFT_LON, bottomLat]          // bottom-left
-    ]
+    coordinates: imgCorners
 });
+
+map.addLayer({
+    id: "franklin-1882-layer",
+    type: "raster",
+    source: "franklin-1882",
+    layout: { visibility: "none" },
+    paint: { "raster-opacity": 0.8 }
+}, "franklin-county-outline");
+
+updateHistoricalOpacity(historicalSlider.value);
 
 map.addLayer({
     id: "franklin-1882-layer",
