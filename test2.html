@@ -364,17 +364,15 @@
             <div id="basemap-toggle" role="group" aria-label="Basemap">
                 <button type="button" class="basemap-option active" data-basemap="street">Street</button>
                 <button type="button" class="basemap-option" data-basemap="aerial">Aerial</button>
-           
-
-                
             </div>
 
             <div class="legend-title" style="margin-top: 12px;">HISTORICAL OVERLAY</div>
-<div id="historical-toggle-container" style="padding: 2px 4px 6px 4px;"></div>
-<div id="opacity-slider-wrapper" style="opacity: 0.5; pointer-events: none; display: flex; flex-direction: column; gap: 2px; padding-left: 22px;">
-    <span style="font-size: 11px; color: #666; font-family: sans-serif;">Opacity: <span id="opacity-value-label">80%</span></span>
-    <input type="range" id="historical-opacity-slider" min="0" max="100" step="1" value="80" style="width: 100%; cursor: pointer; margin: 0;">
-</div>
+            <div id="historical-toggle-container" style="padding: 2px 4px 6px 4px;"></div>
+            <div id="opacity-slider-wrapper" style="opacity: 0.5; pointer-events: none; display: flex; flex-direction: column; gap: 2px; padding-left: 22px;">
+                <span style="font-size: 11px; color: #666; font-family: sans-serif;">Opacity: <span id="opacity-value-label">80%</span></span>
+                <input type="range" id="historical-opacity-slider" min="0" max="100" step="1" value="80" style="width: 100%; cursor: pointer; margin: 0;">
+            </div>
+
             <div class="legend-title" style="margin-top: 12px;">ACCESSIBILITY</div>
             <div class="legend-item"><span class="legend-circle" style="background-color: #01796F;"></span><span>Public</span></div>
             <div class="legend-item"><span class="legend-circle" style="background-color: #C9A227;"></span><span>With Permission</span></div>
@@ -534,6 +532,7 @@ const legendArrow = document.getElementById("legend-arrow");
 const historicalSlider = document.getElementById("historical-opacity-slider");
 const sliderWrapper = document.getElementById("opacity-slider-wrapper");
 const opacityLabel = document.getElementById("opacity-value-label");
+const historicalToggleContainer = document.getElementById("historical-toggle-container");
 
 
 // ============================================================
@@ -565,6 +564,184 @@ let searchResultsOpen = false;
 let currentSearchResults = [];
 
 let movedPeopleByOrigin = {};
+
+
+// ============================================================
+// HISTORICAL OVERLAYS
+//
+// Each entry is one historical map image, georeferenced by four
+// control points. To add another map, append an object with the
+// same shape. Only one overlay is shown at a time.
+//
+// Control points: [pixelX, pixelY, longitude, latitude]
+// Order: NW, NE, SE, SW.
+// ============================================================
+
+const HISTORICAL_OVERLAYS = [
+    {
+        id: "franklin-1882-layer",
+        label: "1882 Franklin Co. Map",
+        url: "https://raw.githubusercontent.com/Luri-den/FCPC/main/cropped-franklin-1882.jpg",
+        width: 3497,
+        height: 2926,
+        controlPoints: [
+            [475,  850, -85.298653, 39.525454],  // NW
+            [3105, 825, -84.810676, 39.521903],  // NE
+            [3080, 2310, -84.815210, 39.309328], // SE
+            [465, 2610, -85.299317, 39.267088]   // SW
+        ]
+    }
+
+    // To add another map, add a comma after the closing brace above
+    // and uncomment an entry like this:
+    //
+    // ,{
+    //     id: "franklin-1840-layer",
+    //     label: "1840 Franklin Co. Map",
+    //     url: "https://example.com/your-map.jpg",
+    //     width: 3000,
+    //     height: 2400,
+    //     controlPoints: [
+    //         [x, y, lon, lat],  // NW
+    //         [x, y, lon, lat],  // NE
+    //         [x, y, lon, lat],  // SE
+    //         [x, y, lon, lat]   // SW
+    //     ]
+    // }
+];
+
+let activeOverlayId = null;   // which overlay is currently shown, if any
+let overlayOpacity = 0.8;     // shared opacity, applied to whichever is active
+
+
+// ============================================================
+// AFFINE FIT AND CORNER COMPUTATION
+// ============================================================
+
+// Fit an affine transform (lon = a*x + b*y + c; lat = d*x + e*y + f)
+// using least squares over the four control points.
+function fitAffine(points) {
+    let Sxx=0, Sxy=0, Sx=0, Syy=0, Sy=0, n=0;
+    let Sxl=0, Syl=0, Sl=0;
+    let Sxt=0, Syt=0, St=0;
+
+    for (const [x, y, lon, lat] of points) {
+        Sxx += x*x; Sxy += x*y; Sx += x;
+        Syy += y*y; Sy  += y;   n  += 1;
+        Sxl += x*lon; Syl += y*lon; Sl += lon;
+        Sxt += x*lat; Syt += y*lat; St += lat;
+    }
+
+    function solve3x3(M, v) {
+        const A = [
+            [M[0][0], M[0][1], M[0][2], v[0]],
+            [M[1][0], M[1][1], M[1][2], v[1]],
+            [M[2][0], M[2][1], M[2][2], v[2]]
+        ];
+        for (let i = 0; i < 3; i++) {
+            let p = i;
+            for (let r = i+1; r < 3; r++) if (Math.abs(A[r][i]) > Math.abs(A[p][i])) p = r;
+            const tmp = A[i]; A[i] = A[p]; A[p] = tmp;
+            const piv = A[i][i];
+            if (Math.abs(piv) < 1e-12) return null;
+            for (let j = i; j < 4; j++) A[i][j] /= piv;
+            for (let r = 0; r < 3; r++) {
+                if (r === i) continue;
+                const f = A[r][i];
+                for (let j = i; j < 4; j++) A[r][j] -= f * A[i][j];
+            }
+        }
+        return [A[0][3], A[1][3], A[2][3]];
+    }
+
+    const M = [[Sxx, Sxy, Sx], [Sxy, Syy, Sy], [Sx, Sy, n]];
+    const lonCoef = solve3x3(M, [Sxl, Syl, Sl]);
+    const latCoef = solve3x3(M, [Sxt, Syt, St]);
+
+    if (!lonCoef || !latCoef) return null;
+
+    return {
+        lon: function (x, y) { return lonCoef[0]*x + lonCoef[1]*y + lonCoef[2]; },
+        lat: function (x, y) { return latCoef[0]*x + latCoef[1]*y + latCoef[2]; }
+    };
+}
+
+// Compute the geographic positions of the image's four LITERAL corners.
+function buildOverlayCorners(overlay) {
+    const affine = fitAffine(overlay.controlPoints);
+    if (!affine) {
+        console.error("Overlay " + overlay.id + ": affine fit failed.");
+        return [[-85.30, 39.53], [-84.81, 39.51], [-84.82, 39.27], [-85.30, 39.27]];
+    }
+    return [
+        [affine.lon(0, 0),                          affine.lat(0, 0)],
+        [affine.lon(overlay.width, 0),              affine.lat(overlay.width, 0)],
+        [affine.lon(overlay.width, overlay.height), affine.lat(overlay.width, overlay.height)],
+        [affine.lon(0, overlay.height),             affine.lat(0, overlay.height)]
+    ];
+}
+
+
+// ============================================================
+// HISTORICAL OVERLAY CONTROLS
+//
+// Only one overlay is shown at a time. Checking a checkbox turns
+// that overlay on and any others off. The shared opacity slider
+// applies to whichever overlay is active.
+// ============================================================
+
+function setActiveOverlay(overlayId) {
+    HISTORICAL_OVERLAYS.forEach(function (overlay) {
+        setLayerVisibility(overlay.id, overlay.id === overlayId ? "visible" : "none");
+    });
+
+    activeOverlayId = overlayId || null;
+
+    historicalToggleContainer.querySelectorAll("input[data-overlay-id]").forEach(function (cb) {
+        cb.checked = (cb.dataset.overlayId === activeOverlayId);
+    });
+
+    sliderWrapper.style.opacity = activeOverlayId ? "1" : "0.5";
+    sliderWrapper.style.pointerEvents = activeOverlayId ? "auto" : "none";
+}
+
+function applyOverlayOpacity(sliderValue) {
+    overlayOpacity = parseFloat(sliderValue) / 100;
+    opacityLabel.textContent = sliderValue + "%";
+
+    HISTORICAL_OVERLAYS.forEach(function (overlay) {
+        if (map.getLayer(overlay.id)) {
+            map.setPaintProperty(overlay.id, "raster-opacity", overlayOpacity);
+        }
+    });
+}
+
+// Build the checkbox list from HISTORICAL_OVERLAYS.
+HISTORICAL_OVERLAYS.forEach(function (overlay) {
+    const wrapper = document.createElement("div");
+    wrapper.style.cssText = "display: flex; align-items: center; margin-bottom: 6px;";
+
+    const label = document.createElement("label");
+    label.style.cssText = "cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: normal; color: #333;";
+
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.dataset.overlayId = overlay.id;
+    cb.style.cssText = "cursor: pointer; margin: 0;";
+
+    cb.addEventListener("change", function (event) {
+        setActiveOverlay(event.target.checked ? overlay.id : null);
+    });
+
+    label.appendChild(cb);
+    label.appendChild(document.createTextNode(" " + overlay.label));
+    wrapper.appendChild(label);
+    historicalToggleContainer.appendChild(wrapper);
+});
+
+historicalSlider.addEventListener("input", function (event) {
+    applyOverlayOpacity(event.target.value);
+});
 
 
 // ============================================================
@@ -655,44 +832,6 @@ function findCemetery(cemeteryID) {
 }
 
 
-// ---- after the map is created and DOM refs are collected ----
-
-// 1. Data and helpers
-const HISTORICAL_OVERLAYS = [ ... ];
-let activeOverlayId = null;
-let overlayOpacity = 0.8;
-
-function fitAffine(points) { ... }
-
-function buildOverlayCorners(overlay) { ... }
-
-function setActiveOverlay(overlayId) { ... }
-
-function applyOverlayOpacity(sliderValue) { ... }
-
-// 2. Build the checkboxes from HISTORICAL_OVERLAYS
-const historicalToggleContainer = document.getElementById("historical-toggle-container");
-HISTORICAL_OVERLAYS.forEach(function (overlay) { ... });
-
-// 3. Wire the slider
-historicalSlider.addEventListener("input", function (event) {
-    applyOverlayOpacity(event.target.value);
-});
-
-// 4. Set initial opacity label
-applyOverlayOpacity(historicalSlider.value);
-
-// ... rest of the script ...
-
-// Inside map.on("load"), just add the sources and layers:
-HISTORICAL_OVERLAYS.forEach(function (overlay) {
-    map.addSource(...);
-    map.addLayer(...);
-});
-
-// Apply the initial opacity to whatever gets added to the map later.
-applyOverlayOpacity(historicalSlider.value);
-   
 // ============================================================
 // INFO PANEL / LIGHTBOX / LEGEND CONTROLS
 // ============================================================
@@ -2243,7 +2382,6 @@ function showLakeSpokes() {
 
 function updateLakeSiteLabels() {
 
-    // Guard first, before touching the DOM.
     if (!lakeSpokesVisible || !lakeSiteLabels) {
         return;
     }
@@ -2717,126 +2855,30 @@ map.on("load", function () {
         }
     });
 
-// Historical overlays. Add more entries to support more maps.
-const HISTORICAL_OVERLAYS = [
-    {
-        id: "franklin-1882-layer",
-        label: "1882 Franklin Co. Map",
-        url: "https://raw.githubusercontent.com/Luri-den/FCPC/main/cropped-franklin-1882.jpg",
-        width: 3497,
-        height: 2926,
-        controlPoints: [
-         // NW:
-           [475,  850, -85.298653, 39.525454],
+    // ---- Historical overlays (from HISTORICAL_OVERLAYS) ----
+    HISTORICAL_OVERLAYS.forEach(function (overlay) {
 
-           // NE:
-    [3105, 825, -84.810676, 39.521903],
+        const sourceId = overlay.id.replace("-layer", "");
 
-    // SE: 
-    [3080, 2310, -84.815210, 39.309328],
+        map.addSource(sourceId, {
+            type: "image",
+            url: overlay.url,
+            coordinates: buildOverlayCorners(overlay)
+        });
 
-    // SW: 
-    [465, 2610, -85.299317, 39.267088]
-        ]
-    }
-    // To add another map, append an object here with the same shape:
-    // {
-    //     id: "franklin-1840-layer",
-    //     label: "1840 Franklin Co. Map",
-    //     url: "...",
-    //     width: 3000,
-    //     height: 2400,
-    //     controlPoints: [[x,y,lon,lat], [x,y,lon,lat], [x,y,lon,lat], [x,y,lon,lat]]
-    // }
-];
-
-let activeOverlayId = null;   // which overlay is currently shown, if any
-let overlayOpacity = 0.8;     // shared opacity, applied to whichever is active
-// Fit an affine transform (lon = a*x + b*y + c; lat = d*x + e*y + f)
-// using least squares over the four control points.
-function fitAffine(points) {
-    // Build the normal equations for [x y 1] -> lon and -> lat.
-    // For 4 points with 3 unknowns, solve the 3x3 system directly.
-    let Sxx=0, Sxy=0, Sx=0, Syy=0, Sy=0, n=0;
-    let Sxl=0, Syl=0, Sl=0;   // for longitude
-    let Sxt=0, Syt=0, St=0;   // for latitude
-
-    for (const [x, y, lon, lat] of points) {
-        Sxx += x*x; Sxy += x*y; Sx += x;
-        Syy += y*y; Sy  += y;   n  += 1;
-        Sxl += x*lon; Syl += y*lon; Sl += lon;
-        Sxt += x*lat; Syt += y*lat; St += lat;
-    }
-
-    // Solve the 3x3 system for longitude coefficients [a, b, c]
-    function solve3x3(M, v) {
-        // M is 3x3, v is length 3. Gaussian elimination.
-        const A = [
-            [M[0][0], M[0][1], M[0][2], v[0]],
-            [M[1][0], M[1][1], M[1][2], v[1]],
-            [M[2][0], M[2][1], M[2][2], v[2]]
-        ];
-        for (let i = 0; i < 3; i++) {
-            let p = i;
-            for (let r = i+1; r < 3; r++) if (Math.abs(A[r][i]) > Math.abs(A[p][i])) p = r;
-            [A[i], A[p]] = [A[p], A[i]];
-            const piv = A[i][i];
-            if (Math.abs(piv) < 1e-12) return null;
-            for (let j = i; j < 4; j++) A[i][j] /= piv;
-            for (let r = 0; r < 3; r++) {
-                if (r === i) continue;
-                const f = A[r][i];
-                for (let j = i; j < 4; j++) A[r][j] -= f * A[i][j];
-            }
-        }
-        return [A[0][3], A[1][3], A[2][3]];
-    }
-
-    const M = [[Sxx, Sxy, Sx], [Sxy, Syy, Sy], [Sx, Sy, n]];
-    const lonCoef = solve3x3(M, [Sxl, Syl, Sl]);
-    const latCoef = solve3x3(M, [Sxt, Syt, St]);
-
-    if (!lonCoef || !latCoef) return null;
-
-    return {
-        lon: (x, y) => lonCoef[0]*x + lonCoef[1]*y + lonCoef[2],
-        lat: (x, y) => latCoef[0]*x + latCoef[1]*y + latCoef[2]
-    };
-}
-
-function buildOverlayCorners(overlay) {
-    const affine = fitAffine(overlay.controlPoints);
-    if (!affine) {
-        console.error("Overlay " + overlay.id + ": affine fit failed.");
-        return [[-85.30, 39.53], [-84.81, 39.51], [-84.82, 39.27], [-85.30, 39.27]];
-    }
-    return [
-        [affine.lon(0,            0),          affine.lat(0,            0)],
-        [affine.lon(overlay.width, 0),         affine.lat(overlay.width, 0)],
-        [affine.lon(overlay.width, overlay.height), affine.lat(overlay.width, overlay.height)],
-        [affine.lon(0,            overlay.height), affine.lat(0,            overlay.height)]
-    ];
-}
-   
-HISTORICAL_OVERLAYS.forEach(function (overlay) {
-    map.addSource(overlay.id.replace("-layer", ""), {
-        type: "image",
-        url: overlay.url,
-        coordinates: buildOverlayCorners(overlay)
+        map.addLayer({
+            id: overlay.id,
+            type: "raster",
+            source: sourceId,
+            layout: { visibility: "none" },
+            paint: { "raster-opacity": overlayOpacity }
+        }, "franklin-county-outline");
     });
 
-    map.addLayer({
-        id: overlay.id,
-        type: "raster",
-        source: overlay.id.replace("-layer", ""),
-        layout: { visibility: "none" },
-        paint: { "raster-opacity": overlayOpacity }
-    }, "franklin-county-outline");
-});
+    // Apply the slider's initial value to the freshly added layers.
+    applyOverlayOpacity(historicalSlider.value);
 
-applyOverlayOpacity(historicalSlider.value);
-
-    // ---- cemetery boundary (hidden until a cemetery is selected) ----
+    // ---- Cemetery boundary (hidden until a cemetery is selected) ----
     map.addSource("cemetery-boundary", { type: "geojson", data: EMPTY_COLLECTION });
 
     map.addLayer({
@@ -2857,13 +2899,13 @@ applyOverlayOpacity(historicalSlider.value);
 
     loadBoundaries();
 
-    // ---- shared physical marker layers ----
+    // ---- Shared physical marker layers ----
     map.addSource("shared-markers-data", { type: "geojson", data: EMPTY_COLLECTION });
 
-    // ---- individual grave layer ----
+    // ---- Individual grave layer ----
     map.addSource("graves-data", { type: "geojson", data: EMPTY_COLLECTION });
 
-    // ---- main cemetery CSV ----
+    // ---- Main cemetery CSV ----
     Papa.parse(CSV_PATH, {
 
         download: true,
