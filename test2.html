@@ -531,7 +531,6 @@ const closeCemeteryLightbox = document.getElementById("close-cemetery-lightbox")
 const legendToggle = document.getElementById("legend-toggle");
 const legendContent = document.getElementById("legend-content");
 const legendArrow = document.getElementById("legend-arrow");
-const historicalCheckbox = document.getElementById("historical-layer-toggle");
 const historicalSlider = document.getElementById("historical-opacity-slider");
 const sliderWrapper = document.getElementById("opacity-slider-wrapper");
 const opacityLabel = document.getElementById("opacity-value-label");
@@ -656,28 +655,39 @@ function findCemetery(cemeteryID) {
 }
 
 
+// ---- after the map is created and DOM refs are collected ----
+
+// 1. Data and helpers
+const HISTORICAL_OVERLAYS = [ ... ];
+let activeOverlayId = null;
+let overlayOpacity = 0.8;
+
+function fitAffine(points) { ... }
+
+function buildOverlayCorners(overlay) { ... }
+
+function setActiveOverlay(overlayId) { ... }
+
+function applyOverlayOpacity(sliderValue) { ... }
+
+// 2. Build the checkboxes from HISTORICAL_OVERLAYS
 const historicalToggleContainer = document.getElementById("historical-toggle-container");
+HISTORICAL_OVERLAYS.forEach(function (overlay) { ... });
 
+// 3. Wire the slider
+historicalSlider.addEventListener("input", function (event) {
+    applyOverlayOpacity(event.target.value);
+});
+
+// 4. Set initial opacity label
+applyOverlayOpacity(historicalSlider.value);
+
+// ... rest of the script ...
+
+// Inside map.on("load"), just add the sources and layers:
 HISTORICAL_OVERLAYS.forEach(function (overlay) {
-    const wrapper = document.createElement("div");
-    wrapper.style.cssText = "display: flex; align-items: center; margin-bottom: 6px;";
-
-    const label = document.createElement("label");
-    label.style.cssText = "cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: normal; color: #333;";
-
-    const cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.dataset.overlayId = overlay.id;
-    cb.style.cssText = "cursor: pointer; margin: 0;";
-
-    cb.addEventListener("change", function (event) {
-        setActiveOverlay(event.target.checked ? overlay.id : null);
-    });
-
-    label.appendChild(cb);
-    label.appendChild(document.createTextNode(" " + overlay.label));
-    wrapper.appendChild(label);
-    historicalToggleContainer.appendChild(wrapper);
+    map.addSource(...);
+    map.addLayer(...);
 });
 
 // Apply the initial opacity to whatever gets added to the map later.
@@ -2726,7 +2736,7 @@ const HISTORICAL_OVERLAYS = [
     [3080, 2310, -84.815210, 39.309328],
 
     // SW: 
-    [465, 2610, -85.299317, 39.267088
+    [465, 2610, -85.299317, 39.267088]
         ]
     }
     // To add another map, append an object here with the same shape:
@@ -2794,11 +2804,6 @@ function fitAffine(points) {
     };
 }
 
-const affine = fitAffine(CONTROL_POINTS);
-if (!affine) {
-    console.error("1882 overlay: affine fit failed; check control points.");
-}
-
 function buildOverlayCorners(overlay) {
     const affine = fitAffine(overlay.controlPoints);
     if (!affine) {
@@ -2813,14 +2818,6 @@ function buildOverlayCorners(overlay) {
     ];
 }
    
-// MapLibre needs the geographic position of the image's LITERAL corners.
-const imgCorners = affine ? [
-    [affine.lon(0,            0),            affine.lat(0,            0)],            // top-left of file
-    [affine.lon(IMG_WIDTH,    0),            affine.lat(IMG_WIDTH,    0)],            // top-right of file
-    [affine.lon(IMG_WIDTH,    IMG_HEIGHT),   affine.lat(IMG_WIDTH,    IMG_HEIGHT)],   // bottom-right of file
-    [affine.lon(0,            IMG_HEIGHT),   affine.lat(0,            IMG_HEIGHT)]    // bottom-left of file
-] : [[-85.30, 39.53], [-84.81, 39.51], [-84.82, 39.27], [-85.30, 39.27]]; // fallback
-
 HISTORICAL_OVERLAYS.forEach(function (overlay) {
     map.addSource(overlay.id.replace("-layer", ""), {
         type: "image",
@@ -2837,7 +2834,7 @@ HISTORICAL_OVERLAYS.forEach(function (overlay) {
     }, "franklin-county-outline");
 });
 
-updateHistoricalOpacity(historicalSlider.value);
+applyOverlayOpacity(historicalSlider.value);
 
     // ---- cemetery boundary (hidden until a cemetery is selected) ----
     map.addSource("cemetery-boundary", { type: "geojson", data: EMPTY_COLLECTION });
