@@ -1068,7 +1068,7 @@ function updateGraveLegend(cemeteryID) {
 // ============================================================
 function makeGraveSymbol(opts) {
 
-    const size = 48;
+    const size = 56;
 
     const canvas = document.createElement("canvas");
     canvas.width = size;
@@ -1077,10 +1077,10 @@ function makeGraveSymbol(opts) {
     const ctx = canvas.getContext("2d");
     const half = size / 2;
 
-    const FILL   = "#227e75";
-    const STROKE = "#463a2d";
+    const FILL   = "#3f3528";
+    const STROKE = "#FFFFFF;
 
-    const ringGap     = 5;
+    const ringGap     = 2;
     const ringWidth   = 3;
     const ringDashOn  = 3;
     const ringDashOff = 3;
