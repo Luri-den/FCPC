@@ -144,6 +144,104 @@ h2 {
 
 }
 
+                    /*// ------------------------------------------------
+                // WAR (only shown when the person is a veteran)
+                // ------------------------------------------------*/
+
+                let warText =
+                    "";
+
+
+                if (
+
+                    veteranValue
+                    ===
+                    "1"
+
+                    &&
+
+                    String(
+                        row.WAR
+                    ).trim()
+                    !==
+                    ""
+
+                ) {
+
+                    warText = `
+
+                        <div class="veteran-details">
+
+                            ${row.WAR}
+
+                        </div>
+
+                    `;
+
+                }
+
+
+                /*/ ------------------------------------------------
+                // PIONEER STATUS
+                // ------------------------------------------------*/
+
+                const pioneerValue =
+                    String(
+                        row.PIONEER
+                    ).trim();
+
+
+                let pioneerText =
+                    "N/A";
+
+
+                if (
+                    pioneerValue
+                    ===
+                    "1"
+                ) {
+
+                    pioneerText =
+                        "Yes";
+
+                }
+
+                else if (
+                    pioneerValue
+                    ===
+                    "0"
+                ) {
+
+                    pioneerText =
+                        "No";
+
+                }
+
+
+                /*/ ------------------------------------------------
+                // PIONEER ICON
+                // ------------------------------------------------*/
+
+                const pioneerIcon =
+
+                    pioneerValue
+                    ===
+                    "1"
+
+                        ? `
+
+                            <img
+                                src="pioneericon.png"
+                                alt="Pioneer"
+                                class="pioneer-icon"
+                                title="Pioneer"
+                            >
+
+                          `
+
+                        : "";
+
+
 
 /* ============================================================
    VETERAN ICON
@@ -1121,29 +1219,34 @@ function displayInterments(
                 }
 
 
-                // ------------------------------------------------
-                // VETERAN ICON
-                // ------------------------------------------------
+                .veteran-icon {
 
-                const veteranIcon =
+    width: 24px;
 
-                    veteranValue
-                    ===
-                    "1"
+    height: 24px;
 
-                        ? `
+    object-fit: contain;
 
-                            <img
-                                src="veticon.svg"
-                                alt="Veteran"
-                                class="veteran-icon"
-                                title="Veteran"
-                            >
+    margin-left: 12px;
 
-                          `
+}
 
-                        : "";
 
+/* ============================================================
+   PIONEER ICON
+   ============================================================ */
+
+.pioneer-icon {
+
+    width: 24px;
+
+    height: 24px;
+
+    object-fit: contain;
+
+    margin-left: 12px;
+
+}
 
                 // ------------------------------------------------
                 // RETURN INTERMENT
@@ -1161,6 +1264,8 @@ function displayInterments(
                             </span>
 
                             ${veteranIcon}
+
+                            ${pioneerIcon}
 
                         </div>
 
@@ -1236,7 +1341,7 @@ function displayInterments(
                         </div>
 
 
-                        <div class="field">
+                                                <div class="field">
 
                             <span class="label">
                                 Veteran:
@@ -1246,8 +1351,23 @@ function displayInterments(
 
                                 ${veteranText}
 
+                                ${warText}
+
                                 ${veteranDetails}
 
+                            </span>
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <span class="label">
+                                Pioneer:
+                            </span>
+
+                            <span>
+                                ${pioneerText}
                             </span>
 
                         </div>
