@@ -2899,43 +2899,47 @@ map.on("load", function () {
 
     function makeMausIcon(size, withDot) {
 
-        const canvas = document.createElement("canvas");
+    const canvas = document.createElement("canvas");
 
-        canvas.width = size;
-        canvas.height = size;
+    canvas.width = size;
+    canvas.height = size;
 
-        const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d");
 
-        const half = size / 2;
+    const half = size / 2;
 
-        // Fill + stroke color match the grave/shared marker palette.
-        ctx.fillStyle = "#463a2d";
-        ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = Math.max(2, size * 0.12);
+    ctx.fillStyle = "#463a2d";
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = size * 0.125;   // scales with canvas; 4 at size 32 → 2 CSS px
 
-        // Square centered in the canvas.
-        const pad = ctx.lineWidth / 2;
-        ctx.fillRect(pad, pad, size - pad * 2, size - pad * 2);
-        ctx.strokeRect(pad, pad, size - pad * 2, size - pad * 2);
+    // Square fills the whole canvas; stroke drawn inward so the
+    // outer edge lands exactly at the canvas bounds.
+    const inset = ctx.lineWidth / 2;
+    ctx.fillRect(0, 0, size, size);
+    ctx.strokeRect(inset, inset, size - ctx.lineWidth, size - ctx.lineWidth);
 
-        if (withDot) {
-            ctx.beginPath();
-            ctx.arc(half, half, size * 0.2, 0, Math.PI * 2);
-            ctx.fillStyle = "#ffffff";
-            ctx.fill();
-        }
+    if (withDot) {
+        ctx.beginPath();
+        ctx.arc(half, half, size * 0.25, 0, Math.PI * 2);   // 8px on screen at size 32
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+    }
 
+    const imageData = ctx.getImageData(0, 0, size, size);
+
+    return { width: size, height: size, data: imageData.data };
+}
         const imageData = ctx.getImageData(0, 0, size, size);
 
         return { width: size, height: size, data: imageData.data };
     }
 
         if (!map.hasImage("maus-square")) {
-        map.addImage("maus-square", makeMausIcon(26, false), { pixelRatio: 2 });
+        map.addImage("maus-square", makeMausIcon(20, false), { pixelRatio: 2 });
     }
 
     if (!map.hasImage("maus-square-dot")) {
-        map.addImage("maus-square-dot", makeMausIcon(34, true), { pixelRatio: 2 });
+        map.addImage("maus-square-dot", makeMausIcon(32, true), { pixelRatio: 2 });
     }
    
     map.addControl(
