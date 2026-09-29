@@ -1202,9 +1202,11 @@ function updateCemeteryGraves() {
             sharedSource.setData(EMPTY_COLLECTION);
         }
 
-        setLayerVisibility("graves-layer", "none");
+                setLayerVisibility("graves-layer", "none");
         setLayerVisibility("shared-markers-outer-layer", "none");
         setLayerVisibility("shared-markers-inner-layer", "none");
+        setLayerVisibility("graves-maus-layer", "none");
+        setLayerVisibility("shared-markers-maus-layer", "none");
 
         return;
     }
@@ -1229,7 +1231,7 @@ function updateCemeteryGraves() {
 
         graveFeatures.push({
             type: "Feature",
-            properties: {
+                        properties: {
                 Cemetery_ID: cemeteryID,
                 Grave_Index: index + 1,
                 Person_Name: person.name,
@@ -1241,14 +1243,16 @@ function updateCemeteryGraves() {
                 Stone_Info: person.stoneInfo || "",
                 Vet_Details: person.vetDetails || "",
                 Marker_ID: person.markerID || "",
+                Mausoleum: person.mausoleum === true,
                 Person_Data: JSON.stringify([person])
             },
             geometry: { type: "Point", coordinates: person.coordinates }
         });
     });
 
-    gravesSource.setData({ type: "FeatureCollection", features: graveFeatures });
+        gravesSource.setData({ type: "FeatureCollection", features: graveFeatures });
     setLayerVisibility("graves-layer", "visible");
+    setLayerVisibility("graves-maus-layer", "visible");
 
     if (sharedSource) {
 
@@ -1270,20 +1274,23 @@ function updateCemeteryGraves() {
                 return;
             }
 
-            sharedFeatures.push({
+                       sharedFeatures.push({
                 type: "Feature",
                 properties: {
                     Cemetery_ID: cemeteryID,
                     Marker_ID: markerID,
-                    Person_Count: group.length
+                    Person_Count: group.length,
+                    Mausoleum: group.some(function (member) {
+                        return member.mausoleum === true;
+                    })
                 },
                 geometry: { type: "Point", coordinates: representative.coordinates }
             });
-        });
 
-        sharedSource.setData({ type: "FeatureCollection", features: sharedFeatures });
+                sharedSource.setData({ type: "FeatureCollection", features: sharedFeatures });
         setLayerVisibility("shared-markers-outer-layer", "visible");
         setLayerVisibility("shared-markers-inner-layer", "visible");
+        setLayerVisibility("shared-markers-maus-layer", "visible");
     }
 }
 
@@ -1518,10 +1525,13 @@ const VETS_LABELS = { 1: "Yes", 2: "No" };
 
 function handleCemeteryClick(event) {
 
-    if (map.getLayer("shared-markers-outer-layer")) {
+        if (map.getLayer("shared-markers-outer-layer")) {
+
+        const sharedHitLayers = ["shared-markers-outer-layer", "shared-markers-maus-layer"]
+            .filter(function (id) { return map.getLayer(id); });
 
         const sharedHits = map.queryRenderedFeatures(event.point, {
-            layers: ["shared-markers-outer-layer"]
+            layers: sharedHitLayers
         });
 
         if (sharedHits && sharedHits.length) {
@@ -2077,6 +2087,7 @@ function loadInterments(path) {
                     vetDetails: cleanString(row["VET DETAILS"]),
                     markerID: markerID,
                     originalCemeteryID: cleanString(row["ORIGINAL CEMETERY ID"]),
+                    mausoleum: cleanString(row.MAUS) === "1",
                     coordinates: hasCoordinates ? [lon, lat] : null
                 };
 
@@ -2852,6 +2863,49 @@ map.on("load", function () {
         setBasemap("street");
     }
 
+    // ---- Canvas-generated MAUS icons (square / square-with-dot) ----
+
+    function makeMausIcon(size, withDot) {
+
+        const canvas = document.createElement("canvas");
+
+        canvas.width = size;
+        canvas.height = size;
+
+        const ctx = canvas.getContext("2d");
+
+        const half = size / 2;
+
+        // Fill + stroke color match the grave/shared marker palette.
+        ctx.fillStyle = "#463a2d";
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = Math.max(2, size * 0.12);
+
+        // Square centered in the canvas.
+        const pad = ctx.lineWidth / 2;
+        ctx.fillRect(pad, pad, size - pad * 2, size - pad * 2);
+        ctx.strokeRect(pad, pad, size - pad * 2, size - pad * 2);
+
+        if (withDot) {
+            ctx.beginPath();
+            ctx.arc(half, half, size * 0.16, 0, Math.PI * 2);
+            ctx.fillStyle = "#ffffff";
+            ctx.fill();
+        }
+
+        const imageData = ctx.getImageData(0, 0, size, size);
+
+        return { width: size, height: size, data: imageData.data };
+    }
+
+    if (!map.hasImage("maus-square")) {
+        map.addImage("maus-square", makeMausIcon(16, false), { pixelRatio: 2 });
+    }
+
+    if (!map.hasImage("maus-square-dot")) {
+        map.addImage("maus-square-dot", makeMausIcon(18, true), { pixelRatio: 2 });
+    }
+   
     map.addControl(
         new maplibregl.NavigationControl({ showCompass: false }),
         "top-right"
@@ -3039,10 +3093,11 @@ map.on("load", function () {
                 }
             });
 
-            map.addLayer({
+                        map.addLayer({
                 id: "graves-layer",
                 type: "circle",
                 source: "graves-data",
+                filter: ["!=", ["get", "Mausoleum"], true],
                 layout: { visibility: "none" },
                 paint: {
                     "circle-radius": 5,
@@ -3052,11 +3107,12 @@ map.on("load", function () {
                     "circle-stroke-color": "#ffffff"
                 }
             });
-
-            map.addLayer({
+           
+                       map.addLayer({
                 id: "shared-markers-outer-layer",
                 type: "circle",
                 source: "shared-markers-data",
+                filter: ["!=", ["get", "Mausoleum"], true],
                 layout: { visibility: "none" },
                 paint: {
                     "circle-radius": 8,
@@ -3072,6 +3128,7 @@ map.on("load", function () {
                 id: "shared-markers-inner-layer",
                 type: "circle",
                 source: "shared-markers-data",
+                filter: ["!=", ["get", "Mausoleum"], true],
                 layout: { visibility: "none" },
                 paint: {
                     "circle-radius": 4,
@@ -3082,10 +3139,37 @@ map.on("load", function () {
                 }
             });
 
+                       map.addLayer({
+                id: "graves-maus-layer",
+                type: "symbol",
+                source: "graves-data",
+                filter: ["==", ["get", "Mausoleum"], true],
+                layout: {
+                    visibility: "none",
+                    "icon-image": "maus-square",
+                    "icon-allow-overlap": true,
+                    "icon-ignore-placement": true
+                }
+            });
+
+            map.addLayer({
+                id: "shared-markers-maus-layer",
+                type: "symbol",
+                source: "shared-markers-data",
+                filter: ["==", ["get", "Mausoleum"], true],
+                layout: {
+                    visibility: "none",
+                    "icon-image": "maus-square-dot",
+                    "icon-allow-overlap": true,
+                    "icon-ignore-placement": true
+                }
+            });
+
             // ---------------- CLICK HANDLERS ----------------
             map.on("click", "cemeteries-layer", handleCemeteryClick);
             map.on("click", "graves-layer", handleGraveClick);
             map.on("click", "shared-markers-outer-layer", handleSharedMarkerClick);
+            map.on("click", "shared-markers-maus-layer", handleSharedMarkerClick);
 
             // ---------------- HOVER: cemeteries ----------------
             function cemeteryHover(event) {
@@ -3123,7 +3207,7 @@ map.on("load", function () {
                 }
             }
 
-            map.on("mouseenter", "graves-layer", function (event) {
+                        map.on("mouseenter", "graves-layer", function (event) {
                 map.getCanvas().style.cursor = "pointer";
                 graveHover(event);
             });
@@ -3131,6 +3215,18 @@ map.on("load", function () {
             map.on("mousemove", "graves-layer", graveHover);
 
             map.on("mouseleave", "graves-layer", function () {
+                map.getCanvas().style.cursor = "";
+                removeHoverLabel();
+            });
+
+            map.on("mouseenter", "graves-maus-layer", function (event) {
+                map.getCanvas().style.cursor = "pointer";
+                graveHover(event);
+            });
+
+            map.on("mousemove", "graves-maus-layer", graveHover);
+
+            map.on("mouseleave", "graves-maus-layer", function () {
                 map.getCanvas().style.cursor = "";
                 removeHoverLabel();
             });
@@ -3147,7 +3243,7 @@ map.on("load", function () {
                 }
             }
 
-            map.on("mouseenter", "shared-markers-outer-layer", function (event) {
+                        map.on("mouseenter", "shared-markers-outer-layer", function (event) {
                 map.getCanvas().style.cursor = "pointer";
                 sharedHover(event);
             });
@@ -3155,6 +3251,18 @@ map.on("load", function () {
             map.on("mousemove", "shared-markers-outer-layer", sharedHover);
 
             map.on("mouseleave", "shared-markers-outer-layer", function () {
+                map.getCanvas().style.cursor = "";
+                removeHoverLabel();
+            });
+
+            map.on("mouseenter", "shared-markers-maus-layer", function (event) {
+                map.getCanvas().style.cursor = "pointer";
+                sharedHover(event);
+            });
+
+            map.on("mousemove", "shared-markers-maus-layer", sharedHover);
+
+            map.on("mouseleave", "shared-markers-maus-layer", function () {
                 map.getCanvas().style.cursor = "";
                 removeHoverLabel();
             });
@@ -3208,18 +3316,19 @@ map.on("click", function (event) {
         return;
     }
 
-    const layers = [
+        const layers = [
         "cemeteries-layer",
         "cemeteries-highlight-layer",
         "graves-layer",
+        "graves-maus-layer",
         "shared-markers-outer-layer",
         "shared-markers-inner-layer",
+        "shared-markers-maus-layer",
         "lake-cemeteries-layer",
         "lake-sites-layer"
     ].filter(function (id) {
         return map.getLayer(id);
     });
-
     if (layers.length) {
         const hits = map.queryRenderedFeatures(event.point, { layers: layers });
 
