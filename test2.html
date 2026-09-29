@@ -2817,26 +2817,6 @@ map.addLayer({
 
 updateHistoricalOpacity(historicalSlider.value);
 
-map.addLayer({
-    id: "franklin-1882-layer",
-    type: "raster",
-    source: "franklin-1882",
-    layout: { visibility: "none" },
-    paint: { "raster-opacity": 0.8 }
-}, "franklin-county-outline");
-
-updateHistoricalOpacity(historicalSlider.value);
-map.addLayer({
-    id: "franklin-1882-layer",
-    type: "raster",
-    source: "franklin-1882",
-    layout: { visibility: "none" },
-    paint: { "raster-opacity": 0.8 }
-}, "franklin-county-outline");
-
-    // Apply the slider's initial value now that the layer exists.
-    updateHistoricalOpacity(historicalSlider.value);
-
     // ---- cemetery boundary (hidden until a cemetery is selected) ----
     map.addSource("cemetery-boundary", { type: "geojson", data: EMPTY_COLLECTION });
 
