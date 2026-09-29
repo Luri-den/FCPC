@@ -167,10 +167,10 @@
         white-space: nowrap;
     }
 
-    .grave-legend-item svg {
+    .grave-legend-item img {
         display: block;
-        width: 18px;
-        height: 18px;
+        width: 28px;
+        height: 28px;
         flex-shrink: 0;
     }
 
@@ -255,7 +255,6 @@
         display: inline-block; width: 14px; height: 14px; min-width: 14px;
         border-radius: 50%; border: 1px solid rgba(0, 0, 0, 0.25);
     }
-    .legend-marker { display: inline-block; width: 16px; height: 16px; min-width: 16px; }
 
     /* ---------- OFF-SCREEN SEARCH DIRECTIONS ---------- */
     #search-directions { position: absolute; inset: 0; z-index: 3; pointer-events: none; overflow: hidden; }
@@ -441,32 +440,7 @@
             <div class="legend-item"><span class="legend-circle" style="background-color: #777777;"></span><span>Unknown</span></div>
 
             <div class="legend-title" style="margin-top: 12px;">GRAVE MARKERS</div>
-            <div class="legend-item">
-                <svg class="legend-marker" viewBox="0 0 16 16" aria-hidden="true">
-                    <circle cx="8" cy="8" r="5.5" fill="#463a2d"/>
-                </svg>
-                <span>Single</span>
-            </div>
-            <div class="legend-item">
-                <svg class="legend-marker" viewBox="0 0 16 16" aria-hidden="true">
-                    <circle cx="8" cy="8" r="6" fill="none" stroke="#463a2d" stroke-width="2"/>
-                    <circle cx="8" cy="8" r="3" fill="#463a2d"/>
-                </svg>
-                <span>Multiple (Single Marker)</span>
-            </div>
-            <div class="legend-item">
-                <svg class="legend-marker" viewBox="0 0 16 16" aria-hidden="true">
-                    <rect x="2" y="2" width="12" height="12" fill="#463a2d"/>
-                </svg>
-                <span>Structure (Single Interment)</span>
-            </div>
-            <div class="legend-item">
-                <svg class="legend-marker" viewBox="0 0 16 16" aria-hidden="true">
-                    <rect x="2" y="2" width="12" height="12" fill="#463a2d"/>
-                    <circle cx="8" cy="8" r="2.6" fill="#ffffff"/>
-                </svg>
-                <span>Structure (Multiple Interments)</span>
-            </div>
+            <div id="marker-legend"></div>
         </div>
     </div>
 
@@ -914,66 +888,6 @@ function findCemetery(cemeteryID) {
     });
 }
 
-   // Build a small inline SVG matching one grave-symbol variant.
-// The geometry mirrors makeGraveSymbol, scaled down to 18x18.
-function legendSVG(opts) {
-    const size = 18;
-    const half = size / 2;
-
-    const FILL = "#463a2d";
-    const STROKE = "#ffffff";
-
-    // Scale factors chosen to match the canvas symbols visually.
-    const ringGap = 1.5;
-    const ringWidth = 1;
-    const borderWidth = 1.4;
-    const shapeRadius = half - ringGap - borderWidth / 2;
-
-    let s = '<svg viewBox="0 0 ' + size + ' ' + size +
-            '" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">';
-
-    if (opts.veteran) {
-        s += '<circle cx="' + half + '" cy="' + half +
-             '" r="' + (half - ringWidth / 2 - 0.2) +
-             '" fill="none" stroke="' + FILL +
-             '" stroke-width="' + ringWidth +
-             '" stroke-dasharray="1 1"/>';
-    }
-
-    if (opts.shape === "circle") {
-        s += '<circle cx="' + half + '" cy="' + half +
-             '" r="' + shapeRadius +
-             '" fill="' + FILL +
-             '" stroke="' + STROKE +
-             '" stroke-width="' + borderWidth + '"/>';
-    }
-    else {
-        const side = shapeRadius * 2 * 0.85;
-        const inset = half - side / 2;
-        s += '<rect x="' + inset + '" y="' + inset +
-             '" width="' + side + '" height="' + side +
-             '" fill="' + FILL +
-             '" stroke="' + STROKE +
-             '" stroke-width="' + borderWidth + '"/>';
-    }
-
-    if (opts.pioneer) {
-        s += '<line x1="' + ringGap + '" y1="' + half +
-             '" x2="' + (size - ringGap) + '" y2="' + half +
-             '" stroke="' + STROKE +
-             '" stroke-width="' + borderWidth + '"/>';
-    }
-
-    if (opts.dot) {
-        s += '<circle cx="' + half + '" cy="' + half +
-             '" r="' + (shapeRadius * 0.45) +
-             '" fill="' + STROKE + '"/>';
-    }
-
-    s += '</svg>';
-    return s;
-}
-
 // Compute which legend rows apply to this cemetery, and render them.
 function updateGraveLegend(cemeteryID) {
 
@@ -1055,220 +969,112 @@ function updateGraveLegend(cemeteryID) {
 // ============================================================
 // CANVAS-GENERATED GRAVE SYMBOLS
 //
-// One function generates every variant from four flags:
-//   shape:   "circle" | "square"
-//   dot:     boolean — center dot
-//   veteran: boolean — dotted outer ring
-//   pioneer: boolean — horizontal line through center
+// One drawing routine makes every variant from four flags:
+//   shape:   "circle" | "square"   (grave | structure)
+//   dot:     hole in the middle    (several people at one marker)
+//   veteran: thin solid outer ring
+//   pioneer: small triangle above the marker
 //
-// Drawn at y x y registered with pixelRatio 2 (32 CSS px on screen).
+// The icon canvas has equal padding on every side, so the marker
+// stays centered on its GPS point. The legends reuse this same
+// routine, so they always match what is on the map.
 // ============================================================
-function makeGraveSymbol(opts) {
+const GRAVE_INK = "#3f3528";
+const GRAVE_ICON_SIZE = 34;   // icon canvas, CSS px
+const GRAVE_SCALE = 1;        // raise (for example 1.4) to make every map marker bigger
 
-    const size = 56;
+function drawGraveSymbol(ctx, cx, cy, opts) {
 
-    const canvas = document.createElement("canvas");
-    canvas.width = size;
-    canvas.height = size;
+    const square = opts.shape === "square";
+    const half = square ? 5.5 : 6;
+    const ring = half + 2.75;
 
-    const ctx = canvas.getContext("2d");
-    const half = size / 2;
-
-    const FILL   = "#3f3528";
-    const STROKE = "#ffffff";
-
-    const ringGap     = 2;
-    const ringWidth   = 3;
-    const ringDashOn  = 3;
-    const ringDashOff = 3;
-
-    /*
-     * ============================================================
-     * VETERAN INDICATOR
-     *
-     * Circle marker → dotted circle
-     * Square marker → dotted square
-     * ============================================================
-     */
-
-    if (opts.veteran) {
-
-        const ringRadius = half - ringWidth / 2 - 1;
-
-        ctx.save();
-
-        ctx.strokeStyle = FILL;
-        ctx.lineWidth = ringWidth;
-        ctx.setLineDash([ringDashOn, ringDashOff]);
-
+    function outline(r) {
         ctx.beginPath();
-
-        if (opts.shape === "circle") {
-
-            ctx.arc(
-                half,
-                half,
-                ringRadius,
-                0,
-                Math.PI * 2
-            );
-
-        } else {
-
-            const ringSide = ringRadius * 2;
-            const ringInset = half - ringSide / 2;
-
-            ctx.rect(
-                ringInset,
-                ringInset,
-                ringSide,
-                ringSide
-            );
-        }
-
-        ctx.stroke();
-
-        ctx.restore();
+        if (square) { ctx.rect(cx - r, cy - r, r * 2, r * 2); }
+        else { ctx.arc(cx, cy, r, 0, Math.PI * 2); }
     }
 
-
-    /*
-     * ============================================================
-     * BASE MARKER
-     * ============================================================
-     */
-
-    const borderWidth = 4;
-
-    const shapeRadius =
-        half - ringGap - borderWidth - 1;
-
-    ctx.fillStyle = FILL;
-    ctx.strokeStyle = STROKE;
-    ctx.lineWidth = borderWidth;
-
+    ctx.lineJoin = "miter";
     ctx.setLineDash([]);
 
-
-    if (opts.shape === "circle") {
-
-        ctx.beginPath();
-
-        ctx.arc(
-            half,
-            half,
-            shapeRadius,
-            0,
-            Math.PI * 2
-        );
-
-        ctx.fill();
-        ctx.stroke();
-
-    } else {
-
-        const side = shapeRadius * 2 * 0.85;
-        const inset = half - side / 2;
-
-        ctx.fillRect(
-            inset,
-            inset,
-            side,
-            side
-        );
-
-        ctx.strokeRect(
-            inset,
-            inset,
-            side,
-            side
-        );
+    if (opts.veteran) {
+        outline(ring);
+        ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 3.5; ctx.stroke();
+        ctx.strokeStyle = GRAVE_INK; ctx.lineWidth = 1.5; ctx.stroke();
     }
 
-
-    /*
-     * ============================================================
-     * PIONEER INDICATOR
-     *
-     * Horizontal line across the marker
-     * ============================================================
-     */
-
-    if (opts.pioneer) {
-
-        const lineY = half;
-
-        const lineX0 = ringGap;
-        const lineX1 = size - ringGap;
-
-        ctx.save();
-
-        ctx.strokeStyle = STROKE;
-        ctx.lineWidth = borderWidth;
-
-        ctx.beginPath();
-
-        ctx.moveTo(
-            lineX0,
-            lineY
-        );
-
-        ctx.lineTo(
-            lineX1,
-            lineY
-        );
-
-        ctx.stroke();
-
-        ctx.restore();
-    }
-
-
-    /*
-     * ============================================================
-     * SHARED / MULTIPLE INTERMENT INDICATOR
-     *
-     * Center dot
-     * ============================================================
-     */
+    outline(half);
+    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = GRAVE_INK; ctx.fill();
 
     if (opts.dot) {
-
-        ctx.beginPath();
-
-        ctx.arc(
-            half,
-            half,
-            shapeRadius * 0.45,
-            0,
-            Math.PI * 2
-        );
-
-        ctx.fillStyle = STROKE;
-
-        ctx.fill();
+        outline(2.4);
+        ctx.fillStyle = "#ffffff"; ctx.fill();
     }
 
+    if (opts.pioneer) {
+        const top = opts.veteran ? ring + 1.75 : half + 1;
+        const baseY = cy - top - 5.5;
+        const tipY = cy - top - 0.5;
 
-    /*
-     * ============================================================
-     * RETURN IMAGE DATA TO MAPLIBRE
-     * ============================================================
-     */
+        ctx.beginPath();
+        ctx.moveTo(cx - 3.5, baseY);
+        ctx.lineTo(cx + 3.5, baseY);
+        ctx.lineTo(cx, tipY);
+        ctx.closePath();
+        ctx.lineJoin = "round";
+        ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = GRAVE_INK; ctx.fill();
+    }
+}
 
-    const imageData =
-        ctx.getImageData(
-            0,
-            0,
-            size,
-            size
-        );
+function makeGraveCanvas(opts, pixelScale) {
+    const px = Math.round(GRAVE_ICON_SIZE * pixelScale);
+    const canvas = document.createElement("canvas");
+    canvas.width = px;
+    canvas.height = px;
+    const ctx = canvas.getContext("2d");
+    ctx.scale(pixelScale, pixelScale);
+    drawGraveSymbol(ctx, GRAVE_ICON_SIZE / 2, GRAVE_ICON_SIZE / 2, opts);
+    return canvas;
+}
 
-    return {
-        width: size,
-        height: size,
-        data: imageData.data
-    };
+function makeGraveSymbol(opts) {
+    const canvas = makeGraveCanvas(opts, 2 * GRAVE_SCALE);
+    const imageData = canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height);
+    return { width: canvas.width, height: canvas.height, data: imageData.data };
+}
+
+// Legend icon: same drawing code, returned as an <img> tag.
+function legendSVG(opts, size) {
+    const px = size || 28;
+    const canvas = makeGraveCanvas(opts, 2);
+    return '<img src="' + canvas.toDataURL() + '" width="' + px + '" height="' + px + '" alt="">';
+}
+
+// Top-left "Layers & Legend" panel: grave marker key.
+function buildMarkerLegend() {
+
+    const box = document.getElementById("marker-legend");
+
+    if (!box) {
+        return;
+    }
+
+    [
+        [{ shape: "circle" }, "Single"],
+        [{ shape: "circle", dot: true }, "Multiple (single marker)"],
+        [{ shape: "square" }, "Structure (single interment)"],
+        [{ shape: "square", dot: true }, "Structure (multiple interments)"],
+        [{ shape: "circle", veteran: true }, "Veteran"],
+        [{ shape: "circle", pioneer: true }, "Pioneer"]
+    ].forEach(function (item) {
+        const row = document.createElement("div");
+        row.className = "legend-item";
+        row.innerHTML = legendSVG(item[0], 24) + "<span>" + item[1] + "</span>";
+        box.appendChild(row);
+    });
 }
 
 function registerGraveSymbols() {
@@ -3339,6 +3145,7 @@ map.on("load", function () {
     }
 
     registerGraveSymbols();
+    buildMarkerLegend();
 
     map.addControl(
         new maplibregl.NavigationControl({ showCompass: false }),
