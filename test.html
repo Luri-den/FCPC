@@ -196,6 +196,7 @@
         display: inline-block; width: 14px; height: 14px; min-width: 14px;
         border-radius: 50%; border: 1px solid rgba(0, 0, 0, 0.25);
     }
+       .legend-marker { display: inline-block; width: 16px; height: 16px; min-width: 16px; }
 
     /* ---------- OFF-SCREEN SEARCH DIRECTIONS ---------- */
     #search-directions { position: absolute; inset: 0; z-index: 3; pointer-events: none; overflow: hidden; }
@@ -379,6 +380,35 @@
             <div class="legend-item"><span class="legend-circle" style="background-color: #D2691E;"></span><span>Private Land</span></div>
             <div class="legend-item"><span class="legend-circle" style="background-color: #8B0000;"></span><span>Inaccessible</span></div>
             <div class="legend-item"><span class="legend-circle" style="background-color: #777777;"></span><span>Unknown</span></div>
+
+                       <div class="legend-title" style="margin-top: 12px;">GRAVE MARKERS</div>
+            <div class="legend-item">
+                <svg class="legend-marker" viewBox="0 0 16 16" aria-hidden="true">
+                    <circle cx="8" cy="8" r="5.5" fill="#463a2d"/>
+                </svg>
+                <span>Single</span>
+            </div>
+            <div class="legend-item">
+                <svg class="legend-marker" viewBox="0 0 16 16" aria-hidden="true">
+                    <circle cx="8" cy="8" r="6" fill="none" stroke="#463a2d" stroke-width="2"/>
+                    <circle cx="8" cy="8" r="3" fill="#463a2d"/>
+                </svg>
+                <span>Multiple (Single Marker)</span>
+            </div>
+            <div class="legend-item">
+                <svg class="legend-marker" viewBox="0 0 16 16" aria-hidden="true">
+                    <rect x="2" y="2" width="12" height="12" fill="#463a2d"/>
+                </svg>
+                <span>Structure (Single Interment)</span>
+            </div>
+            <div class="legend-item">
+                <svg class="legend-marker" viewBox="0 0 16 16" aria-hidden="true">
+                    <rect x="2" y="2" width="12" height="12" fill="#463a2d"/>
+                    <circle cx="8" cy="8" r="2.6" fill="#ffffff"/>
+                </svg>
+                <span>Structure (Multiple Interments)</span>
+            </div>
+           
         </div>
     </div>
 
@@ -1254,7 +1284,7 @@ function updateCemeteryGraves() {
     setLayerVisibility("graves-layer", "visible");
     setLayerVisibility("graves-maus-layer", "visible");
 
-    if (sharedSource) {
+        if (sharedSource) {
 
         const sharedFeatures = [];
 
@@ -1274,7 +1304,7 @@ function updateCemeteryGraves() {
                 return;
             }
 
-                       sharedFeatures.push({
+            sharedFeatures.push({
                 type: "Feature",
                 properties: {
                     Cemetery_ID: cemeteryID,
@@ -1286,16 +1316,16 @@ function updateCemeteryGraves() {
                 },
                 geometry: { type: "Point", coordinates: representative.coordinates }
             });
-
-                                sharedSource.setData({ type: "FeatureCollection", features: sharedFeatures });
         });
+
+        sharedSource.setData({ type: "FeatureCollection", features: sharedFeatures });
 
         setLayerVisibility("shared-markers-outer-layer", "visible");
         setLayerVisibility("shared-markers-inner-layer", "visible");
         setLayerVisibility("shared-markers-maus-layer", "visible");
     }
 }
-
+   
 function fitSelectedCemetery() {
 
     if (!selectedCemeteryFeature) {
@@ -1529,7 +1559,7 @@ function handleCemeteryClick(event) {
 
         if (map.getLayer("shared-markers-outer-layer")) {
 
-        const sharedHitLayers = ["shared-markers-outer-layer", "shared-markers-maus-layer"]
+        const sharedHitLayers =   ["shared-markers-outer-layer", "shared-markers-maus-layer", "graves-layer", "graves-maus-layer"]
             .filter(function (id) { return map.getLayer(id); });
 
         const sharedHits = map.queryRenderedFeatures(event.point, {
@@ -2890,7 +2920,7 @@ map.on("load", function () {
 
         if (withDot) {
             ctx.beginPath();
-            ctx.arc(half, half, size * 0.16, 0, Math.PI * 2);
+            ctx.arc(half, half, size * 0.2, 0, Math.PI * 2);
             ctx.fillStyle = "#ffffff";
             ctx.fill();
         }
@@ -2900,12 +2930,12 @@ map.on("load", function () {
         return { width: size, height: size, data: imageData.data };
     }
 
-    if (!map.hasImage("maus-square")) {
-        map.addImage("maus-square", makeMausIcon(16, false), { pixelRatio: 2 });
+        if (!map.hasImage("maus-square")) {
+        map.addImage("maus-square", makeMausIcon(26, false), { pixelRatio: 2 });
     }
 
     if (!map.hasImage("maus-square-dot")) {
-        map.addImage("maus-square-dot", makeMausIcon(18, true), { pixelRatio: 2 });
+        map.addImage("maus-square-dot", makeMausIcon(26, true), { pixelRatio: 2 });
     }
    
     map.addControl(
