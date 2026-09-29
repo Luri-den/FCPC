@@ -875,8 +875,8 @@ function makeGraveSymbol(opts) {
     const ctx = canvas.getContext("2d");
     const half = size / 2;
 
-    const FILL   = "#463a2d";
-    const STROKE = "#227e75";
+    const FILL   = "#227e75";
+    const STROKE = "#463a2d";
 
     const ringGap     = 5;
     const ringWidth   = 3;
@@ -902,19 +902,45 @@ function makeGraveSymbol(opts) {
     ctx.strokeStyle = STROKE;
     ctx.lineWidth = borderWidth;
 
+   if (opts.veteran) {
+
+    ctx.save();
+    ctx.strokeStyle = FILL;
+    ctx.lineWidth = ringWidth;
+    ctx.setLineDash([ringDashOn, ringDashOff]);
+
+    const ringRadius = half - ringWidth / 2 - 1;
+
+    ctx.beginPath();
+
     if (opts.shape === "circle") {
-        ctx.beginPath();
-        ctx.arc(half, half, shapeRadius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-    }
-    else {
-        const side = shapeRadius * 2 * 0.85;
-        const inset = half - side / 2;
-        ctx.fillRect(inset, inset, side, side);
-        ctx.strokeRect(inset, inset, side, side);
+
+        // Veteran ring around circular marker
+        ctx.arc(
+            half,
+            half,
+            ringRadius,
+            0,
+            Math.PI * 2
+        );
+
+    } else {
+
+        // Veteran ring around square marker
+        const ringSide = ringRadius * 2;
+        const ringInset = half - ringSide / 2;
+
+        ctx.rect(
+            ringInset,
+            ringInset,
+            ringSide,
+            ringSide
+        );
     }
 
+    ctx.stroke();
+    ctx.restore();
+}
     if (opts.pioneer) {
         const lineY = half;
         const lineX0 = ringGap;
