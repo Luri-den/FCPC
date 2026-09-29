@@ -199,8 +199,6 @@
     .placeholder { color: #666; font-size: 14px; line-height: 1.4; }
     .error-message { color: #8b0000; font-size: 14px; line-height: 1.45; }
 
-    document.getElementById("close-grave-legend").addEventListener("click", function () {
-    document.getElementById("grave-legend").style.display = "none";
 });
    
     /* ---------- LIGHTBOX ---------- */
@@ -1314,6 +1312,10 @@ document.getElementById("close-info").addEventListener("click", function () {
     infoPanel.style.display = "none";
 });
 
+document.getElementById("close-grave-legend").addEventListener("click", function () {
+    document.getElementById("grave-legend").style.display = "none";
+});
+   
 function closeCemeteryRecord() {
     cemeteryLightbox.style.display = "none";
     cemeteryLightboxFrame.src = "";
