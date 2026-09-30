@@ -1,611 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#01796F">
-   <!-- Mobile app breakout support -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="mobile-web-app-capable" content="yes">
-
-<title>Franklin County Indiana Pioneer Cemeteries Archive Prototype</title>
-
-<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="manifest" href="manifest.json">
-<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-<script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
-
-<style>
-    * { box-sizing: border-box; }
-
-    html, body {
-        margin: 0; padding: 0; width: 100%; height: 100%;
-        font-family: Arial, Helvetica, sans-serif;
-    }
-
-    body { display: flex; flex-direction: column; background: #f4f1e8; }
-
-    /* ---------- HEADER ---------- */
-    header { background: #01796F; color: white; padding: 14px 18px; z-index: 10; }
-    header h1 { margin: 0 0 5px 0; font-size: 22px; }
-    header p { margin: 0; font-size: 14px; opacity: 0.9; }
-    header a { color: white; text-decoration: underline; }
-    header a:hover { opacity: 0.8; }
-
-    /* ---------- CONTROLS ---------- */
-    #controls {
-        background: #eee9dc; border-bottom: 1px solid #c9c1b2; padding: 10px;
-        display: flex; flex-wrap: wrap; gap: 8px; align-items: center; z-index: 30;
-    }
-
-    /* ---------- SEARCH ---------- */
-    #search-wrapper { position: relative; flex: 1 1 220px; min-width: 180px; }
-
-    #search {
-        width: 100%; padding: 9px 34px 9px 10px;
-        border: 1px solid #aaa; border-radius: 4px; font-size: 15px;
-    }
-
-    #clear-search {
-        position: absolute; top: 50%; right: 5px; transform: translateY(-50%);
-        width: 26px; height: 26px; padding: 0; border: none; border-radius: 50%;
-        background: transparent; color: #777; font-size: 20px; line-height: 26px;
-        cursor: pointer; display: none;
-    }
-    #clear-search:hover { background: #e5e0d5; color: #333; }
-
-    /* ---------- SEARCH TOGGLES ---------- */
-    #search-toggles { display: flex; gap: 4px; align-items: center; }
-
-    .search-toggle {
-        padding: 8px 11px; border: 1px solid #aaa; border-radius: 4px;
-        background: #ddd8cc; color: #463a2d; font-size: 13px; font-weight: normal; cursor: pointer;
-    }
-    .search-toggle:hover { background: #cfc8bb; }
-    .search-toggle.active { background: #01796F; border-color: #01796F; color: white; }
-    .search-toggle.active:hover { background: #463a2d; border-color: #463a2d; }
-
-    /* ---------- YEAR FILTER ---------- */
-    #year-filter-container { display: flex; align-items: center; gap: 8px; padding: 0 4px; }
-    #year-filter-label { font-size: 14px; white-space: nowrap; color: #3f3528; }
-    #year-filter { width: 150px; cursor: pointer; }
-    #year-value { min-width: 42px; font-weight: bold; font-size: 14px; color: #3f3528; text-align: center; }
-
-    /* ---------- BUTTONS ---------- */
-    button {
-        padding: 9px 14px; border: 1px solid #8d8375; border-radius: 4px;
-        background: #01796F; color: white; font-size: 14px; cursor: pointer;
-    }
-    button:hover { background: #463a2d; }
-
-    .see-more-button {
-        display: block; width: 100%; padding: 10px 14px;
-        border: 1px solid #8d8375; border-radius: 4px;
-        background: #01796F; color: white; font-size: 14px; font-weight: bold;
-        text-align: center; cursor: pointer;
-    }
-    .see-more-button:hover { background: #463a2d; }
-
-    .export-button {
-        display: block; width: 100%; margin-top: 8px; padding: 10px 14px;
-        border: 1px solid #01796F; border-radius: 4px;
-        background: white; color: #01796F; font-size: 14px; font-weight: bold;
-        text-align: center; cursor: pointer;
-    }
-    .export-button:hover { background: #eee9dc; color: #01796F; }
-
-    .shared-marker-person-button,
-    .shared-marker-view-all-button {
-        display: block; width: 100%; margin: 7px 0; padding: 10px 12px;
-        border: 1px solid #8d8375; border-radius: 4px;
-        background: #01796F; color: white; font-size: 14px; font-weight: bold;
-        text-align: left; cursor: pointer;
-    }
-    .shared-marker-person-button:hover,
-    .shared-marker-view-all-button:hover { background: #463a2d; }
-    .shared-marker-view-all-button { text-align: center; margin-top: 12px; }
-
- /* ---------- GEOLOCATION DISCLAIMER ---------- */
-   
-#geoDisclaimer {
-    display: none;
-    position: fixed;
-    inset: 0;
-    z-index: 10000;
-    background: rgba(0,0,0,0.6);
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-}
-#geoDisclaimer .geo-box {
-    background: #fff;
-    color: #222;
-    max-width: 440px;
-    max-height: 90vh;
-    overflow-y: auto;
-    padding: 20px 22px;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-    font-size: 14px;
-    line-height: 1.45;
-}
-#geoDisclaimer h3 { margin: 0 0 10px; }
-#geoDisclaimer ul { margin: 8px 0 12px 20px; padding: 0; }
-#geoDisclaimer .geo-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 14px;
-}
-#geoDisclaimer button {
-    padding: 10px 16px;
-    border-radius: 6px;
-    border: 1px solid #888;
-    background: #f2f2f2;
-    color: #000000;
-    font-size: 14px;
-    cursor: pointer;
-}
-#geoDisclaimer #geoAccept {
-    background: #2a5d34;
-    color: #fff;
-    border-color: #2a5d34;
-}
-
-   
-    /* ---------- ACCESSIBILITY HELPERS ---------- */
-    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-    button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid #0b57d0; outline-offset: 2px; }
-    main { flex: 1; display: flex; flex-direction: column; min-height: 0; }
-    #info-panel, #search-results { overscroll-behavior: contain; }
-
-    /* ---------- POPUP CONTENT ---------- */
-    .cemetery-popup-photo {
-        display: block; width: 100%; height: auto; max-height: 220px;
-        object-fit: contain; margin: 0 0 12px 0; border-radius: 4px;
-    }
-
-    .popup-field { display: grid; grid-template-columns: 130px 1fr; column-gap: 10px; margin-bottom: 8px; }
-    .popup-label { font-weight: bold; }
-
-    .lake-cemetery { border-top: 1px solid #ddd; padding: 12px 0; }
-    .lake-cemetery:first-child { border-top: none; }
-    .lake-cemetery h3 { margin: 0 0 10px 0; font-size: 16px; color: #463a2d; }
-    .lake-introduction { margin: 0 0 12px 0; line-height: 1.4; font-size: 14px; }
-
-    /* ---------- MAP ---------- */
-    #map { flex: 1; min-height: 0; width: 100%; position: relative; }
-
-    /* ---------- INFO PANEL ---------- */
-    #info-panel {
-        position: absolute; top: 10px; right: 10px; width: 310px;
-        max-width: calc(100% - 20px); max-height: calc(100% - 20px);
-        overflow-y: auto; background: rgba(255, 255, 255, 0.96);
-        border: 1px solid #aaa; border-radius: 5px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-        padding: 14px; z-index: 4;
-    }
-
-    /* ---------- GRAVE LEGEND (cemetery mode only) ---------- */
-    #grave-legend {
-        display: none;
-        position: absolute;
-        bottom: 10px;
-        left: 50%;
-        transform: translateX(-50%);
-        max-width: 520px;
-        background: rgba(255, 255, 255, 0.96);
-        border: 1px solid #aaa;
-        border-radius: 5px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-        padding: 10px 32px 10px 14px;
-        z-index: 4;
-    }
-
-    #close-grave-legend {
-        position: absolute; top: 5px; right: 7px;
-        width: 24px; height: 24px; padding: 0;
-        border: none; border-radius: 50%;
-        background: transparent; color: #5a4b3a;
-        font-size: 20px; line-height: 24px; cursor: pointer;
-    }
-    #close-grave-legend:hover { background: #e5e0d5; color: #2f281f; }
-
-    #grave-legend-content {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 4px 16px;
-        align-items: center;
-        font-size: 13px;
-        color: #3f3528;
-    }
-
-    .grave-legend-item {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        white-space: nowrap;
-    }
-
-    .grave-legend-item img {
-        display: block;
-        width: 28px;
-        height: 28px;
-        flex-shrink: 0;
-    }
-
-    @media (max-width: 700px) {
-        #grave-legend {
-            left: 8px;
-            right: 60px;
-            top: 56px;
-            bottom: auto;
-            transform: none;
-            max-width: none;
-        }
-    }
-   
-    #close-info {
-        position: absolute; top: 5px; right: 7px; width: 28px; height: 28px; padding: 0;
-        border: none; border-radius: 50%; background: transparent; color: #5a4b3a;
-        font-size: 23px; line-height: 28px; cursor: pointer;
-    }
-    #close-info:hover { background: #e5e0d5; color: #2f281f; }
-
-    #info-content { padding-right: 24px; }
-    #info-panel h2 { margin: 0 0 6px 0; font-size: 20px; color: #3f3528; }
-    #info-panel h3 { margin: 12px 0 3px 0; font-size: 13px; color: #6b6258; text-transform: uppercase; }
-    #info-panel p { margin: 0; line-height: 1.4; font-size: 14px; }
-
-    .placeholder { color: #666; font-size: 14px; line-height: 1.4; }
-    .error-message { color: #8b0000; font-size: 14px; line-height: 1.45; }
-
-   
-    /* ---------- LIGHTBOX ---------- */
-    #cemetery-lightbox {
-        display: none; position: absolute; inset: 0;
-        background: rgba(0, 0, 0, 0.78); z-index: 20;
-        align-items: center; justify-content: center; padding: 20px;
-    }
-
-    #cemetery-lightbox-frame {
-        width: min(1100px, 95%); height: min(850px, 92%);
-        border: none; border-radius: 5px; background: white;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-    }
-
-    #close-cemetery-lightbox {
-        position: absolute; top: 15px; right: 20px; width: 38px; height: 38px; padding: 0;
-        border: none; border-radius: 50%; background: rgba(255, 255, 255, 0.92);
-        color: #3f3528; font-size: 28px; line-height: 38px; cursor: pointer; z-index: 21;
-    }
-    #close-cemetery-lightbox:hover { background: white; color: #01796F; }
-
-    /* ---------- HOVER LABELS ---------- */
-    .map-hover-popup .maplibregl-popup-content {
-        padding: 6px 9px; border: 1px solid rgba(90, 75, 58, 0.55); border-radius: 14px;
-        background: rgba(255, 255, 255, 0.96); box-shadow: 0 2px 7px rgba(0, 0, 0, 0.25);
-        color: #3f3528; font-size: 12px; font-weight: bold; line-height: 1.15; white-space: normal; overflow-wrap: anywhere;
-    }
-    .map-hover-popup .maplibregl-popup-tip {
-        border-top-color: rgba(255, 255, 255, 0.96);
-        border-bottom-color: rgba(255, 255, 255, 0.96);
-    }
-
-    .map-hover-popup .maplibregl-popup-content { border-radius: 8px; }
-    .map-hover-popup .hover-detail { margin-top: 2px; font-size: 12px; font-weight: normal; color: #6b6258; white-space: pre-line; }
-    /* ---------- ACCESSIBILITY LEGEND ---------- */
-    #accessibility-legend {
-        position: absolute; top: 10px; left: 10px; z-index: 10;
-        background: rgba(255, 255, 255, 0.96); border: 1px solid #aaa; border-radius: 5px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25); overflow: hidden;
-        font-family: Arial, Helvetica, sans-serif;
-        max-width: calc(100% - 20px);
-    }
-
-    #legend-toggle {
-        min-width: 110px; width: 100%; gap: 10px; padding: 8px 10px;
-        border: none; border-radius: 0;
-        background: white; color: #3f3528; font-size: 13px; font-weight: bold;
-        display: flex; align-items: center; justify-content: space-between; cursor: pointer;
-    }
-    #legend-toggle:hover { background: #eee9dc; color: #3f3528; }
-
-    #legend-content { display: none; min-width: 180px; padding: 8px 12px 11px 12px; border-top: 1px solid #ddd; }
-    .legend-title { margin-bottom: 7px; font-size: 12px; font-weight: bold; color: #555; }
-    .legend-item { display: flex; align-items: center; gap: 8px; margin: 5px 0; font-size: 13px; line-height: 1.4; white-space: nowrap; }
-    .legend-circle {
-        display: inline-block; width: 14px; height: 14px; min-width: 14px;
-        border-radius: 50%; border: 1px solid rgba(0, 0, 0, 0.25);
-    }
-
-    /* ---------- OFF-SCREEN SEARCH DIRECTIONS ---------- */
-    #search-directions { position: absolute; inset: 0; z-index: 3; pointer-events: none; overflow: hidden; }
-
-    .search-direction {
-        position: absolute; display: flex; align-items: center; gap: 5px; max-width: 210px;
-        padding: 5px 8px 5px 6px; border: 1px solid rgba(90, 75, 58, 0.55); border-radius: 14px;
-        background: rgba(255, 255, 255, 0.94); box-shadow: 0 2px 7px rgba(0, 0, 0, 0.25);
-        color: #3f3528; font-size: 12px; font-weight: bold; line-height: 1.15;
-        white-space: nowrap; pointer-events: auto; cursor: pointer; transform-origin: center center;
-    }
-    .search-direction:hover { background: white; border-color: #463a2d; }
-
-    .search-direction-arrow {
-        display: inline-block; width: 16px; min-width: 16px; text-align: center;
-        font-size: 18px; line-height: 16px; color: #FFD700;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65); transform-origin: center center;
-    }
-
-    .search-direction-name { overflow: hidden; text-overflow: ellipsis; }
-
-    .lake-site-label { position: absolute; transform: translate(-50%, calc(-100% - 12px)); }
-
-    .lake-goto-button {
-        display: block; width: 100%; margin-top: 8px; padding: 10px 14px;
-        border: 1px solid #8d8375; border-radius: 4px;
-        background: #01796F; color: white; font-size: 14px; font-weight: bold;
-        text-align: center; cursor: pointer;
-    }
-    .lake-goto-button:hover { background: #463a2d; }
-
-    /* ---------- SEARCH RESULTS DROPDOWN ---------- */
-    #search-results {
-        display: none; position: absolute; top: 100%; left: 0;
-        width: max(100%, 300px); max-width: calc(100vw - 20px);
-        max-height: min(60vh, 420px); overflow-y: auto; margin-top: 4px;
-        background: white; border: 1px solid #aaa; border-radius: 5px;
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3); z-index: 40;
-    }
-
-    .search-results-heading {
-        padding: 6px 12px 4px; background: #f4f1e8; color: #6b6258;
-        font-size: 12px; font-weight: bold; text-transform: uppercase;
-    }
-
-    .search-result {
-        display: block; width: 100%; padding: 8px 12px;
-        border: none; border-bottom: 1px solid #eee; border-radius: 0;
-        background: white; color: #3f3528; text-align: left;
-        font-size: 14px; font-weight: normal; cursor: pointer;
-    }
-    .search-result:hover { background: #eee9dc; color: #3f3528; }
-    .search-result-title { display: block; font-weight: bold; }
-    .search-result-detail { display: block; margin-top: 2px; font-size: 13px; color: #6b6258; }
-    .search-results-note { padding: 8px 12px; font-size: 13px; color: #6b6258; }
-
-    /* ---------- BASEMAP SWITCH (inside the legend panel) ---------- */
-    #basemap-toggle { display: flex; gap: 4px; }
-
-    .basemap-option {
-        flex: 1; padding: 6px 10px; border: 1px solid #aaa; border-radius: 4px;
-        background: #ddd8cc; color: #463a2d; font-size: 13px; font-weight: normal; cursor: pointer;
-    }
-    .basemap-option:hover { background: #cfc8bb; color: #463a2d; }
-    .basemap-option.active { background: #01796F; border-color: #01796F; color: white; }
-    .basemap-option.active:hover { background: #463a2d; border-color: #463a2d; }
-
-    /* ---------- NOTICES ---------- */
-    #notices-overlay {
-        display: none; position: fixed; inset: 0; z-index: 100;
-        background: rgba(0, 0, 0, 0.6); align-items: center; justify-content: center; padding: 16px;
-    }
-
-    #notices-box {
-        width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto;
-        padding: 20px 22px; background: white; border-radius: 6px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-    }
-
-    #notices-box h2 { margin: 0 0 10px 0; font-size: 22px; color: #3f3528; }
-    #notices-box h3 { margin: 16px 0 4px 0; font-size: 15px; color: #01796F; }
-    #notices-box p { margin: 0 0 8px 0; font-size: 14px; line-height: 1.5; color: #3f3528; }
-    #close-notices { display: block; width: 100%; margin-top: 18px; font-weight: bold; }
-
-    /* ---------- MOBILE ---------- */
-    @media (max-width: 700px) {
-
-        #search-results { max-height: 45vh; }
-        #notices-box { padding: 16px 16px; }
-
-        .search-direction { max-width: 60vw; padding: 5px 7px 5px 5px; font-size: 11px; }
-        .lake-site-label { max-width: 50vw; }
-        .search-direction-arrow { width: 15px; min-width: 15px; font-size: 17px; }
-
-        header { padding: 11px 13px; padding-top: calc(11px + env(safe-area-inset-top)); }
-        header h1 { font-size: 18px; }
-        header p { font-size: 12px; }
-
-        #controls { padding: 8px; }
-        #search { width: 100%; flex: 1 1 100%; font-size: 16px; }
-        #controls > button { width: auto; flex: 1 1 calc(50% - 4px); }
-        #search-toggles { width: 100%; flex: 1 1 100%; }
-        .search-toggle { flex: 1; }
-        #year-filter-container { width: 100%; flex: 1 1 100%; }
-        #year-filter { flex: 1; width: auto; }
-
-        #info-panel {
-            position: absolute; top: auto; right: 8px; bottom: calc(8px + env(safe-area-inset-bottom)); left: 8px;
-            width: auto; max-width: none; max-height: 65%;
-        }
-
-        .popup-field { grid-template-columns: 120px 1fr; }
-
-        #cemetery-lightbox { padding: 10px; }
-        #cemetery-lightbox-frame { width: 100%; height: 90%; }
-        #close-cemetery-lightbox { top: 5px; right: 8px; }
-    }
-
-    @media (pointer: coarse) {
-        #clear-search { width: 36px; height: 36px; line-height: 36px; font-size: 24px; right: 3px; }
-        #close-info, #close-grave-legend { width: 40px; height: 40px; line-height: 40px; }
-        .search-toggle, .basemap-option, #controls > button { min-height: 40px; }
-        #info-content { padding-right: 40px; }
-    }
-</style>
-</head>
-
-<body>
-
-<header>
-    <h1>Franklin County Indiana Pioneer Cemeteries Archive Prototype</h1>
-    <p>Historic Cemetery Locations and Associated Records &middot; <a href="#" id="open-notices">Notices &amp; Access Information</a></p>
-</header>
-
-<main>
-<div id="controls">
-
-    <div id="search-wrapper">
-        <input type="text" id="search" placeholder="Search cemeteries or people..." aria-label="Search cemeteries or people">
-        <button id="clear-search" type="button" title="Clear search" aria-label="Clear search">&times;</button>
-        <div id="search-results" aria-label="Search results"></div>
-    </div>
-
-    <div id="search-toggles">
-        <button type="button" class="search-toggle active" id="search-cemetery" aria-pressed="true">Cemetery</button>
-        <button type="button" class="search-toggle active" id="search-person" aria-pressed="true">Person</button>
-        <button type="button" class="search-toggle" id="search-veterans" aria-pressed="false">Veterans Only</button>
-    </div>
-
-    <div id="year-filter-container">
-        <span id="year-filter-label">Established Before:</span>
-        <input type="range" id="year-filter" min="1800" max="1900" step="5" value="1900" aria-labelledby="year-filter-label">
-        <span id="year-value">All</span>
-    </div>
-
-    <button id="reset-btn">Reset Filters</button>
-
-    <button id="export-all-btn" type="button" title="Download every cemetery with its interments as one CSV file">Export All (CSV)</button>
-
-</div>
-
-<div id="map" role="region" aria-label="Interactive map">
-
-    <div id="sr-status" class="sr-only" aria-live="polite"></div>
-
-    <div id="search-directions"></div>
-    <div id="lake-site-labels"></div>
-
-    <div id="accessibility-legend">
-        <button id="legend-toggle" type="button" aria-expanded="false" aria-controls="legend-content">
-            <span>Layers &amp; Legend</span>
-            <span id="legend-arrow">▾</span>
-        </button>
-
-        <div id="legend-content">
-            <div class="legend-title">BASEMAP</div>
-            <div id="basemap-toggle" role="group" aria-label="Basemap">
-                <button type="button" class="basemap-option active" data-basemap="street" aria-pressed="true">Street</button>
-                <button type="button" class="basemap-option" data-basemap="aerial" aria-pressed="false">Aerial</button>
-            </div>
-
-            <div class="legend-title" style="margin-top: 12px;">HISTORICAL OVERLAY</div>
-            <div id="historical-toggle-container" style="padding: 2px 4px 6px 4px;"></div>
-            <div id="opacity-slider-wrapper" style="opacity: 0.5; pointer-events: none; display: flex; flex-direction: column; gap: 2px; padding-left: 22px;">
-                <span style="font-size: 11px; color: #666; font-family: sans-serif;">Opacity: <span id="opacity-value-label">80%</span></span>
-                <input type="range" id="historical-opacity-slider" aria-label="Historical overlay opacity" min="0" max="100" step="1" value="80" style="width: 100%; cursor: pointer; margin: 0;">
-            </div>
-
-            <div class="legend-title" style="margin-top: 12px;">ACCESSIBILITY</div>
-            <div class="legend-item"><span class="legend-circle" style="background-color: #01796F;"></span><span>Public</span></div>
-            <div class="legend-item"><span class="legend-circle" style="background-color: #C9A227;"></span><span>With Permission</span></div>
-            <div class="legend-item"><span class="legend-circle" style="background-color: #D2691E;"></span><span>Private Land</span></div>
-            <div class="legend-item"><span class="legend-circle" style="background-color: #8B0000;"></span><span>Inaccessible</span></div>
-            <div class="legend-item"><span class="legend-circle" style="background-color: #777777;"></span><span>Unknown</span></div>
-
-            <div class="legend-title" style="margin-top: 12px;">GRAVE MARKERS</div>
-            <div id="marker-legend"></div>
-        </div>
-    </div>
-
-    <div id="info-panel">
-        <button id="close-info" title="Close Panel" aria-label="Close Panel">&times;</button>
-        <div id="info-content">
-            <div class="placeholder">
-                Click a cemetery marker on the map to inspect historic records and notes.
-            </div>
-        </div>
-    </div>
-
-    <div id="cemetery-lightbox" role="dialog" aria-modal="true" aria-label="Cemetery record">
-        <button id="close-cemetery-lightbox" title="Close Cemetery Record" aria-label="Close Cemetery Record">&times;</button>
-        <iframe id="cemetery-lightbox-frame" title="Cemetery Record"></iframe>
-    </div>
-    <div id="grave-legend">
-        <button id="close-grave-legend" title="Close Legend" aria-label="Close Legend">&times;</button>
-        <div id="grave-legend-content"></div>
-    </div>
-</div>
-
-</main>
-
-<!-- =====================================================
-     LEGAL / ACCESS NOTICES
-     ===================================================== -->
-<div id="notices-overlay" role="dialog" aria-modal="true" aria-labelledby="notices-title">
-    <div id="notices-box">
-
-        <h2 id="notices-title">Before You Explore!</h2>
-
-        <p>
-            This map documents historic pioneer cemeteries and other graveyards
-            in Franklin County, Indiana. Please read the following before
-            visiting a site or using this information.
-        </p>
-
-        <h3>Access and Private Property</h3>
-        <p>
-            A cemetery's appearance on this map, no matter the rating assigned,
-            does not give anyone the right to enter it. Many of these sites
-            are on private land, those land owners control access. Mistakes can
-            happen with labels, so always obtain the landowner's permission before
-            entering.
-        </p>
-
-        <h3>Protecting and Respecting</h3>
-        <p>
-            Please do not disturb, move, remove, or damage any marker, stone, or other
-            feature. Even if you mean well, Indiana law protects cemeteries and there are
-            people trying to document and survey many sites. Please contact the DNR or
-            a local representative if anything is amiss.
-        </p>
-        <p>
-            If you find human remains, or think you may have found human remains,
-            leave them undisturbed and report them immediately to the County Coroner.
-        </p>
-
-        <h3>About This Information</h3>
-        <p>
-            This is a work in progress. Records come from ongoing and historical
-            surveys both, and as such they may be incomplete or contain errors.
-            Locations should always be taken as approximate and must not be used for legal,
-            boundary, or property purposes. Contact information and correction information
-            will be added when the site is published.
-        </p>
-
-        <button id="close-notices" type="button">I Understand</button>
-
-    </div>
-</div>
-
-<div id="geoDisclaimer" role="dialog" aria-modal="true" aria-labelledby="geoTitle">
-  <div class="geo-box">
-    <h3 id="geoTitle">Before You Use Location</h3>
-    <p>This feature shows your approximate position on the archive map for <strong>general reference only</strong>. It is <strong>not</strong> intended for:</p>
-    <ul>
-      <li>Turn-by-turn navigation</li>
-      <li>Route planning or travel directions</li>
-      <li>Emergency dispatch or reporting your location to emergency services</li>
-      <li>Surveying, legal boundary determination, or property-line decisions</li>
-    </ul>
-    <p>GPS accuracy varies with your device, weather, and tree cover, and cemetery and grave locations on this map are approximate. Many cemeteries are on private property or have no public access; please obtain permission and respect posted signs. Watch for uneven ground, sunken graves, and other hazards. In an emergency, call 911.</p>
-    <div class="geo-actions">
-      <button id="geoCancel" type="button">Cancel</button>
-      <button id="geoAccept" type="button">I understand</button>
-    </div>
-  </div>
-</div>
 <script>
 
 // ============================================================
@@ -721,6 +113,30 @@ let searchResultsOpen = false;
 let currentSearchResults = [];
 
 let movedPeopleByOrigin = {};
+
+
+// ============================================================
+// CSV LOADING HELPER
+// ============================================================
+// PapaParse 5.4.1's `download: true` uses XHR, which silently
+// fails on GitHub Pages (no complete, no error). We fetch the
+// text ourselves and hand it to Papa.parse for local parsing.
+
+function fetchCsvText(url) {
+    return fetch(url).then(function (response) {
+        if (!response.ok) {
+            throw new Error("HTTP " + response.status);
+        }
+        return response.text();
+    });
+}
+
+function parseCsvText(text) {
+    return Papa.parse(text, {
+        header: true,
+        skipEmptyLines: true
+    });
+}
 
 
 // ============================================================
@@ -945,7 +361,6 @@ function showHoverLabel(text, coordinates, detail) {
         return;
     }
 
-    // Clear
     if (hoverPopup) {
         hoverPopup.remove();
     }
@@ -990,7 +405,6 @@ function findCemetery(cemeteryID) {
     });
 }
 
-// Compute which legend rows apply to this cemetery, and render them.
 function updateGraveLegend(cemeteryID) {
 
     const container = document.getElementById("grave-legend-content");
@@ -1000,7 +414,6 @@ function updateGraveLegend(cemeteryID) {
     const rows = data.rows || [];
     const groups = data.groups || {};
 
-    // Which base shapes appear? Start all false.
     const seen = {
         circleSingle:  false,
         circleDot:     false,
@@ -1010,10 +423,9 @@ function updateGraveLegend(cemeteryID) {
         pioneer:       false
     };
 
-    // Walk the individual (non-shared) interments.
     rows.forEach(function (person) {
         const group = person.markerID ? groups[person.markerID] : null;
-        if (group && group.length >= 2) return;   // handled as shared below
+        if (group && group.length >= 2) return;
 
         if (person.mausoleum) {
             seen.squareSingle = true;
@@ -1025,7 +437,6 @@ function updateGraveLegend(cemeteryID) {
         if (person.pioneer) seen.pioneer = true;
     });
 
-    // Walk the shared markers.
     Object.keys(groups).forEach(function (markerID) {
         const group = groups[markerID];
         if (!group || group.length < 2) return;
@@ -1042,7 +453,6 @@ function updateGraveLegend(cemeteryID) {
         if (group.some(function (p) { return p.pioneer === true; })) seen.pioneer = true;
     });
 
-    // Build the rows.
     let html = "";
 
     function row(svgOpts, label) {
@@ -1059,7 +469,6 @@ function updateGraveLegend(cemeteryID) {
     if (seen.pioneer)      row({ shape: "circle", pioneer: true }, "Pioneer");
 
     if (html === "") {
-        // Nothing to show — hide the panel entirely.
         document.getElementById("grave-legend").style.display = "none";
         return;
     }
@@ -1068,22 +477,9 @@ function updateGraveLegend(cemeteryID) {
     document.getElementById("grave-legend").style.display = "block";
 }
 
-// ============================================================
-// CANVAS-GENERATED GRAVE SYMBOLS
-//
-// One drawing routine makes every variant from four flags:
-//   shape:   "circle" | "square"   (grave | structure)
-//   dot:     hole in the middle    (several people at one marker)
-//   veteran: thin solid outer ring
-//   pioneer: small triangle above the marker
-//
-// The icon canvas has equal padding on every side, so the marker
-// stays centered on its GPS point. The legends reuse this same
-// routine, so they always match what is on the map.
-// ============================================================
 const GRAVE_INK = "#3f3528";
-const GRAVE_ICON_SIZE = 34;   // icon canvas, CSS px
-const GRAVE_SCALE = 1;        // raise (for example 1.4) to make every map marker bigger
+const GRAVE_ICON_SIZE = 34;
+const GRAVE_SCALE = 1;
 
 function drawGraveSymbol(ctx, cx, cy, opts) {
 
@@ -1151,78 +547,48 @@ function makeGraveSymbol(opts) {
 function makeEntranceSymbol() {
 
     const size = 64;
-
     const canvas = document.createElement("canvas");
-
     canvas.width = size;
     canvas.height = size;
 
     const ctx = canvas.getContext("2d");
-
     const center = size / 2;
 
     ctx.clearRect(0, 0, size, size);
 
-    /*
-     * Outer circle
-     */
     ctx.beginPath();
-
-    ctx.arc(
-        center,
-        center,
-        25,
-        0,
-        Math.PI * 2
-    );
-
+    ctx.arc(center, center, 25, 0, Math.PI * 2);
     ctx.strokeStyle = "#01796F";
     ctx.lineWidth = 5;
-
     ctx.stroke();
 
-
-    /*
-     * Left gate panel
-     */
     ctx.beginPath();
-
     ctx.moveTo(18, 43);
     ctx.lineTo(18, 25);
     ctx.lineTo(31, 33);
     ctx.lineTo(31, 43);
-
     ctx.strokeStyle = "#01796F";
     ctx.lineWidth = 5;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-
     ctx.stroke();
 
-
-    /*
-     * Right gate panel
-     */
     ctx.beginPath();
-
     ctx.moveTo(46, 43);
     ctx.lineTo(46, 25);
     ctx.lineTo(33, 33);
     ctx.lineTo(33, 43);
-
     ctx.stroke();
 
     return canvas;
 }
-   
-// Legend icon: same drawing code, returned as an <img> tag.
+
 function legendSVG(opts, size) {
     const px = size || 28;
     const canvas = makeGraveCanvas(opts, 2);
     return '<img src="' + canvas.toDataURL() + '" width="' + px + '" height="' + px + '" alt="">';
 }
 
-// Top-left "Layers & Legend" panel: grave marker key.
 function buildMarkerLegend() {
 
     const box = document.getElementById("marker-legend");
@@ -1246,73 +612,6 @@ function buildMarkerLegend() {
     });
 }
 
-function makeEntranceSymbol() {
-
-    const size = 64;
-
-    const canvas = document.createElement("canvas");
-
-    canvas.width = size;
-    canvas.height = size;
-
-    const ctx = canvas.getContext("2d");
-
-    const center = size / 2;
-
-    ctx.clearRect(0, 0, size, size);
-
-    /*
-     * Outer circle
-     */
-    ctx.beginPath();
-
-    ctx.arc(
-        center,
-        center,
-        25,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.strokeStyle = "#01796F";
-    ctx.lineWidth = 5;
-
-    ctx.stroke();
-
-
-    /*
-     * Left gate panel
-     */
-    ctx.beginPath();
-
-    ctx.moveTo(18, 43);
-    ctx.lineTo(18, 25);
-    ctx.lineTo(31, 33);
-    ctx.lineTo(31, 43);
-
-    ctx.strokeStyle = "#01796F";
-    ctx.lineWidth = 5;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-
-    ctx.stroke();
-
-
-    /*
-     * Right gate panel
-     */
-    ctx.beginPath();
-
-    ctx.moveTo(46, 43);
-    ctx.lineTo(46, 25);
-    ctx.lineTo(33, 33);
-    ctx.lineTo(33, 43);
-
-    ctx.stroke();
-
-    return canvas;
-}
-   
 function registerGraveSymbols() {
     const shapes = ["circle", "square"];
 
@@ -1343,7 +642,6 @@ function registerGraveSymbols() {
         });
     });
 }
-
 
 
 // ============================================================
@@ -1400,7 +698,6 @@ function setBasemap(name) {
         localStorage.setItem("basemap", aerial ? "aerial" : "street");
     }
     catch (error) {
-        // Storage can be blocked; the choice just won't be remembered.
     }
 }
 
@@ -1452,7 +749,6 @@ document.addEventListener("keydown", function (event) {
 });
 
 
-
 // ============================================================
 // LEGAL / ACCESS NOTICES
 // ============================================================
@@ -1467,7 +763,6 @@ function closeNotices() {
         localStorage.setItem("noticesAccepted", "1");
     }
     catch (error) {
-        // Ignore: the notice will simply show again next visit.
     }
 }
 
@@ -1504,6 +799,7 @@ try {
 catch (error) {
     openNotices();
 }
+
 
 // ============================================================
 // INFO PANEL CLICKS (event delegation)
@@ -1622,8 +918,6 @@ function boundaryFeaturesFor(cemeteryID) {
         const properties = feature.properties || {};
         const type = cleanString(properties.TYPE).toUpperCase();
 
-        // Existing boundary GeoJSON did not have TYPE, so preserve backward
-        // compatibility by treating a missing TYPE as a boundary.
         return feature.geometry &&
             boundaryIDOf(feature) === cemeteryID &&
             (!type || type === "BOUNDARY");
@@ -2063,7 +1357,7 @@ function showSharedMarkerPanel(cemeteryID, markerID, viewAll) {
                 <div style="border-top:1px solid #ccc; margin-top:16px; padding-top:14px;">
                     <h2>${escapeHtml(person.name || "Unnamed Interment")}</h2>`;
 
-                      if (person.birth) { html += popupField("Birth", person.birth); }
+            if (person.birth) { html += popupField("Birth", person.birth); }
             if (person.death) { html += popupField("Death", person.death); }
 
             html += popupField("Veteran", person.veteran ? "Yes" : "No");
@@ -2082,7 +1376,6 @@ function showSharedMarkerPanel(cemeteryID, markerID, viewAll) {
 
             html += `</div>`;
         });
-
 
         infoContent.innerHTML = html;
         return;
@@ -2654,13 +1947,10 @@ function processMapFilters() {
 
 function loadInterments(path) {
 
-    Papa.parse(path, {
+    fetchCsvText(path)
+        .then(function (text) {
 
-        download: true,
-        header: true,
-        skipEmptyLines: true,
-
-        complete: function (results) {
+            const results = parseCsvText(text);
 
             intermentsByCemetery = {};
             movedPeopleByOrigin = {};
@@ -2758,12 +2048,10 @@ function loadInterments(path) {
             }
 
             processMapFilters();
-        },
-
-        error: function (error) {
+        })
+        .catch(function (error) {
             console.error("interments.csv loading error:", error);
-        }
-    });
+        });
 }
 
 
@@ -3310,13 +2598,10 @@ function showLakeCemeteryPanel(lakeID) {
 
 function loadLakeCemeteries(path) {
 
-    Papa.parse(path, {
+    fetchCsvText(path)
+        .then(function (text) {
 
-        download: true,
-        header: true,
-        skipEmptyLines: true,
-
-        complete: function (lakeResults) {
+            const lakeResults = parseCsvText(text);
 
             lakeCemeteries = lakeResults.data
                 .filter(function (row) {
@@ -3466,19 +2751,13 @@ function loadLakeCemeteries(path) {
             });
 
             processMapFilters();
-        },
-
-        error: function (error) {
+        })
+        .catch(function (error) {
             console.error("lakecems.csv loading error:", error);
             processMapFilters();
-        }
-    });
+        });
 }
 
-
-// ============================================================
-// MAP LOAD
-// ============================================================
 
 // ============================================================
 // MAP LOAD
@@ -3515,7 +2794,6 @@ map.on("load", function () {
         "top-right"
     );
 
-    // One single Geolocate control
     const geolocate = new maplibregl.GeolocateControl({
         positionOptions: { enableHighAccuracy: true },
         trackUserLocation: true,
@@ -3523,7 +2801,6 @@ map.on("load", function () {
     });
     map.addControl(geolocate, "top-right");
 
-    // ---- Disclaimer Gate ----
     let geoDisclaimerAccepted = false;
     const geoModal = document.getElementById('geoDisclaimer');
 
@@ -3556,13 +2833,12 @@ map.on("load", function () {
         }
     });
 
-    // ---- Boundary check ----
     geolocate.on('geolocate', function (position) {
         const userLon = position.coords.longitude;
         const userLat = position.coords.latitude;
 
         if (userLon < -85.50 || userLon > -84.65 || userLat < 39.10 || userLat > 39.70) {
-            geolocate.trigger(); // toggles tracking off
+            geolocate.trigger();
             alert("We're sorry, but you are currently outside the archival map boundaries. The viewable map will remain centered on Franklin County, Indiana.");
             map.flyTo({ center: [-85.0626, 39.3992], zoom: 11 });
         }
@@ -3647,7 +2923,6 @@ map.on("load", function () {
         }
     });
 
-    // Fixed: Clean layer declaration with no loose comments or brackets!
     map.addLayer({
         id: "cemetery-features-layer",
         type: "symbol",
@@ -3689,13 +2964,10 @@ map.on("load", function () {
     map.addSource("graves-data", { type: "geojson", data: EMPTY_COLLECTION });
 
     // ---- Main cemetery CSV ----
-    Papa.parse(CSV_PATH, {
+    fetchCsvText(CSV_PATH)
+        .then(function (text) {
 
-        download: true,
-        header: true,
-        skipEmptyLines: true,
-
-        complete: function (results) {
+            const results = parseCsvText(text);
 
             const mapFeatures = [];
 
@@ -3798,7 +3070,6 @@ map.on("load", function () {
                 }
             });
 
-            // ---- Tap-target circles (own the click and hover handlers) ----
             map.addLayer({
                 id: "graves-tap-layer",
                 type: "circle",
@@ -3821,7 +3092,6 @@ map.on("load", function () {
                 }
             });
 
-            // ---- Visible grave symbols ----
             const SINGLE_GRAVE_ICON = [
                 "concat", "grave-circle",
                 ["case", ["get", "Veteran"], "-vet", ""],
@@ -3906,17 +3176,18 @@ map.on("load", function () {
             map.on("click", "shared-markers-maus-layer", handleSharedMarkerClick);
 
             // ---------------- HOVER: cemeteries ----------------
-           function cemeteryHover(event) {
-    const feature = event.features && event.features[0];
+            function cemeteryHover(event) {
+                const feature = event.features && event.features[0];
 
-    if (feature) {
-        showHoverLabel(
-            feature.properties.Cemetery_Name || "Unnamed Cemetery",
-            event.lngLat,
-            cemeteryHoverDetail(feature.properties)
-        );
-    }
-}
+                if (feature) {
+                    showHoverLabel(
+                        feature.properties.Cemetery_Name || "Unnamed Cemetery",
+                        event.lngLat,
+                        cemeteryHoverDetail(feature.properties)
+                    );
+                }
+            }
+
             map.on("mouseenter", "cemeteries-layer", function (event) {
                 map.getCanvas().style.cursor = "pointer";
                 cemeteryHover(event);
@@ -3929,8 +3200,7 @@ map.on("load", function () {
                 removeHoverLabel();
             });
 
-            // ---------------- HOVER: graves (single, non-mausoleum) ----------------
-            // ---------------- HOVER: graves (single, non-mausoleum) ----------------
+            // ---------------- HOVER: graves ----------------
             function graveHover(event) {
                 const feature = event.features && event.features[0];
 
@@ -3947,31 +3217,30 @@ map.on("load", function () {
                 }
             }
 
+            function cemeteryHoverDetail(props) {
 
-           function cemeteryHoverDetail(props) {
+                const parts = [];
 
-    const parts = [];
+                if (Number(props.Established_Year) > 0) {
+                    parts.push("Est. " + props.Established_Year);
+                }
 
-    if (Number(props.Established_Year) > 0) {
-        parts.push("Est. " + props.Established_Year);
-    }
+                const rows = (intermentsByCemetery[cleanString(props.Cemetery_ID)] || {}).rows || [];
+                const years = [];
 
-    const rows = (intermentsByCemetery[cleanString(props.Cemetery_ID)] || {}).rows || [];
-    const years = [];
+                rows.forEach(function (person) {
+                    const match = String(person.death || "").match(/\b(1[5-9]\d\d|20\d\d)\b/);
+                    if (match) { years.push(Number(match[1])); }
+                });
 
-    rows.forEach(function (person) {
-        const match = String(person.death || "").match(/\b(1[5-9]\d\d|20\d\d)\b/);
-        if (match) { years.push(Number(match[1])); }
-    });
+                if (years.length) {
+                    const first = Math.min.apply(null, years);
+                    const last = Math.max.apply(null, years);
+                    parts.push(first === last ? "Burial: " + first : "Burials: " + first + "–" + last);
+                }
 
-    if (years.length) {
-        const first = Math.min.apply(null, years);
-        const last = Math.max.apply(null, years);
-        parts.push(first === last ? "Burial: " + first : "Burials: " + first + "–" + last);
-    }
-
-    return parts.join(" · ");
-}
+                return parts.join(" · ");
+            }
 
             map.on("mouseenter", "graves-tap-layer", function (event) {
                 map.getCanvas().style.cursor = "pointer";
@@ -3999,31 +3268,31 @@ map.on("load", function () {
 
             // ---------------- HOVER: shared markers ----------------
             function sharedHover(event) {
-    const feature = event.features && event.features[0];
+                const feature = event.features && event.features[0];
 
-    if (!feature) {
-        return;
-    }
+                if (!feature) {
+                    return;
+                }
 
-    const props = feature.properties;
-    const group = getGroups(props.Cemetery_ID)[props.Marker_ID] || [];
+                const props = feature.properties;
+                const group = getGroups(props.Cemetery_ID)[props.Marker_ID] || [];
 
-    const MAX_NAMES = 3;
+                const MAX_NAMES = 3;
 
-    const names = group.slice(0, MAX_NAMES).map(function (person) {
-        return person.name || "Unnamed Interment";
-    });
+                const names = group.slice(0, MAX_NAMES).map(function (person) {
+                    return person.name || "Unnamed Interment";
+                });
 
-    if (group.length > MAX_NAMES) {
-        names.push("and " + (group.length - MAX_NAMES) + " more");
-    }
+                if (group.length > MAX_NAMES) {
+                    names.push("and " + (group.length - MAX_NAMES) + " more");
+                }
 
-    showHoverLabel(
-        (props.Person_Count || group.length) + " people at this marker",
-        event.lngLat,
-        names.join("\n")
-    );
-}
+                showHoverLabel(
+                    (props.Person_Count || group.length) + " people at this marker",
+                    event.lngLat,
+                    names.join("\n")
+                );
+            }
 
             map.on("mouseenter", "shared-markers-tap-layer", function (event) {
                 map.getCanvas().style.cursor = "pointer";
@@ -4054,9 +3323,8 @@ map.on("load", function () {
             loadLakeCemeteries(LAKE_CSV_PATH);
 
             processMapFilters();
-        },
-
-        error: function (error) {
+        })
+        .catch(function (error) {
 
             console.error("cemlist.csv loading error:", error);
 
@@ -4068,8 +3336,7 @@ map.on("load", function () {
                     Make sure the file is uploaded to the same repository
                     folder as index.html.
                 </div>`;
-        }
-    });
+        });
 });
 
 
@@ -4248,6 +3515,3 @@ resetButton.addEventListener("click", function () {
 });
 
 </script>
-   
-</body>
-</html>
