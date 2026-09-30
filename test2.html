@@ -1180,72 +1180,60 @@ function buildMarkerLegend() {
     });
 }
 
+// Entrance icon: white disc, teal ring, gate at the end of a path in perspective.
+// Canvas is 128 px; with "icon-size": 0.75 and pixelRatio: 2 it displays at 48 px.
 function makeEntranceSymbol() {
 
-    const size = 64;
-
+    const size = 128;
     const canvas = document.createElement("canvas");
-
     canvas.width = size;
     canvas.height = size;
 
     const ctx = canvas.getContext("2d");
+    ctx.scale(size / 64, size / 64);   // draw on a 64 x 64 grid
 
-    const center = size / 2;
+    const TEAL = "#01796F";
 
-    ctx.clearRect(0, 0, size, size);
-
-    /*
-     * Outer circle
-     */
+    // White disc with teal ring
     ctx.beginPath();
-
-    ctx.arc(
-        center,
-        center,
-        25,
-        0,
-        Math.PI * 2
-    );
-   
-    ctx.fillStyle = "#ffffff"
-    ctx.fill()
-    ctx.strokeStyle = "#01796F";
-    ctx.lineWidth = 5;
+    ctx.arc(32, 32, 29, 0, Math.PI * 2);
+    ctx.fillStyle = "#ffffff";
+    ctx.fill();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = TEAL;
     ctx.stroke();
 
+    ctx.fillStyle = TEAL;
 
-    /*
-     * Left gate panel
-     */
+    // Path edges: wide at the bottom, narrow at the top, leaning inward
     ctx.beginPath();
+    ctx.moveTo(12, 48);
+    ctx.lineTo(21, 48);
+    ctx.lineTo(26, 17);
+    ctx.lineTo(23, 17);
+    ctx.closePath();
+    ctx.fill();
 
-    ctx.moveTo(18, 43);
-    ctx.lineTo(18, 25);
-    ctx.lineTo(31, 33);
-    ctx.lineTo(31, 43);
-
-    ctx.strokeStyle = "#01796F";
-    ctx.lineWidth = 5;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-
-    ctx.stroke();
-
-
-    /*
-     * Right gate panel
-     */
     ctx.beginPath();
+    ctx.moveTo(52, 48);
+    ctx.lineTo(43, 48);
+    ctx.lineTo(38, 17);
+    ctx.lineTo(41, 17);
+    ctx.closePath();
+    ctx.fill();
 
-    ctx.moveTo(46, 43);
-    ctx.lineTo(46, 25);
-    ctx.lineTo(33, 33);
-    ctx.lineTo(33, 43);
+    // Gate at the horizon: top rail and four bars (two leaves, gap in the middle)
+    ctx.fillRect(27, 20.5, 10, 2);
+    [28, 30.3, 33.7, 36].forEach(function (x) {
+        ctx.fillRect(x - 0.8, 20.5, 1.6, 15);
+    });
 
-    ctx.stroke();
-
-    return { width: size, height: size, data: ctx.getImageData(0, 0, size, size).data };
+    // MapLibre's addImage needs pixel data, not a canvas element
+    return {
+        width: size,
+        height: size,
+        data: ctx.getImageData(0, 0, size, size).data
+    };
 }
    
 
@@ -3591,7 +3579,7 @@ map.on("load", function () {
         layout: {
             visibility: "none",
             "icon-image": "cemetery-entrance",
-            "icon-size": 1.50,
+            "icon-size": 0.75,
             "icon-allow-overlap": true
         }
     }); 
