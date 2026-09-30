@@ -589,6 +589,24 @@
     </div>
 </div>
 
+<div id="geoDisclaimer" role="dialog" aria-modal="true" aria-labelledby="geoTitle">
+  <div class="geo-box">
+    <h3 id="geoTitle">Before You Use Location</h3>
+    <p>This feature shows your approximate position on the archive map for <strong>general reference only</strong>. It is <strong>not</strong> intended for:</p>
+    <ul>
+      <li>Turn-by-turn navigation</li>
+      <li>Route planning or travel directions</li>
+      <li>Emergency dispatch or reporting your location to emergency services</li>
+      <li>Surveying, legal boundary determination, or property-line decisions</li>
+    </ul>
+    <p>GPS accuracy varies with your device, weather, and tree cover, and cemetery and grave locations on this map are approximate. Many cemeteries are on private property or have no public access; please obtain permission and respect posted signs. Watch for uneven ground, sunken graves, and other hazards. In an emergency, call 911.</p>
+    <div class="geo-actions">
+      <button id="geoCancel" type="button">Cancel</button>
+      <button id="geoAccept" type="button">I understand</button>
+    </div>
+  </div>
+</div>
+
 <script>
 
 // ============================================================
@@ -1131,73 +1149,6 @@ function makeGraveSymbol(opts) {
     return { width: canvas.width, height: canvas.height, data: imageData.data };
 }
 
-function makeEntranceSymbol() {
-
-    const size = 64;
-
-    const canvas = document.createElement("canvas");
-
-    canvas.width = size;
-    canvas.height = size;
-
-    const ctx = canvas.getContext("2d");
-
-    const center = size / 2;
-
-    ctx.clearRect(0, 0, size, size);
-
-    /*
-     * Outer circle
-     */
-    ctx.beginPath();
-
-    ctx.arc(
-        center,
-        center,
-        25,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.strokeStyle = "#01796F";
-    ctx.lineWidth = 5;
-
-    ctx.stroke();
-
-
-    /*
-     * Left gate panel
-     */
-    ctx.beginPath();
-
-    ctx.moveTo(18, 43);
-    ctx.lineTo(18, 25);
-    ctx.lineTo(31, 33);
-    ctx.lineTo(31, 43);
-
-    ctx.strokeStyle = "#01796F";
-    ctx.lineWidth = 5;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-
-    ctx.stroke();
-
-
-    /*
-     * Right gate panel
-     */
-    ctx.beginPath();
-
-    ctx.moveTo(46, 43);
-    ctx.lineTo(46, 25);
-    ctx.lineTo(33, 33);
-    ctx.lineTo(33, 43);
-
-    ctx.stroke();
-
-    return canvas;
-}
-   
 // Legend icon: same drawing code, returned as an <img> tag.
 function legendSVG(opts, size) {
     const px = size || 28;
@@ -1293,9 +1244,10 @@ function makeEntranceSymbol() {
 
     ctx.stroke();
 
-    return canvas;
+    return { width: size, height: size, data: ctx.getImageData(0, 0, size, size).data };
 }
    
+
 function registerGraveSymbols() {
     const shapes = ["circle", "square"];
 
@@ -3511,22 +3463,28 @@ map.on("load", function () {
     const geoModal = document.getElementById('geoDisclaimer');
 
     const geoBtn = document.querySelector('.maplibregl-ctrl-geolocate');
-    geoBtn.addEventListener('click', function (e) {
-        if (!geoDisclaimerAccepted) {
-            e.stopImmediatePropagation();   // block MapLibre from starting geolocation yet
-            e.preventDefault();
-            openDialog(geoModal, document.getElementById('geoAccept'));
-        }
-    }, true); // capture phase so we run before MapLibre's handler
+    const geoAccept = document.getElementById('geoAccept');
+    const geoCancel = document.getElementById('geoCancel');
 
-    document.getElementById('geoAccept').addEventListener('click', function () {
-        geoDisclaimerAccepted = true;
-        closeDialog(geoModal);
-        geolocate.trigger();                // now actually start locating
-    });
-    document.getElementById('geoCancel').addEventListener('click', function () {
-        closeDialog(geoModal);
-    });
+    if (geoBtn && geoModal && geoAccept && geoCancel) {
+        geoBtn.addEventListener('click', function (e) {
+            if (!geoDisclaimerAccepted) {
+                e.stopImmediatePropagation();
+                e.preventDefault();
+                openDialog(geoModal, geoAccept);
+            }
+        }, true);
+
+        geoAccept.addEventListener('click', function () {
+            geoDisclaimerAccepted = true;
+            closeDialog(geoModal);
+            geolocate.trigger();
+        });
+
+        geoCancel.addEventListener('click', function () {
+            closeDialog(geoModal);
+        });
+    }
     document.addEventListener('keydown', function (event) {
         if (event.key === 'Escape' && geoModal.style.display === 'flex') {
             closeDialog(geoModal);
@@ -4225,23 +4183,5 @@ resetButton.addEventListener("click", function () {
 });
 
 </script>
-<div id="geoDisclaimer" role="dialog" aria-modal="true" aria-labelledby="geoTitle">
-  <div class="geo-box">
-    <h3 id="geoTitle">Before You Use Location</h3>
-    <p>This feature shows your approximate position on the archive map for <strong>general reference only</strong>. It is <strong>not</strong> intended for:</p>
-    <ul>
-      <li>Turn-by-turn navigation</li>
-      <li>Route planning or travel directions</li>
-      <li>Emergency dispatch or reporting your location to emergency services</li>
-      <li>Surveying, legal boundary determination, or property-line decisions</li>
-    </ul>
-    <p>GPS accuracy varies with your device, weather, and tree cover, and cemetery and grave locations on this map are approximate. Many cemeteries are on private property or have no public access; please obtain permission and respect posted signs. Watch for uneven ground, sunken graves, and other hazards. In an emergency, call 911.</p>
-    <div class="geo-actions">
-      <button id="geoCancel" type="button">Cancel</button>
-      <button id="geoAccept" type="button">I understand</button>
-    </div>
-  </div>
-</div>
-   
 </body>
 </html>
