@@ -231,6 +231,9 @@
         border-bottom-color: rgba(255, 255, 255, 0.96);
     }
 
+    .map-hover-popup .maplibregl-popup-content { border-radius: 8px; }
+    .map-hover-popup .hover-detail { margin-top: 2px; font-size: 11px; font-weight: normal; color: #6b6258; }
+
     /* ---------- ACCESSIBILITY LEGEND ---------- */
     #accessibility-legend {
         position: absolute; top: 10px; left: 10px; z-index: 10;
@@ -845,7 +848,7 @@ function popupField(label, value) {
         </div>`;
 }
 
-function showHoverLabel(text, coordinates) {
+function showHoverLabel(text, coordinates, detail) {
 
     if (!desktopHoverEnabled() || !text) {
         return;
@@ -860,7 +863,10 @@ function showHoverLabel(text, coordinates) {
         });
     }
 
-    hoverPopup.setLngLat(coordinates).setHTML(escapeHtml(text)).addTo(map);
+    const html = "<div>" + escapeHtml(text) + "</div>" +
+        (detail ? '<div class="hover-detail">' + escapeHtml(detail) + "</div>" : "");
+
+    hoverPopup.setLngLat(coordinates).setHTML(html).addTo(map);
 }
 
 function removeHoverLabel() {
@@ -3441,17 +3447,17 @@ map.on("load", function () {
             map.on("click", "shared-markers-maus-layer", handleSharedMarkerClick);
 
             // ---------------- HOVER: cemeteries ----------------
-            function cemeteryHover(event) {
-                const feature = event.features && event.features[0];
+           function cemeteryHover(event) {
+    const feature = event.features && event.features[0];
 
-                if (feature) {
-                    showHoverLabel(
-                        feature.properties.Cemetery_Name || "Unnamed Cemetery",
-                        event.lngLat
-                    );
-                }
-            }
-
+    if (feature) {
+        showHoverLabel(
+            feature.properties.Cemetery_Name || "Unnamed Cemetery",
+            event.lngLat,
+            cemeteryHoverDetail(feature.properties)
+        );
+    }
+}
             map.on("mouseenter", "cemeteries-layer", function (event) {
                 map.getCanvas().style.cursor = "pointer";
                 cemeteryHover(event);
@@ -3466,15 +3472,43 @@ map.on("load", function () {
 
             // ---------------- HOVER: graves (single, non-mausoleum) ----------------
             function graveHover(event) {
-                const feature = event.features && event.features[0];
+    const feature = event.features && event.features[0];
 
-                if (feature) {
-                    showHoverLabel(
-                        feature.properties.Person_Name || "Unnamed Interment",
-                        event.lngLat
-                    );
-                }
-            }
+    if (feature) {
+        const p = feature.properties;
+        const dates = [
+            p.Birth ? "Born " + p.Birth : "",
+            p.Death ? "Died " + p.Death : ""
+        ].filter(Boolean).join(" · ");
+
+        showHoverLabel(p.Person_Name || "Unnamed Interment", event.lngLat, dates);
+    }
+}
+
+           function cemeteryHoverDetail(props) {
+
+    const parts = [];
+
+    if (Number(props.Established_Year) > 0) {
+        parts.push("Est. " + props.Established_Year);
+    }
+
+    const rows = (intermentsByCemetery[cleanString(props.Cemetery_ID)] || {}).rows || [];
+    const years = [];
+
+    rows.forEach(function (person) {
+        const match = String(person.death || "").match(/\b(1[5-9]\d\d|20\d\d)\b/);
+        if (match) { years.push(Number(match[1])); }
+    });
+
+    if (years.length) {
+        const first = Math.min.apply(null, years);
+        const last = Math.max.apply(null, years);
+        parts.push(first === last ? "Burial: " + first : "Burials: " + first + "–" + last);
+    }
+
+    return parts.join(" · ");
+}
 
             map.on("mouseenter", "graves-tap-layer", function (event) {
                 map.getCanvas().style.cursor = "pointer";
