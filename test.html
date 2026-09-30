@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#01796F">
    <!-- Mobile app breakout support -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -153,6 +154,12 @@
 }
 
    
+    /* ---------- ACCESSIBILITY HELPERS ---------- */
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid #0b57d0; outline-offset: 2px; }
+    main { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    #info-panel, #search-results { overscroll-behavior: contain; }
+
     /* ---------- POPUP CONTENT ---------- */
     .cemetery-popup-photo {
         display: block; width: 100%; height: auto; max-height: 220px;
@@ -231,8 +238,9 @@
     @media (max-width: 700px) {
         #grave-legend {
             left: 8px;
-            right: 8px;
-            bottom: 8px;
+            right: 60px;
+            top: 56px;
+            bottom: auto;
             transform: none;
             max-width: none;
         }
@@ -286,7 +294,7 @@
     }
 
     .map-hover-popup .maplibregl-popup-content { border-radius: 8px; }
-    .map-hover-popup .hover-detail { margin-top: 2px; font-size: 11px; font-weight: normal; color: #6b6258; white-space: pre-line; }
+    .map-hover-popup .hover-detail { margin-top: 2px; font-size: 12px; font-weight: normal; color: #6b6258; white-space: pre-line; }
     /* ---------- ACCESSIBILITY LEGEND ---------- */
     #accessibility-legend {
         position: absolute; top: 10px; left: 10px; z-index: 10;
@@ -305,7 +313,7 @@
     #legend-toggle:hover { background: #eee9dc; color: #3f3528; }
 
     #legend-content { display: none; min-width: 180px; padding: 8px 12px 11px 12px; border-top: 1px solid #ddd; }
-    .legend-title { margin-bottom: 7px; font-size: 11px; font-weight: bold; color: #555; }
+    .legend-title { margin-bottom: 7px; font-size: 12px; font-weight: bold; color: #555; }
     .legend-item { display: flex; align-items: center; gap: 8px; margin: 5px 0; font-size: 13px; line-height: 1.4; white-space: nowrap; }
     .legend-circle {
         display: inline-block; width: 14px; height: 14px; min-width: 14px;
@@ -353,7 +361,7 @@
 
     .search-results-heading {
         padding: 6px 12px 4px; background: #f4f1e8; color: #6b6258;
-        font-size: 11px; font-weight: bold; text-transform: uppercase;
+        font-size: 12px; font-weight: bold; text-transform: uppercase;
     }
 
     .search-result {
@@ -364,8 +372,8 @@
     }
     .search-result:hover { background: #eee9dc; color: #3f3528; }
     .search-result-title { display: block; font-weight: bold; }
-    .search-result-detail { display: block; margin-top: 2px; font-size: 12px; color: #6b6258; }
-    .search-results-note { padding: 8px 12px; font-size: 12px; color: #6b6258; }
+    .search-result-detail { display: block; margin-top: 2px; font-size: 13px; color: #6b6258; }
+    .search-results-note { padding: 8px 12px; font-size: 13px; color: #6b6258; }
 
     /* ---------- BASEMAP SWITCH (inside the legend panel) ---------- */
     #basemap-toggle { display: flex; gap: 4px; }
@@ -405,19 +413,20 @@
         .lake-site-label { max-width: 50vw; }
         .search-direction-arrow { width: 15px; min-width: 15px; font-size: 17px; }
 
-        header { padding: 11px 13px; }
+        header { padding: 11px 13px; padding-top: calc(11px + env(safe-area-inset-top)); }
         header h1 { font-size: 18px; }
         header p { font-size: 12px; }
 
         #controls { padding: 8px; }
-        #search, #controls > button { width: 100%; flex: 1 1 100%; }
+        #search { width: 100%; flex: 1 1 100%; font-size: 16px; }
+        #controls > button { width: auto; flex: 1 1 calc(50% - 4px); }
         #search-toggles { width: 100%; flex: 1 1 100%; }
         .search-toggle { flex: 1; }
         #year-filter-container { width: 100%; flex: 1 1 100%; }
         #year-filter { flex: 1; width: auto; }
 
         #info-panel {
-            position: absolute; top: auto; right: 8px; bottom: 8px; left: 8px;
+            position: absolute; top: auto; right: 8px; bottom: calc(8px + env(safe-area-inset-bottom)); left: 8px;
             width: auto; max-width: none; max-height: 65%;
         }
 
@@ -426,6 +435,13 @@
         #cemetery-lightbox { padding: 10px; }
         #cemetery-lightbox-frame { width: 100%; height: 90%; }
         #close-cemetery-lightbox { top: 5px; right: 8px; }
+    }
+
+    @media (pointer: coarse) {
+        #clear-search { width: 36px; height: 36px; line-height: 36px; font-size: 24px; right: 3px; }
+        #close-info, #close-grave-legend { width: 40px; height: 40px; line-height: 40px; }
+        .search-toggle, .basemap-option, #controls > button { min-height: 40px; }
+        #info-content { padding-right: 40px; }
     }
 </style>
 </head>
@@ -437,23 +453,24 @@
     <p>Historic Cemetery Locations and Associated Records &middot; <a href="#" id="open-notices">Notices &amp; Access Information</a></p>
 </header>
 
+<main>
 <div id="controls">
 
     <div id="search-wrapper">
-        <input type="text" id="search" placeholder="Search cemeteries or people...">
-        <button id="clear-search" type="button" title="Clear search">&times;</button>
-        <div id="search-results" role="listbox" aria-label="Search results"></div>
+        <input type="text" id="search" placeholder="Search cemeteries or people..." aria-label="Search cemeteries or people">
+        <button id="clear-search" type="button" title="Clear search" aria-label="Clear search">&times;</button>
+        <div id="search-results" aria-label="Search results"></div>
     </div>
 
     <div id="search-toggles">
-        <button type="button" class="search-toggle active" id="search-cemetery">Cemetery</button>
-        <button type="button" class="search-toggle active" id="search-person">Person</button>
-        <button type="button" class="search-toggle" id="search-veterans">Veterans Only</button>
+        <button type="button" class="search-toggle active" id="search-cemetery" aria-pressed="true">Cemetery</button>
+        <button type="button" class="search-toggle active" id="search-person" aria-pressed="true">Person</button>
+        <button type="button" class="search-toggle" id="search-veterans" aria-pressed="false">Veterans Only</button>
     </div>
 
     <div id="year-filter-container">
         <span id="year-filter-label">Established Before:</span>
-        <input type="range" id="year-filter" min="1800" max="1900" step="5" value="1900">
+        <input type="range" id="year-filter" min="1800" max="1900" step="5" value="1900" aria-labelledby="year-filter-label">
         <span id="year-value">All</span>
     </div>
 
@@ -463,7 +480,9 @@
 
 </div>
 
-<div id="map">
+<div id="map" role="region" aria-label="Interactive map">
+
+    <div id="sr-status" class="sr-only" aria-live="polite"></div>
 
     <div id="search-directions"></div>
     <div id="lake-site-labels"></div>
@@ -477,15 +496,15 @@
         <div id="legend-content">
             <div class="legend-title">BASEMAP</div>
             <div id="basemap-toggle" role="group" aria-label="Basemap">
-                <button type="button" class="basemap-option active" data-basemap="street">Street</button>
-                <button type="button" class="basemap-option" data-basemap="aerial">Aerial</button>
+                <button type="button" class="basemap-option active" data-basemap="street" aria-pressed="true">Street</button>
+                <button type="button" class="basemap-option" data-basemap="aerial" aria-pressed="false">Aerial</button>
             </div>
 
             <div class="legend-title" style="margin-top: 12px;">HISTORICAL OVERLAY</div>
             <div id="historical-toggle-container" style="padding: 2px 4px 6px 4px;"></div>
             <div id="opacity-slider-wrapper" style="opacity: 0.5; pointer-events: none; display: flex; flex-direction: column; gap: 2px; padding-left: 22px;">
                 <span style="font-size: 11px; color: #666; font-family: sans-serif;">Opacity: <span id="opacity-value-label">80%</span></span>
-                <input type="range" id="historical-opacity-slider" min="0" max="100" step="1" value="80" style="width: 100%; cursor: pointer; margin: 0;">
+                <input type="range" id="historical-opacity-slider" aria-label="Historical overlay opacity" min="0" max="100" step="1" value="80" style="width: 100%; cursor: pointer; margin: 0;">
             </div>
 
             <div class="legend-title" style="margin-top: 12px;">ACCESSIBILITY</div>
@@ -509,7 +528,7 @@
         </div>
     </div>
 
-    <div id="cemetery-lightbox">
+    <div id="cemetery-lightbox" role="dialog" aria-modal="true" aria-label="Cemetery record">
         <button id="close-cemetery-lightbox" title="Close Cemetery Record" aria-label="Close Cemetery Record">&times;</button>
         <iframe id="cemetery-lightbox-frame" title="Cemetery Record"></iframe>
     </div>
@@ -518,6 +537,8 @@
         <div id="grave-legend-content"></div>
     </div>
 </div>
+
+</main>
 
 <!-- =====================================================
      LEGAL / ACCESS NOTICES
@@ -1186,7 +1207,7 @@ document.getElementById("close-grave-legend").addEventListener("click", function
 });
    
 function closeCemeteryRecord() {
-    cemeteryLightbox.style.display = "none";
+    closeDialog(cemeteryLightbox);
     cemeteryLightboxFrame.src = "";
 }
 
@@ -1223,10 +1244,9 @@ function setBasemap(name) {
     setLayerVisibility("indiana-layer", aerial ? "visible" : "none");
 
     document.querySelectorAll(".basemap-option").forEach(function (button) {
-        button.classList.toggle(
-            "active",
-            button.dataset.basemap === (aerial ? "aerial" : "street")
-        );
+        const isActive = button.dataset.basemap === (aerial ? "aerial" : "street");
+        button.classList.toggle("active", isActive);
+        button.setAttribute("aria-pressed", String(isActive));
     });
 
     try {
@@ -1247,16 +1267,56 @@ document.getElementById("basemap-toggle").addEventListener("click", function (ev
 
 
 // ============================================================
+// DIALOG FOCUS HELPERS
+// ============================================================
+function openDialog(overlay, focusEl) {
+    overlay._returnFocus = document.activeElement;
+    overlay.style.display = "flex";
+    if (focusEl) focusEl.focus();
+}
+
+function closeDialog(overlay) {
+    overlay.style.display = "none";
+    if (overlay._returnFocus && overlay._returnFocus.focus) {
+        overlay._returnFocus.focus();
+    }
+}
+
+function trapTab(overlay, event) {
+    if (event.key !== "Tab" || overlay.style.display !== "flex") return;
+    const items = overlay.querySelectorAll("button, a[href], input");
+    if (!items.length) return;
+    const first = items[0], last = items[items.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+        last.focus(); event.preventDefault();
+    } else if (!event.shiftKey && document.activeElement === last) {
+        first.focus(); event.preventDefault();
+    }
+}
+
+function announce(text) {
+    const el = document.getElementById("sr-status");
+    if (el) el.textContent = text;
+}
+
+document.addEventListener("keydown", function (event) {
+    trapTab(noticesOverlay, event);
+    trapTab(document.getElementById("geoDisclaimer"), event);
+    trapTab(cemeteryLightbox, event);
+});
+
+
+// ============================================================
 // LEGAL / ACCESS NOTICES
 // ============================================================
 
 function openNotices() {
-    noticesOverlay.style.display = "flex";
+    openDialog(noticesOverlay, document.getElementById("close-notices"));
 }
 
 function closeNotices() {
 
-    noticesOverlay.style.display = "none";
+    closeDialog(noticesOverlay);
 
     try {
         localStorage.setItem("noticesAccepted", "1");
@@ -1314,7 +1374,7 @@ infoContent.addEventListener("click", function (event) {
     if (seeMore) {
         cemeteryLightboxFrame.src =
             "cemetery.html?id=" + encodeURIComponent(seeMore.dataset.cemeteryId);
-        cemeteryLightbox.style.display = "flex";
+        openDialog(cemeteryLightbox, closeCemeteryLightbox);
         return;
     }
 
@@ -1734,6 +1794,8 @@ function handleGraveClick(event) {
         };
     }
 
+    announce("Showing " + (person.name || "interment"));
+
     const cemeteryName = cemetery ? cemetery.properties.Cemetery_Name : props.Cemetery_ID;
 
     function section(title, value) {
@@ -1912,6 +1974,8 @@ function showCemeteryPanel(feature) {
     const props = feature.properties;
 
     infoPanel.style.display = "block";
+
+    announce("Showing " + (props.Cemetery_Name || "cemetery"));
 
     const accessText = ACCESS_LABELS[Number(props.Access)] || "Unknown";
     const statusText = STATUS_LABELS[Number(props.Status)] || "Unknown";
@@ -2197,6 +2261,7 @@ function updateSearchResults(searchStr, filterYear) {
     const shownPeople = personHits.slice(0, MAX_PERSON_RESULTS);
 
     currentSearchResults = shownCemeteries.concat(shownPeople);
+    announce(currentSearchResults.length + " search results");
 
     let html = "";
 
@@ -2300,6 +2365,7 @@ function processMapFilters() {
 
     clearSearch.style.display = searchBox.value !== "" ? "block" : "none";
     yearVal.innerText = filterYear < 1900 ? filterYear : "All";
+    yearSlider.setAttribute("aria-valuetext", filterYear < 1900 ? "Established before " + filterYear : "All years");
 
     cemeteryFeatures.forEach(function (feature) {
 
@@ -3236,23 +3302,13 @@ map.on("load", function () {
         "top-right"
     );
 
-   map.addControl(
-        new maplibregl.GeolocateControl({
-            positionOptions: {
-                enableHighAccuracy: true // Forces the phone to use GPS
-            },
-            trackUserLocation: true,      // Keeps updating position
-            showUserLocation: true        // Renders the location
-        }),
-        "top-right"
-    );
-
       // One single Geolocate control
 const geolocate = new maplibregl.GeolocateControl({
     positionOptions: { enableHighAccuracy: true },
     trackUserLocation: true,
     showUserLocation: true
 });
+map.addControl(geolocate, "top-right");
 
 // ---- Disclaimer Gate ----
 let geoDisclaimerAccepted = false;
@@ -3263,17 +3319,22 @@ geoBtn.addEventListener('click', function (e) {
     if (!geoDisclaimerAccepted) {
         e.stopImmediatePropagation();   // block MapLibre from starting geolocation yet
         e.preventDefault();
-        geoModal.style.display = 'flex';
+        openDialog(geoModal, document.getElementById('geoAccept'));
     }
 }, true); // capture phase so we run before MapLibre's handler
 
 document.getElementById('geoAccept').addEventListener('click', function () {
     geoDisclaimerAccepted = true;
-    geoModal.style.display = 'none';
+    closeDialog(geoModal);
     geolocate.trigger();                // now actually start locating
 });
 document.getElementById('geoCancel').addEventListener('click', function () {
-    geoModal.style.display = 'none';
+    closeDialog(geoModal);
+});
+document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && geoModal.style.display === 'flex') {
+        closeDialog(geoModal);
+    }
 });
 
 // ---- Boundary check ----
@@ -3845,18 +3906,21 @@ clearSearch.addEventListener("click", function () {
 cemeteryToggle.addEventListener("click", function () {
     searchCemetery = !searchCemetery;
     cemeteryToggle.classList.toggle("active", searchCemetery);
+    cemeteryToggle.setAttribute("aria-pressed", String(searchCemetery));
     processMapFilters();
 });
 
 personToggle.addEventListener("click", function () {
     searchPerson = !searchPerson;
     personToggle.classList.toggle("active", searchPerson);
+    personToggle.setAttribute("aria-pressed", String(searchPerson));
     processMapFilters();
 });
 
 veteransToggle.addEventListener("click", function () {
     veteransOnly = !veteransOnly;
     veteransToggle.classList.toggle("active", veteransOnly);
+    veteransToggle.setAttribute("aria-pressed", String(veteransOnly));
     processMapFilters();
 });
 
@@ -3897,6 +3961,9 @@ resetButton.addEventListener("click", function () {
     cemeteryToggle.classList.add("active");
     personToggle.classList.add("active");
     veteransToggle.classList.remove("active");
+    cemeteryToggle.setAttribute("aria-pressed", "true");
+    personToggle.setAttribute("aria-pressed", "true");
+    veteransToggle.setAttribute("aria-pressed", "false");
 
     yearSlider.value = 1900;
     yearVal.innerText = "All";
