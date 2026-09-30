@@ -3469,24 +3469,23 @@ map.on("load", function () {
             });
 
             // ---------------- HOVER: graves (single, non-mausoleum) ----------------
+            // ---------------- HOVER: graves (single, non-mausoleum) ----------------
             function graveHover(event) {
-    const feature = event.features && event.features[0];
+                const feature = event.features && event.features[0];
 
-    function graveHover(event) {
-    const feature = event.features && event.features[0];
+                if (feature) {
+                    const p = feature.properties;
 
-    if (feature) {
-        const p = feature.properties;
+                    const dates = p.Birth && p.Death
+                        ? p.Birth + " – " + p.Death
+                        : p.Birth ? "Born " + p.Birth
+                        : p.Death ? "Died " + p.Death
+                        : "";
 
-        const dates = p.Birth && p.Death
-            ? p.Birth + " – " + p.Death
-            : p.Birth ? "Born " + p.Birth
-            : p.Death ? "Died " + p.Death
-            : "";
+                    showHoverLabel(p.Person_Name || "Unnamed Interment", event.lngLat, dates);
+                }
+            }
 
-        showHoverLabel(p.Person_Name || "Unnamed Interment", event.lngLat, dates);
-    }
-}
 
            function cemeteryHoverDetail(props) {
 
