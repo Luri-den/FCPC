@@ -5,7 +5,8 @@
       "type": "Feature",
       "properties": {
         "CEMETERY_ID": "TEST001",
-        "NAME": "Test Cemetery"
+        "NAME": "Test Cemetery",
+        "TYPE": "BOUNDARY"
       },
       "geometry": {
         "type": "Polygon",
@@ -18,6 +19,19 @@
             [-85.04535382, 39.42423460]
           ]
         ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "CEMETERY_ID": "TEST001",
+        "TYPE": "ENTRANCE",
+        "LABEL": "Main Entrance",
+        "NOTES": "Test Entrance"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-85.04533500, 39.42423460]
       }
     }
   ]
