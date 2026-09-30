@@ -1327,19 +1327,7 @@ function registerGraveSymbols() {
     });
 
 
-    /*
-     * Cemetery entrance symbol
-     */
-    if (!map.hasImage("cemetery-entrance")) {
 
-        map.addImage(
-            "cemetery-entrance",
-            makeEntranceSymbol(),
-            { pixelRatio: 2 }
-        );
-
-    }
-}
 
 // ============================================================
 // INFO PANEL / LIGHTBOX / LEGEND CONTROLS
@@ -3494,8 +3482,17 @@ map.on("load", function () {
         setBasemap("street");
     }
 
-    registerGraveSymbols();
-    buildMarkerLegend();
+   registerGraveSymbols();
+
+if (!map.hasImage("cemetery-entrance")) {
+    map.addImage(
+        "cemetery-entrance",
+        makeEntranceSymbol(),
+        { pixelRatio: 2 }
+    );
+}
+
+buildMarkerLegend();
 
     map.addControl(
         new maplibregl.NavigationControl({ showCompass: false }),
