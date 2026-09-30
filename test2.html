@@ -3373,16 +3373,16 @@ function loadLakeCemeteries(path) {
 // ============================================================
 
 map.on("load", function () {
-
+console.log("L1: load fired")
     try {
         setBasemap(localStorage.getItem("basemap") === "aerial" ? "aerial" : "street");
     }
     catch (error) {
         setBasemap("street");
     }
-
+console.log("L2: basemap");
     registerGraveSymbols();
-
+console.log("L3: grave symbols")
     if (!map.hasImage("cemetery-entrance")) {
         map.addImage(
             "cemetery-entrance",
@@ -3390,9 +3390,9 @@ map.on("load", function () {
             { pixelRatio: 2 }
         );
     }
-
+console.log("L4: entrance image");
     buildMarkerLegend();
-
+console.log("L5: marker legend");
     map.addControl(
         new maplibregl.NavigationControl({ showCompass: false }),
         "top-right"
@@ -3401,14 +3401,15 @@ map.on("load", function () {
     map.addControl(
         new maplibregl.FullscreenControl(),
         "top-right"
-    );
+ console.log("L6: nav + fullscreen controls");
 
     const geolocate = new maplibregl.GeolocateControl({
         positionOptions: { enableHighAccuracy: true },
         trackUserLocation: true,
         showUserLocation: true
     });
-    map.addControl(geolocate, "top-right");
+    map.addControl(geolocate, "top-right"
+                   console.log("L7: geolocate control") );
 
     let geoDisclaimerAccepted = false;
     const geoModal = document.getElementById('geoDisclaimer');
@@ -3416,7 +3417,7 @@ map.on("load", function () {
     const geoBtn = document.querySelector('.maplibregl-ctrl-geolocate');
     const geoAccept = document.getElementById('geoAccept');
     const geoCancel = document.getElementById('geoCancel');
-
+console.log("L8: geo disclaimer");
     if (geoBtn && geoModal && geoAccept && geoCancel) {
         geoBtn.addEventListener('click', function (e) {
             if (!geoDisclaimerAccepted) {
@@ -3441,7 +3442,7 @@ map.on("load", function () {
             closeDialog(geoModal);
         }
     });
-
+console.log("L9: geolocate listener");
     geolocate.on('geolocate', function (position) {
         const userLon = position.coords.longitude;
         const userLat = position.coords.latitude;
