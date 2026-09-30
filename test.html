@@ -853,19 +853,25 @@ function showHoverLabel(text, coordinates, detail) {
         return;
     }
 
-     hoverPopup = new maplibregl.Popup({
-            closeButton: false,
-            closeOnClick: false,
-            offset: 12,
-            maxWidth: "260px",
-            className: "map-hover-popup"
-        });
+    // Clear
+    if (hoverPopup) {
+        hoverPopup.remove();
+    }
+
+    hoverPopup = new maplibregl.Popup({
+        closeButton: false,
+        closeOnClick: false,
+        offset: 12,
+        maxWidth: "260px",
+        className: "map-hover-popup"
+    });
    
     const html = "<div>" + escapeHtml(text) + "</div>" +
         (detail ? '<div class="hover-detail">' + escapeHtml(detail) + "</div>" : "");
 
     hoverPopup.setLngLat(coordinates).setHTML(html).addTo(map);
 }
+
 
 function removeHoverLabel() {
     if (hoverPopup) {
