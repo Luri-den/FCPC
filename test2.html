@@ -1435,58 +1435,6 @@ document.addEventListener("keydown", function (event) {
 });
 
 
-// ============================================================
-// LEGAL / ACCESS NOTICES
-// ============================================================
-
-function openNotices() {
-    openDialog(noticesOverlay, document.getElementById("close-notices"));
-}
-
-function closeNotices() {
-    closeDialog(noticesOverlay);
-    try {
-        localStorage.setItem("noticesAccepted", "1");
-    }
-    catch (error) {
-        // Ignore: the notice will simply show again next visit.
-    }
-}
-
-document.getElementById("open-notices").addEventListener("click", function (event) {
-    event.preventDefault();
-    openNotices();
-});
-
-document.getElementById("close-notices").addEventListener("click", closeNotices);
-
-noticesOverlay.addEventListener("click", function (event) {
-    if (event.target === noticesOverlay) {
-        closeNotices();
-    }
-});
-
-document.addEventListener("keydown", function (event) {
-    if (event.key !== "Escape") {
-        return;
-    }
-    if (noticesOverlay.style.display === "flex") {
-        closeNotices();
-    }
-    else if (searchResultsOpen) {
-        closeSearchResults();
-    }
-});
-
-try {
-    if (!localStorage.getItem("noticesAccepted")) {
-        openNotices();
-    }
-}
-catch (error) {
-    openNotices();
-}
-
 
 // ============================================================
 // LEGAL / ACCESS NOTICES
