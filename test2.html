@@ -1355,11 +1355,8 @@ document.addEventListener("keydown", function (event) {
 });
 
 legendToggle.addEventListener("click", function (event) {
-
     event.stopPropagation();
-
     const isOpen = legendContent.style.display === "block";
-
     legendContent.style.display = isOpen ? "none" : "block";
     legendArrow.textContent = isOpen ? "▾" : "▴";
     legendToggle.setAttribute("aria-expanded", isOpen ? "false" : "true");
@@ -1371,9 +1368,7 @@ legendToggle.addEventListener("click", function (event) {
 // ============================================================
 
 function setBasemap(name) {
-
     const aerial = name === "aerial";
-
     setLayerVisibility("osm-layer", aerial ? "none" : "visible");
     setLayerVisibility("usgs-layer", aerial ? "visible" : "none");
     setLayerVisibility("indiana-layer", aerial ? "visible" : "none");
@@ -1394,7 +1389,6 @@ function setBasemap(name) {
 
 document.getElementById("basemap-toggle").addEventListener("click", function (event) {
     const button = event.target.closest(".basemap-option");
-
     if (button) {
         setBasemap(button.dataset.basemap);
     }
@@ -1450,9 +1444,7 @@ function openNotices() {
 }
 
 function closeNotices() {
-
     closeDialog(noticesOverlay);
-
     try {
         localStorage.setItem("noticesAccepted", "1");
     }
@@ -1475,11 +1467,9 @@ noticesOverlay.addEventListener("click", function (event) {
 });
 
 document.addEventListener("keydown", function (event) {
-
     if (event.key !== "Escape") {
         return;
     }
-
     if (noticesOverlay.style.display === "flex") {
         closeNotices();
     }
@@ -1497,6 +1487,58 @@ catch (error) {
     openNotices();
 }
 
+
+// ============================================================
+// LEGAL / ACCESS NOTICES
+// ============================================================
+
+function openNotices() {
+    openDialog(noticesOverlay, document.getElementById("close-notices"));
+}
+
+function closeNotices() {
+    closeDialog(noticesOverlay);
+    try {
+        localStorage.setItem("noticesAccepted", "1");
+    }
+    catch (error) {
+        // Ignore: the notice will simply show again next visit.
+    }
+}
+
+document.getElementById("open-notices").addEventListener("click", function (event) {
+    event.preventDefault();
+    openNotices();
+});
+
+document.getElementById("close-notices").addEventListener("click", closeNotices);
+
+noticesOverlay.addEventListener("click", function (event) {
+    if (event.target === noticesOverlay) {
+        closeNotices();
+    }
+});
+
+document.addEventListener("keydown", function (event) {
+    if (event.key !== "Escape") {
+        return;
+    }
+    if (noticesOverlay.style.display === "flex") {
+        closeNotices();
+    }
+    else if (searchResultsOpen) {
+        closeSearchResults();
+    }
+});
+
+try {
+    if (!localStorage.getItem("noticesAccepted")) {
+        openNotices();
+    }
+}
+catch (error) {
+    openNotices();
+}
 
 // ============================================================
 // INFO PANEL CLICKS (event delegation)
@@ -3473,6 +3515,10 @@ function loadLakeCemeteries(path) {
 // MAP LOAD
 // ============================================================
 
+// ============================================================
+// MAP LOAD
+// ============================================================
+
 map.on("load", function () {
 
     try {
@@ -3482,75 +3528,75 @@ map.on("load", function () {
         setBasemap("street");
     }
 
-   registerGraveSymbols();
+    registerGraveSymbols();
 
-if (!map.hasImage("cemetery-entrance")) {
-    map.addImage(
-        "cemetery-entrance",
-        makeEntranceSymbol(),
-        { pixelRatio: 2 }
-    );
-}
+    if (!map.hasImage("cemetery-entrance")) {
+        map.addImage(
+            "cemetery-entrance",
+            makeEntranceSymbol(),
+            { pixelRatio: 2 }
+        );
+    }
 
-buildMarkerLegend();
+    buildMarkerLegend();
 
     map.addControl(
         new maplibregl.NavigationControl({ showCompass: false }),
         "top-right"
     );
 
-    // Fullscreen toggle button for mobile and desktop breakout viewports
     map.addControl(
         new maplibregl.FullscreenControl(),
         "top-right"
     );
 
-      // One single Geolocate control
-const geolocate = new maplibregl.GeolocateControl({
-    positionOptions: { enableHighAccuracy: true },
-    trackUserLocation: true,
-    showUserLocation: true
-});
-map.addControl(geolocate, "top-right");
+    // One single Geolocate control
+    const geolocate = new maplibregl.GeolocateControl({
+        positionOptions: { enableHighAccuracy: true },
+        trackUserLocation: true,
+        showUserLocation: true
+    });
+    map.addControl(geolocate, "top-right");
 
-// ---- Disclaimer Gate ----
-let geoDisclaimerAccepted = false;
-const geoModal = document.getElementById('geoDisclaimer');
+    // ---- Disclaimer Gate ----
+    let geoDisclaimerAccepted = false;
+    const geoModal = document.getElementById('geoDisclaimer');
 
-const geoBtn = document.querySelector('.maplibregl-ctrl-geolocate');
-geoBtn.addEventListener('click', function (e) {
-    if (!geoDisclaimerAccepted) {
-        e.stopImmediatePropagation();   // block MapLibre from starting geolocation yet
-        e.preventDefault();
-        openDialog(geoModal, document.getElementById('geoAccept'));
-    }
-}, true); // capture phase so we run before MapLibre's handler
+    const geoBtn = document.querySelector('.maplibregl-ctrl-geolocate');
+    geoBtn.addEventListener('click', function (e) {
+        if (!geoDisclaimerAccepted) {
+            e.stopImmediatePropagation();   // block MapLibre from starting geolocation yet
+            e.preventDefault();
+            openDialog(geoModal, document.getElementById('geoAccept'));
+        }
+    }, true); // capture phase so we run before MapLibre's handler
 
-document.getElementById('geoAccept').addEventListener('click', function () {
-    geoDisclaimerAccepted = true;
-    closeDialog(geoModal);
-    geolocate.trigger();                // now actually start locating
-});
-document.getElementById('geoCancel').addEventListener('click', function () {
-    closeDialog(geoModal);
-});
-document.addEventListener('keydown', function (event) {
-    if (event.key === 'Escape' && geoModal.style.display === 'flex') {
+    document.getElementById('geoAccept').addEventListener('click', function () {
+        geoDisclaimerAccepted = true;
         closeDialog(geoModal);
-    }
-});
+        geolocate.trigger();                // now actually start locating
+    });
+    document.getElementById('geoCancel').addEventListener('click', function () {
+        closeDialog(geoModal);
+    });
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && geoModal.style.display === 'flex') {
+            closeDialog(geoModal);
+        }
+    });
 
-// ---- Boundary check ----
-geolocate.on('geolocate', function (position) {
-    const userLon = position.coords.longitude;
-    const userLat = position.coords.latitude;
+    // ---- Boundary check ----
+    geolocate.on('geolocate', function (position) {
+        const userLon = position.coords.longitude;
+        const userLat = position.coords.latitude;
 
-    if (userLon < -85.50 || userLon > -84.65 || userLat < 39.10 || userLat > 39.70) {
-        geolocate.trigger(); // toggles tracking off
-        alert("We're sorry, but you are currently outside the archival map boundaries. The viewable map will remain centered on Franklin County, Indiana.");
-        map.flyTo({ center: [-85.0626, 39.3992], zoom: 11 });
-    }
-});
+        if (userLon < -85.50 || userLon > -84.65 || userLat < 39.10 || userLat > 39.70) {
+            geolocate.trigger(); // toggles tracking off
+            alert("We're sorry, but you are currently outside the archival map boundaries. The viewable map will remain centered on Franklin County, Indiana.");
+            map.flyTo({ center: [-85.0626, 39.3992], zoom: 11 });
+        }
+    });
+
     const CSV_PATH = new URL("cemlist.csv", document.baseURI).href;
     const LAKE_CSV_PATH = new URL("lakecems.csv", document.baseURI).href;
     const INTERMENTS_CSV_PATH = new URL("interments.csv", document.baseURI).href;
@@ -3575,7 +3621,6 @@ geolocate.on('geolocate', function (position) {
 
     // ---- Historical overlays (from HISTORICAL_OVERLAYS) ----
     HISTORICAL_OVERLAYS.forEach(function (overlay) {
-
         const sourceId = overlay.id.replace("-layer", "");
 
         map.addSource(sourceId, {
@@ -3615,8 +3660,6 @@ geolocate.on('geolocate', function (position) {
     });
 
     // ---- Cemetery site features (entrances, etc.) ----
-    // These features live in the same GeoJSON as the cemetery boundary.
-    // Only features with TYPE = ENTRANCE are shown by this layer for now.
     map.addSource("cemetery-features-data", {
         type: "geojson",
         data: EMPTY_COLLECTION
@@ -3633,21 +3676,19 @@ geolocate.on('geolocate', function (position) {
         }
     });
 
-   */ map.addLayer({
-    id: "cemetery-features-layer",
-    type: "symbol",
-    source: "cemetery-features-data",
+    // Fixed: Clean layer declaration with no loose comments or brackets!
+    map.addLayer({
+        id: "cemetery-features-layer",
+        type: "symbol",
+        source: "cemetery-features-data",
+        layout: {
+            visibility: "none",
+            "icon-image": "cemetery-entrance",
+            "icon-size": 0.75,
+            "icon-allow-overlap": true
+        }
+    }); 
 
-    layout: {
-        visibility: "none",
-
-        "icon-image": "cemetery-entrance",
-
-        "icon-size": 0.75,
-
-        "icon-allow-overlap": true
-    }
-}); 
     map.addLayer({
         id: "cemetery-features-label-layer",
         type: "symbol",
