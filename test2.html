@@ -2541,7 +2541,6 @@ function selectSearchResult(result) {
 }
 
 function processMapFilters() {
-
     const searchStr = searchBox.value.toLowerCase().trim();
     const filterYear = parseInt(yearSlider.value, 10);
     const searchIsActive = searchStr !== "" || veteransOnly;
@@ -2551,7 +2550,6 @@ function processMapFilters() {
     yearSlider.setAttribute("aria-valuetext", filterYear < 1900 ? "Established before " + filterYear : "All years");
 
     cemeteryFeatures.forEach(function (feature) {
-
         const props = feature.properties;
         const cemeteryID = cleanString(props.Cemetery_ID);
 
@@ -2564,9 +2562,11 @@ function processMapFilters() {
 
         const personText = intermentData.people.join(" ").toLowerCase();
 
-        let textMatch = searchStr === "";
-
-        if (searchStr !== "") {
+        // ✔️ FIXED: If no search string exists, text automatically matches (passes criteria)
+        let textMatch = false;
+        if (searchStr === "") {
+            textMatch = true;
+        } else {
             if (searchCemetery && cemeteryText.includes(searchStr)) {
                 textMatch = true;
             }
@@ -2590,7 +2590,6 @@ function processMapFilters() {
     }
 
     const source = map.getSource("cemeteries-data");
-
     if (source) {
         source.setData({ type: "FeatureCollection", features: cemeteryFeatures });
     }
@@ -2605,6 +2604,7 @@ function processMapFilters() {
         ]);
     }
 
+    // Only apply the strict Search_Match visibility clipping if a search filter is actively being used
     if (searchIsActive) {
         activeFilters.push(["==", ["get", "Search_Match"], true]);
     }
@@ -2612,18 +2612,15 @@ function processMapFilters() {
     map.setFilter("cemeteries-layer", activeFilters.length > 1 ? activeFilters : null);
 
     if (map.getLayer("cemeteries-highlight-layer")) {
-
         if (searchIsActive) {
             map.setFilter("cemeteries-highlight-layer", [
                 "all",
                 ["==", ["get", "Search_Active"], true],
                 ["==", ["get", "Search_Match"], true]
             ]);
-        }
-        else {
-            map.setFilter("cemeteries-highlight-layer", [
-                "==", ["get", "Search_Active"], true
-            ]);
+        } else {
+            // If no search is active, hide all highlight borders entirely
+            map.setFilter("cemeteries-highlight-layer", ["==", ["get", "Search_Active"], true]);
         }
     }
 
