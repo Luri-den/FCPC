@@ -2214,8 +2214,8 @@ function updateSearchResults(searchStr, filterYear) {
 
             const detail = [
                 props.Township || "",
-                Number(props.Established_Year) > 0 ? "Est. " + props.Established_Year : ""
-            ].filter(Boolean).join(" · ");
+                Number(props.Established_Year) > 0 ? "Est. " + props.Established_Year : "" 
+            ].filter(Boolean).join(" ● ");
 
             html += `
                 <button type="button" class="search-result" data-index="${index}">
