@@ -1180,7 +1180,7 @@ function buildMarkerLegend() {
     });
 }
 
-// Entrance icon: white disc, teal ring, gate at the end of a path in perspective.
+// Entrance icon: white disc, teal ring, arched gate between two finial posts.
 // Canvas is 128 px; with "icon-size": 0.75 and pixelRatio: 2 it displays at 48 px.
 function makeEntranceSymbol() {
 
@@ -1204,29 +1204,31 @@ function makeEntranceSymbol() {
     ctx.stroke();
 
     ctx.fillStyle = TEAL;
+    ctx.strokeStyle = TEAL;
 
-    // Path edges: wide at the bottom, narrow at the top, leaning inward
+    // Posts with round finials
+    ctx.fillRect(13, 23.5, 6, 24.5);
+    ctx.fillRect(45, 23.5, 6, 24.5);
     ctx.beginPath();
-    ctx.moveTo(12, 48);
-    ctx.lineTo(21, 48);
-    ctx.lineTo(26, 17);
-    ctx.lineTo(23, 17);
-    ctx.closePath();
+    ctx.arc(16, 19.8, 3.7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(48, 19.8, 3.7, 0, Math.PI * 2);
     ctx.fill();
 
+    // Gate: arched top rail, spring-line rail, bottom rail
+    ctx.lineWidth = 2.4;
     ctx.beginPath();
-    ctx.moveTo(52, 48);
-    ctx.lineTo(43, 48);
-    ctx.lineTo(38, 17);
-    ctx.lineTo(41, 17);
-    ctx.closePath();
-    ctx.fill();
+    ctx.arc(32, 37, 12.6, Math.PI, 0);
+    ctx.stroke();
 
-    // Gate at the horizon: top rail and four bars (two leaves, gap in the middle)
-    ctx.fillRect(27, 20.5, 10, 2);
-    [28, 30.3, 33.7, 36].forEach(function (x) {
-        ctx.fillRect(x - 0.8, 20.5, 1.6, 15);
-    });
+    ctx.fillRect(19.4, 36.6, 25.2, 2.4);
+    ctx.fillRect(19.4, 45.6, 25.2, 2.4);
+
+    // Vertical bars (centre bar is tallest, following the arch)
+    ctx.fillRect(24.3, 26, 2.2, 20);
+    ctx.fillRect(30.9, 24.4, 2.2, 21.6);
+    ctx.fillRect(37.5, 26, 2.2, 20);
 
     // MapLibre's addImage needs pixel data, not a canvas element
     return {
@@ -3579,7 +3581,7 @@ map.on("load", function () {
         layout: {
             visibility: "none",
             "icon-image": "cemetery-entrance",
-            "icon-size": 1.50,
+            "icon-size": 1.5,
             "icon-allow-overlap": true
         }
     }); 
