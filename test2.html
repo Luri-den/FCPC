@@ -589,6 +589,23 @@
     </div>
 </div>
 
+<div id="geoDisclaimer" role="dialog" aria-modal="true" aria-labelledby="geoTitle">
+  <div class="geo-box">
+    <h3 id="geoTitle">Before You Use Location</h3>
+    <p>This feature shows your approximate position on the archive map for <strong>general reference only</strong>. It is <strong>not</strong> intended for:</p>
+    <ul>
+      <li>Turn-by-turn navigation</li>
+      <li>Route planning or travel directions</li>
+      <li>Emergency dispatch or reporting your location to emergency services</li>
+      <li>Surveying, legal boundary determination, or property-line decisions</li>
+    </ul>
+    <p>GPS accuracy varies with your device, weather, and tree cover, and cemetery and grave locations on this map are approximate. Many cemeteries are on private property or have no public access; please obtain permission and respect posted signs. Watch for uneven ground, sunken graves, and other hazards. In an emergency, call 911.</p>
+    <div class="geo-actions">
+      <button id="geoCancel" type="button">Cancel</button>
+      <button id="geoAccept" type="button">I understand</button>
+    </div>
+  </div>
+</div>
 <script>
 
 // ============================================================
@@ -3514,8 +3531,6 @@ map.on("load", function () {
     const geoAccept = document.getElementById('geoAccept');
     const geoCancel = document.getElementById('geoCancel');
 
-    // Geolocation is optional. A problem with the disclaimer must NEVER
-    // prevent the cemetery CSV and map layers from loading.
     if (geoBtn && geoModal && geoAccept && geoCancel) {
         geoBtn.addEventListener('click', function (e) {
             if (!geoDisclaimerAccepted) {
@@ -3528,25 +3543,18 @@ map.on("load", function () {
         geoAccept.addEventListener('click', function () {
             geoDisclaimerAccepted = true;
             closeDialog(geoModal);
-            try {
-                geolocate.trigger();
-            } catch (error) {
-                console.error("Unable to start geolocation:", error);
-            }
+            geolocate.trigger();
         });
 
         geoCancel.addEventListener('click', function () {
             closeDialog(geoModal);
         });
-
-        document.addEventListener('keydown', function (event) {
-            if (event.key === 'Escape' && geoModal.style.display === 'flex') {
-                closeDialog(geoModal);
-            }
-        });
-    } else {
-        console.warn("Geolocation disclaimer controls are unavailable; geolocation gate disabled.");
     }
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && geoModal && geoModal.style.display === 'flex') {
+            closeDialog(geoModal);
+        }
+    });
 
     // ---- Boundary check ----
     geolocate.on('geolocate', function (position) {
@@ -3583,29 +3591,25 @@ map.on("load", function () {
     });
 
     // ---- Historical overlays (from HISTORICAL_OVERLAYS) ----
-    try {
-        HISTORICAL_OVERLAYS.forEach(function (overlay) {
-            const sourceId = overlay.id.replace("-layer", "");
+    HISTORICAL_OVERLAYS.forEach(function (overlay) {
+        const sourceId = overlay.id.replace("-layer", "");
 
-            map.addSource(sourceId, {
-                type: "image",
-                url: overlay.url,
-                coordinates: buildOverlayCorners(overlay)
-            });
-
-            map.addLayer({
-                id: overlay.id,
-                type: "raster",
-                source: sourceId,
-                layout: { visibility: "none" },
-                paint: { "raster-opacity": overlayOpacity }
-            }, "franklin-county-outline");
+        map.addSource(sourceId, {
+            type: "image",
+            url: overlay.url,
+            coordinates: buildOverlayCorners(overlay)
         });
 
-        applyOverlayOpacity(historicalSlider.value);
-    } catch (error) {
-        console.error("Historical overlay initialization failed; continuing with cemetery map:", error);
-    }
+        map.addLayer({
+            id: overlay.id,
+            type: "raster",
+            source: sourceId,
+            layout: { visibility: "none" },
+            paint: { "raster-opacity": overlayOpacity }
+        }, "franklin-county-outline");
+    });
+
+    applyOverlayOpacity(historicalSlider.value);
 
     // ---- Cemetery boundary (hidden until a cemetery is selected) ----
     map.addSource("cemetery-boundary", { type: "geojson", data: EMPTY_COLLECTION });
@@ -3676,12 +3680,7 @@ map.on("load", function () {
         }
     });
 
-    // Boundary data is optional. If it fails, cemetery markers still load.
-    try {
-        loadBoundaries();
-    } catch (error) {
-        console.error("Cemetery boundary initialization failed; continuing with cemetery map:", error);
-    }
+    loadBoundaries();
 
     // ---- Shared physical marker layers ----
     map.addSource("shared-markers-data", { type: "geojson", data: EMPTY_COLLECTION });
@@ -3690,7 +3689,6 @@ map.on("load", function () {
     map.addSource("graves-data", { type: "geojson", data: EMPTY_COLLECTION });
 
     // ---- Main cemetery CSV ----
-    console.info("FCPC: starting cemetery CSV load:", CSV_PATH);
     Papa.parse(CSV_PATH, {
 
         download: true,
@@ -4250,23 +4248,6 @@ resetButton.addEventListener("click", function () {
 });
 
 </script>
-<div id="geoDisclaimer" role="dialog" aria-modal="true" aria-labelledby="geoTitle">
-  <div class="geo-box">
-    <h3 id="geoTitle">Before You Use Location</h3>
-    <p>This feature shows your approximate position on the archive map for <strong>general reference only</strong>. It is <strong>not</strong> intended for:</p>
-    <ul>
-      <li>Turn-by-turn navigation</li>
-      <li>Route planning or travel directions</li>
-      <li>Emergency dispatch or reporting your location to emergency services</li>
-      <li>Surveying, legal boundary determination, or property-line decisions</li>
-    </ul>
-    <p>GPS accuracy varies with your device, weather, and tree cover, and cemetery and grave locations on this map are approximate. Many cemeteries are on private property or have no public access; please obtain permission and respect posted signs. Watch for uneven ground, sunken graves, and other hazards. In an emergency, call 911.</p>
-    <div class="geo-actions">
-      <button id="geoCancel" type="button">Cancel</button>
-      <button id="geoAccept" type="button">I understand</button>
-    </div>
-  </div>
-</div>
    
 </body>
 </html>
