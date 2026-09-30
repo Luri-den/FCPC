@@ -2562,7 +2562,7 @@ function processMapFilters() {
 
         const personText = intermentData.people.join(" ").toLowerCase();
 
-        // ✔️ FIXED: If no search string exists, text automatically matches (passes criteria)
+        // ✔️ FIXED: Default to TRUE if no text input constraint exists
         let textMatch = false;
         if (searchStr === "") {
             textMatch = true;
@@ -2594,7 +2594,8 @@ function processMapFilters() {
         source.setData({ type: "FeatureCollection", features: cemeteryFeatures });
     }
 
-    const activeFilters = ["all"];
+    // ✔️ FIXED: Establish an explicit "all" condition array configuration baseline
+    let activeFilters = ["all"];
 
     if (filterYear < 1900) {
         activeFilters.push([
@@ -2604,12 +2605,13 @@ function processMapFilters() {
         ]);
     }
 
-    // Only apply the strict Search_Match visibility clipping if a search filter is actively being used
+    // Force strict visual data filtering array limits ONLY when an active query is explicitly being requested
     if (searchIsActive) {
         activeFilters.push(["==", ["get", "Search_Match"], true]);
     }
 
-    map.setFilter("cemeteries-layer", activeFilters.length > 1 ? activeFilters : null);
+    // ✔️ FIXED: Pass a valid fallback base array instead of breaking the layer view on null inputs
+    map.setFilter("cemeteries-layer", activeFilters.length > 1 ? activeFilters : ["has", "Cemetery_ID"]);
 
     if (map.getLayer("cemeteries-highlight-layer")) {
         if (searchIsActive) {
@@ -2619,7 +2621,7 @@ function processMapFilters() {
                 ["==", ["get", "Search_Match"], true]
             ]);
         } else {
-            // If no search is active, hide all highlight borders entirely
+            // Hide all active golden highlights unless a physical match is selected
             map.setFilter("cemeteries-highlight-layer", ["==", ["get", "Search_Active"], true]);
         }
     }
