@@ -3,9 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <!-- Mobile app breakout support -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+
 <title>Franklin County Indiana Pioneer Cemeteries Archive Prototype</title>
 
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="manifest" href="manifest.json">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
 
@@ -3161,6 +3167,13 @@ map.on("load", function () {
         new maplibregl.NavigationControl({ showCompass: false }),
         "top-right"
     );
+
+    // Fullscreen toggle button for mobile and desktop breakout viewports
+    map.addControl(
+        new maplibregl.FullscreenControl(),
+        "top-right"
+    );
+
 
     const CSV_PATH = new URL("cemlist.csv", document.baseURI).href;
     const LAKE_CSV_PATH = new URL("lakecems.csv", document.baseURI).href;
