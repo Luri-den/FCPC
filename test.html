@@ -232,8 +232,7 @@
     }
 
     .map-hover-popup .maplibregl-popup-content { border-radius: 8px; }
-    .map-hover-popup .hover-detail { margin-top: 2px; font-size: 11px; font-weight: normal; color: #6b6258; }
-
+    .map-hover-popup .hover-detail { margin-top: 2px; font-size: 11px; font-weight: normal; color: #6b6258; white-space: pre-line; }
     /* ---------- ACCESSIBILITY LEGEND ---------- */
     #accessibility-legend {
         position: absolute; top: 10px; left: 10px; z-index: 10;
@@ -3536,15 +3535,31 @@ map.on("load", function () {
 
             // ---------------- HOVER: shared markers ----------------
             function sharedHover(event) {
-                const feature = event.features && event.features[0];
+    const feature = event.features && event.features[0];
 
-                if (feature) {
-                    showHoverLabel(
-                        "Marker for " + feature.properties.Person_Count + " people",
-                        event.lngLat
-                    );
-                }
-            }
+    if (!feature) {
+        return;
+    }
+
+    const props = feature.properties;
+    const group = getGroups(props.Cemetery_ID)[props.Marker_ID] || [];
+
+    const MAX_NAMES = 3;
+
+    const names = group.slice(0, MAX_NAMES).map(function (person) {
+        return person.name || "Unnamed Interment";
+    });
+
+    if (group.length > MAX_NAMES) {
+        names.push("and " + (group.length - MAX_NAMES) + " more");
+    }
+
+    showHoverLabel(
+        (props.Person_Count || group.length) + " people at this marker",
+        event.lngLat,
+        names.join("\n")
+    );
+}
 
             map.on("mouseenter", "shared-markers-tap-layer", function (event) {
                 map.getCanvas().style.cursor = "pointer";
