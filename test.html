@@ -1514,6 +1514,7 @@ function updateCemeteryGraves() {
                 Grave_Index: index + 1,
                 Person_Name: person.name,
                 Veteran: person.veteran,
+                War: person.war || "",
                 Pioneer: person.pioneer === true,
                 Birth: person.birth || "",
                 Death: person.death || "",
@@ -1673,6 +1674,7 @@ function handleGraveClick(event) {
         person = {
             name: props.Person_Name || "Unnamed Interment",
             veteran: props.Veteran === true,
+            war: props.War || "",
             pioneer: props.Pioneer === true,
             birth: props.Birth || "",
             death: props.Death || "",
@@ -1703,8 +1705,12 @@ function handleGraveClick(event) {
     if (person.death) { html += section("Death", person.death); }
 
     html += section("Veteran", person.veteran ? "Yes" : "No");
+   if (person.war) { 
+        html += section("Service", person.war); 
+    }
 
     if (person.vetDetails) { html += section("Veteran Details", person.vetDetails); }
+    if (person.vetDetails) { html += section("Details", person.vetDetails); }
     if (person.row) { html += section("Row", person.row); }
     if (person.plot) { html += section("Plot", person.plot); }
     if (person.stoneInfo) { html += section("Additional Information on Stone", person.stoneInfo); }
@@ -1752,7 +1758,10 @@ function showSharedMarkerPanel(cemeteryID, markerID, viewAll) {
             if (person.death) { html += popupField("Death", person.death); }
 
             html += popupField("Veteran", person.veteran ? "Yes" : "No");
+if (person.war) {html += popupField("Service", person.war); 
+            }
 
+            if (person.vetDetails) { html += popupField("Veteran Details", person.vetDetails); }
             if (person.vetDetails) { html += popupField("Veteran Details", person.vetDetails); }
             if (person.row) { html += popupField("Row", person.row); }
             if (person.plot) { html += popupField("Plot", person.plot); }
@@ -2380,6 +2389,7 @@ function loadInterments(path) {
                     plot: cleanString(row.PLOT),
                     stoneInfo: cleanString(row["ADDITIONAL INFORMATION ON STONE"]),
                     veteran: cleanString(row.VETERAN) === "1",
+                    war: cleanString(row.WAR), 
                     vetDetails: cleanString(row["VET DETAILS"]),
                     markerID: markerID,
                     originalCemeteryID: cleanString(row["ORIGINAL CEMETERY ID"]),
