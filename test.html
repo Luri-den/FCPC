@@ -3174,6 +3174,45 @@ map.on("load", function () {
         "top-right"
     );
 
+   map.addControl(
+        new maplibregl.GeolocateControl({
+            positionOptions: {
+                enableHighAccuracy: true // Forces the phone to use GPS
+            },
+            trackUserLocation: true,      // Keeps updating position
+            showUserLocation: true        // Renders the location
+        }),
+        "top-right"
+    );
+
+       // Create the Geolocate Control variable so we can listen to it
+    const geolocate = new maplibregl.GeolocateControl({
+        positionOptions: { enableHighAccuracy: true },
+        trackUserLocation: true,
+        showUserLocation: true
+    });
+   
+    map.addControl(geolocate, "top-right");
+
+    // 🗺️ FIX: Prevent map glitches if the user triggers GPS outside Franklin County
+    geolocate.on('geolocate', function(position) {
+        const userLon = position.coords.longitude;
+        const userLat = position.coords.latitude;
+
+        // Your maxBounds are: Longitude -85.50 to -84.65 | Latitude 39.10 to 39.70
+        if (userLon < -85.50 || userLon > -84.65 || userLat < 39.10 || userLat > 39.70) {
+            
+            // 1. Instantly stop tracking so the map doesn't freeze or struggle
+            geolocate.trigger(); 
+            
+            // 2. Alert the user politely
+            alert("We're sorry, but you are currently outside the archival map boundaries. The viewable map will remain centered on Franklin County, Indiana.");
+            
+            // 3. Reset the map focus smoothly back to your default county view
+            map.flyTo({ center: [-85.0626, 39.3992], zoom: 11 });
+        }
+    });
+
 
     const CSV_PATH = new URL("cemlist.csv", document.baseURI).href;
     const LAKE_CSV_PATH = new URL("lakecems.csv", document.baseURI).href;
