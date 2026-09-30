@@ -224,7 +224,7 @@
     .map-hover-popup .maplibregl-popup-content {
         padding: 6px 9px; border: 1px solid rgba(90, 75, 58, 0.55); border-radius: 14px;
         background: rgba(255, 255, 255, 0.96); box-shadow: 0 2px 7px rgba(0, 0, 0, 0.25);
-        color: #3f3528; font-size: 12px; font-weight: bold; line-height: 1.15; white-space: nowrap;
+        color: #3f3528; font-size: 12px; font-weight: bold; line-height: 1.15; white-space: normal; overflow-wrap: anywhere;
     }
     .map-hover-popup .maplibregl-popup-tip {
         border-top-color: rgba(255, 255, 255, 0.96);
@@ -853,15 +853,14 @@ function showHoverLabel(text, coordinates, detail) {
         return;
     }
 
-    if (!hoverPopup) {
-        hoverPopup = new maplibregl.Popup({
+     hoverPopup = new maplibregl.Popup({
             closeButton: false,
             closeOnClick: false,
             offset: 12,
+            maxWidth: "260px",
             className: "map-hover-popup"
         });
-    }
-
+   
     const html = "<div>" + escapeHtml(text) + "</div>" +
         (detail ? '<div class="hover-detail">' + escapeHtml(detail) + "</div>" : "");
 
@@ -3473,12 +3472,17 @@ map.on("load", function () {
             function graveHover(event) {
     const feature = event.features && event.features[0];
 
+    function graveHover(event) {
+    const feature = event.features && event.features[0];
+
     if (feature) {
         const p = feature.properties;
-        const dates = [
-            p.Birth ? "Born " + p.Birth : "",
-            p.Death ? "Died " + p.Death : ""
-        ].filter(Boolean).join(" · ");
+
+        const dates = p.Birth && p.Death
+            ? p.Birth + " – " + p.Death
+            : p.Birth ? "Born " + p.Birth
+            : p.Death ? "Died " + p.Death
+            : "";
 
         showHoverLabel(p.Person_Name || "Unnamed Interment", event.lngLat, dates);
     }
