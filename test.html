@@ -1754,21 +1754,26 @@ function showSharedMarkerPanel(cemeteryID, markerID, viewAll) {
                 <div style="border-top:1px solid #ccc; margin-top:16px; padding-top:14px;">
                     <h2>${escapeHtml(person.name || "Unnamed Interment")}</h2>`;
 
-            if (person.birth) { html += popupField("Birth", person.birth); }
+                      if (person.birth) { html += popupField("Birth", person.birth); }
             if (person.death) { html += popupField("Death", person.death); }
 
             html += popupField("Veteran", person.veteran ? "Yes" : "No");
-if (person.war) {html += popupField("Service", person.war); 
+            
+            if (person.war) {
+                html += popupField("Service", person.war); 
             }
 
-            if (person.vetDetails) { html += popupField("Veteran Details", person.vetDetails); }
-            if (person.vetDetails) { html += popupField("Veteran Details", person.vetDetails); }
+            if (person.vetDetails) { 
+                html += popupField("Veteran Details", person.vetDetails); 
+            }
+            
             if (person.row) { html += popupField("Row", person.row); }
             if (person.plot) { html += popupField("Plot", person.plot); }
             if (person.stoneInfo) { html += popupField("Additional Information on Stone", person.stoneInfo); }
 
             html += `</div>`;
         });
+
 
         infoContent.innerHTML = html;
         return;
