@@ -1273,6 +1273,137 @@ function registerGraveSymbols() {
 
 
 // ============================================================
+// SHAREABLE LINKS
+//
+//   page.html?cemetery=FC0187             opens that cemetery
+//   page.html?cemetery=FC0187&records=1   also opens its records lightbox
+//
+// The address bar follows the current selection, so whatever is on
+// screen can be shared by copying the address (or the COPY LINK button).
+// The lightbox itself (cemetery.html) is untouched; the link lives on
+// this page and simply reopens the lightbox on load.
+// ============================================================
+
+let linkHandled = false;
+let pendingRecordsID = "";
+
+function pageBaseUrl() {
+    return window.location.href.split(/[?#]/)[0];
+}
+
+function cemeteryShareUrl(cemeteryID) {
+    return pageBaseUrl() + "?cemetery=" + encodeURIComponent(cemeteryID);
+}
+
+function updateShareLink() {
+
+    const params = new URLSearchParams();
+
+    if (selectedCemeteryFeature) {
+
+        params.set("cemetery", cleanString(selectedCemeteryFeature.properties.Cemetery_ID));
+
+        if (cemeteryLightbox.style.display === "flex") {
+            params.set("records", "1");
+        }
+    }
+
+    const query = params.toString();
+
+    try {
+        history.replaceState(null, "", pageBaseUrl() + (query ? "?" + query : "") + window.location.hash);
+    }
+    catch (error) {
+        // Some browsers block this (for example for a file opened from disk);
+        // the address bar just won't update.
+    }
+}
+
+function openCemeteryRecord(cemeteryID) {
+    cemeteryLightboxFrame.src = "cemetery.html?id=" + encodeURIComponent(cemeteryID);
+    openDialog(cemeteryLightbox, closeCemeteryLightbox);
+    updateShareLink();
+}
+
+// Runs once, after the cemetery and interment data have loaded.
+function openLinkedCemetery() {
+
+    if (linkHandled) {
+        return;
+    }
+
+    linkHandled = true;
+
+    const params = new URLSearchParams(window.location.search);
+    const cemeteryID = cleanString(params.get("cemetery"));
+
+    if (!cemeteryID) {
+        return;
+    }
+
+    const feature = findCemetery(cemeteryID) ||
+        cemeteryFeatures.find(function (f) {
+            return cleanString(f.properties.Cemetery_ID).toLowerCase() === cemeteryID.toLowerCase();
+        });
+
+    if (!feature) {
+        updateShareLink();   // drop an unknown ID from the address bar
+        return;
+    }
+
+    showCemeteryPanel(feature);
+
+    if (params.get("records") === "1") {
+
+        const recordID = cleanString(feature.properties.Cemetery_ID);
+
+        if (noticesOverlay.style.display === "flex") {
+            pendingRecordsID = recordID;   // opens when the notice is dismissed
+        }
+        else {
+            openCemeteryRecord(recordID);
+        }
+    }
+}
+
+function copyText(text) {
+
+    if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text);
+    }
+
+    return new Promise(function (resolve, reject) {
+
+        const box = document.createElement("textarea");
+        box.value = text;
+        box.setAttribute("readonly", "");
+        box.style.position = "fixed";
+        box.style.opacity = "0";
+        document.body.appendChild(box);
+        box.select();
+
+        let copied = false;
+
+        try {
+            copied = document.execCommand("copy");
+        }
+        catch (error) {
+            copied = false;
+        }
+
+        document.body.removeChild(box);
+
+        if (copied) {
+            resolve();
+        }
+        else {
+            reject(new Error("copy failed"));
+        }
+    });
+}
+
+
+// ============================================================
 // INFO PANEL / LIGHTBOX / LEGEND CONTROLS
 // ============================================================
 
@@ -1287,6 +1418,7 @@ document.getElementById("close-grave-legend").addEventListener("click", function
 function closeCemeteryRecord() {
     closeDialog(cemeteryLightbox);
     cemeteryLightboxFrame.src = "";
+    updateShareLink();
 }
 
 closeCemeteryLightbox.addEventListener("click", closeCemeteryRecord);
@@ -1395,6 +1527,12 @@ function closeNotices() {
     catch (error) {
         // Ignore: the notice will simply show again next visit.
     }
+
+    if (pendingRecordsID) {
+        const recordID = pendingRecordsID;
+        pendingRecordsID = "";
+        openCemeteryRecord(recordID);
+    }
 }
 
 document.getElementById("open-notices").addEventListener("click", function (event) {
@@ -1440,9 +1578,7 @@ infoContent.addEventListener("click", function (event) {
     const seeMore = event.target.closest(".see-more-button");
 
     if (seeMore) {
-        cemeteryLightboxFrame.src =
-            "cemetery.html?id=" + encodeURIComponent(seeMore.dataset.cemeteryId);
-        openDialog(cemeteryLightbox, closeCemeteryLightbox);
+        openCemeteryRecord(seeMore.dataset.cemeteryId);
         return;
     }
 
@@ -1481,6 +1617,26 @@ infoContent.addEventListener("click", function (event) {
             selectSearchResult({ type: "person", feature: host, person: entry.person });
         }
 
+        return;
+    }
+
+    const copyButton = event.target.closest(".copy-link-button");
+
+    if (copyButton) {
+
+        const url = cemeteryShareUrl(copyButton.dataset.copyCemeteryId);
+        const label = copyButton.dataset.label || copyButton.textContent;
+        copyButton.dataset.label = label;
+
+        copyText(url).then(function () {
+            copyButton.textContent = "LINK COPIED";
+            announce("Link copied");
+        }).catch(function () {
+            copyButton.textContent = label;
+            window.prompt("Copy this link:", url);
+        });
+
+        setTimeout(function () { copyButton.textContent = label; }, 2000);
         return;
     }
 
@@ -1879,6 +2035,7 @@ function enterCemeteryMode(feature) {
     fitSelectedCemetery();
 
     updateGraveLegend(cleanString(feature.properties.Cemetery_ID));
+    updateShareLink();
 }
 
 function exitCemeteryMode() {
@@ -1896,6 +2053,7 @@ function exitCemeteryMode() {
     infoPanel.style.display = "block";
 
     map.flyTo({ center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM, duration: 800 });
+    updateShareLink();
 }
 
 
@@ -2196,6 +2354,12 @@ function showCemeteryPanel(feature) {
                 class="export-button export-cemetery-button"
                 data-export-cemetery-id="${escapeHtml(props.Cemetery_ID)}"
             >EXPORT THIS CEMETERY (CSV)</button>
+
+            <button
+                type="button"
+                class="export-button copy-link-button"
+                data-copy-cemetery-id="${escapeHtml(props.Cemetery_ID)}"
+            >COPY LINK</button>
         </p>
     `;
 
@@ -2737,10 +2901,12 @@ function loadInterments(path) {
             }
 
             processMapFilters();
+            openLinkedCemetery();
         },
 
         error: function (error) {
             console.error("interments.csv loading error:", error);
+            openLinkedCemetery();
         }
     });
 }
@@ -2933,6 +3099,7 @@ function clearCemeterySelection() {
     updateCemeteryFeatures();
     updateCemeteryGraves();
     applyCemeteryMarkerFilters();
+    updateShareLink();
 }
 
 function hideLakeSpokes() {
@@ -3493,6 +3660,11 @@ map.on("load", function () {
     map.addControl(
         new maplibregl.FullscreenControl(),
         "top-right"
+    );
+
+    map.addControl(
+        new maplibregl.ScaleControl({ maxWidth: 110, unit: "imperial" }),
+        "bottom-left"
     );
 
     // One single Geolocate control
@@ -4220,6 +4392,7 @@ resetButton.addEventListener("click", function () {
 
     infoPanel.style.display = "block";
     showDefaultInfo();
+    updateShareLink();
 });
 
 </script>
