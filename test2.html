@@ -1636,6 +1636,30 @@ function loadBoundaries() {
         })
         .then(function (data) {
 
+            // Entrances live inside each cemetery's boundary feature as an
+            // ENTRANCES list. Expand them into point features here so the rest
+            // of the page (which looks for TYPE: "ENTRANCE") works unchanged.
+            // Separate flat ENTRANCE features in the file still work too.
+            data.features = (data.features || []).flatMap(function (feature) {
+
+                const properties = feature.properties || {};
+                const list = Array.isArray(properties.ENTRANCES) ? properties.ENTRANCES : [];
+
+                const entrances = list.map(function (entrance) {
+                    return {
+                        type: "Feature",
+                        properties: {
+                            CEMETERY_ID: properties.CEMETERY_ID,
+                            TYPE: "ENTRANCE",
+                            LABEL: entrance.label || "Entrance"
+                        },
+                        geometry: { type: "Point", coordinates: entrance.coords }
+                    };
+                });
+
+                return [feature].concat(entrances);
+            });
+
             boundaryData = data;
 
             updateCemeteryBoundary();
