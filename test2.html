@@ -2456,13 +2456,13 @@ function showCemeteryPanel(feature) {
 
     infoContent.innerHTML = `
 
-        <img
-            src="photos/${encodeURIComponent(props.Cemetery_ID)}.jpg"
-            alt="${escapeHtml(props.Cemetery_Name || "Cemetery")}"
-            class="cemetery-popup-photo"
-            onerror="this.style.display='none';"
-        >
-
+       <img
+    src="photos/${encodeURIComponent(props.Cemetery_ID)}.jpg"
+    alt="${escapeHtml(props.Cemetery_Name || "Cemetery")}"
+    class="cemetery-popup-photo"
+    data-cemetery-photo-id="${escapeHtml(props.Cemetery_ID)}"
+    onerror="tryNextCemeteryPopupPhoto(this);"
+>
         <h2>${escapeHtml(props.Cemetery_Name || "Unknown Site")}</h2>
 
         <h3>Alternate Name</h3>
@@ -4621,6 +4621,35 @@ gravePhotoLightbox.addEventListener(
     }
 );
 
+   function tryNextCemeteryPopupPhoto(image) {
+
+    const extensions = [
+        "jpg",
+        "jpeg",
+        "png",
+        "webp",
+        "gif"
+    ];
+
+    const cemeteryID =
+        image.dataset.cemeteryPhotoId;
+
+    let index =
+        Number(image.dataset.photoExtensionIndex || 0) + 1;
+
+    if (index >= extensions.length) {
+
+        image.style.display = "none";
+
+        return;
+    }
+
+    image.dataset.photoExtensionIndex =
+        index;
+
+    image.src =
+        `photos/${encodeURIComponent(cemeteryID)}.${extensions[index]}`;
+};
    
 </script>
 </body>
