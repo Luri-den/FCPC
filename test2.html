@@ -1875,6 +1875,7 @@ function enterCemeteryMode(feature) {
     updateCemeteryBoundary();
     updateCemeteryFeatures();
     updateCemeteryGraves();
+    applyCemeteryMarkerFilters();
     fitSelectedCemetery();
 
     updateGraveLegend(cleanString(feature.properties.Cemetery_ID));
@@ -1889,6 +1890,7 @@ function exitCemeteryMode() {
     updateCemeteryBoundary();
     updateCemeteryFeatures();
     updateCemeteryGraves();
+    applyCemeteryMarkerFilters();
 
     showDefaultInfo();
     infoPanel.style.display = "block";
@@ -2507,6 +2509,63 @@ function selectSearchResult(result) {
     }
 }
 
+// Applies the year / search / veterans filters to the cemetery markers,
+// and hides the marker of the cemetery that is currently selected, so it is
+// not mistaken for a grave while the person is zoomed in on it.
+function applyCemeteryMarkerFilters() {
+
+    if (!map.getLayer("cemeteries-layer")) {
+        return;
+    }
+
+    const filterYear = parseInt(yearSlider.value, 10);
+    const searchIsActive = searchBox.value.trim() !== "" || veteransOnly;
+
+    const selectedID = selectedCemeteryFeature
+        ? cleanString(selectedCemeteryFeature.properties.Cemetery_ID)
+        : "";
+
+    const notSelected = ["!=", ["get", "Cemetery_ID"], selectedID];
+
+    const activeFilters = ["all"];
+
+    if (filterYear < 1900) {
+        activeFilters.push([
+            "all",
+            [">", ["get", "Established_Year"], 0],
+            ["<=", ["get", "Established_Year"], filterYear]
+        ]);
+    }
+
+    if (searchIsActive) {
+        activeFilters.push(["==", ["get", "Search_Match"], true]);
+    }
+
+    if (selectedID) {
+        activeFilters.push(notSelected);
+    }
+
+    map.setFilter("cemeteries-layer", activeFilters.length > 1 ? activeFilters : null);
+
+    if (map.getLayer("cemeteries-highlight-layer")) {
+
+        const highlightFilters = [
+            "all",
+            ["==", ["get", "Search_Active"], true]
+        ];
+
+        if (searchIsActive) {
+            highlightFilters.push(["==", ["get", "Search_Match"], true]);
+        }
+
+        if (selectedID) {
+            highlightFilters.push(notSelected);
+        }
+
+        map.setFilter("cemeteries-highlight-layer", highlightFilters);
+    }
+}
+
 function processMapFilters() {
 
     const searchStr = searchBox.value.toLowerCase().trim();
@@ -2562,37 +2621,7 @@ function processMapFilters() {
         source.setData({ type: "FeatureCollection", features: cemeteryFeatures });
     }
 
-    const activeFilters = ["all"];
-
-    if (filterYear < 1900) {
-        activeFilters.push([
-            "all",
-            [">", ["get", "Established_Year"], 0],
-            ["<=", ["get", "Established_Year"], filterYear]
-        ]);
-    }
-
-    if (searchIsActive) {
-        activeFilters.push(["==", ["get", "Search_Match"], true]);
-    }
-
-    map.setFilter("cemeteries-layer", activeFilters.length > 1 ? activeFilters : null);
-
-    if (map.getLayer("cemeteries-highlight-layer")) {
-
-        if (searchIsActive) {
-            map.setFilter("cemeteries-highlight-layer", [
-                "all",
-                ["==", ["get", "Search_Active"], true],
-                ["==", ["get", "Search_Match"], true]
-            ]);
-        }
-        else {
-            map.setFilter("cemeteries-highlight-layer", [
-                "==", ["get", "Search_Active"], true
-            ]);
-        }
-    }
+    applyCemeteryMarkerFilters();
 
     updateSearchDirections();
 }
@@ -2903,6 +2932,7 @@ function clearCemeterySelection() {
     updateCemeteryBoundary();
     updateCemeteryFeatures();
     updateCemeteryGraves();
+    applyCemeteryMarkerFilters();
 }
 
 function hideLakeSpokes() {
