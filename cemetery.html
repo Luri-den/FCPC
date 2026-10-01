@@ -699,38 +699,51 @@ function loadPhotos() {
         );
 
 
-    // --------------------------------------------------------
-    // PHOTO FILE NAMES
-    //
-    // First photo:
-    // FC0031.jpg
-    //
-    // Additional photos:
-    // FC0031-2.jpg
-    // FC0031-3.jpg
-    // FC0031-4.jpg
-    // etc.
-    // --------------------------------------------------------
+   // --------------------------------------------------------
+// PHOTO FILE NAMES
+//
+// First photo:
+// FC0031.jpg
+// FC0031.png
+//
+// Additional photos:
+// FC0031-2.jpg
+// FC0031-2.png
+// FC0031-3.webp
+// etc.
+// --------------------------------------------------------
 
-    const photoPaths = [
-
-        `photos/${encodeURIComponent(cemeteryID)}.jpg`,
-
-        `photos/${encodeURIComponent(cemeteryID)}-2.jpg`,
-
-        `photos/${encodeURIComponent(cemeteryID)}-3.jpg`,
-
-        `photos/${encodeURIComponent(cemeteryID)}-4.jpg`,
-
-        `photos/${encodeURIComponent(cemeteryID)}-5.jpg`
-
-    ];
+const extensions = [
+    "jpg",
+    "jpeg",
+    "png",
+    "webp",
+    "gif"
+];
 
 
-    const validPhotos = [];
+const photoPaths = [];
 
 
-    let completed = 0;
+for (let i = 0; i <= 5; i++) {
+
+    const suffix =
+        i === 0
+            ? ""
+            : `-${i + 1}`;
+
+
+    extensions.forEach(
+        function(ext) {
+
+            photoPaths.push(
+                `photos/${encodeURIComponent(cemeteryID)}${suffix}.${ext}`
+            );
+
+        }
+    );
+
+}
 
 
     // --------------------------------------------------------
