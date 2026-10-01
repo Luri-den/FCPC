@@ -366,8 +366,13 @@
     .legend-title { margin-bottom: 7px; font-size: 12px; font-weight: bold; color: #555; }
     .legend-item { display: flex; align-items: center; gap: 8px; margin: 5px 0; font-size: 13px; line-height: 1.4; white-space: nowrap; }
     .legend-circle {
+        position: relative;
         display: inline-block; width: 14px; height: 14px; min-width: 14px;
         border-radius: 50%; border: 1px solid rgba(0, 0, 0, 0.25);
+    }
+    .legend-circle svg {
+        position: absolute; top: 50%; left: 50%; width: 14px; height: 14px;
+        transform: translate(-50%, -50%); overflow: visible; pointer-events: none;
     }
 
     /* ---------- OFF-SCREEN SEARCH DIRECTIONS ---------- */
@@ -559,9 +564,9 @@
 
             <div class="legend-title" style="margin-top: 12px;">ACCESSIBILITY</div>
             <div class="legend-item"><span class="legend-circle" style="background-color: #01796F;"></span><span>Public</span></div>
-            <div class="legend-item"><span class="legend-circle" style="background-color: #C9A227;"></span><span>With Permission</span></div>
-            <div class="legend-item"><span class="legend-circle" style="background-color: #D2691E;"></span><span>Private Land</span></div>
-            <div class="legend-item"><span class="legend-circle" style="background-color: #8B0000;"></span><span>Inaccessible</span></div>
+            <div class="legend-item"><span class="legend-circle" style="background-color: #C9A227;"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M4 7H10" stroke="rgba(0,0,0,0.75)" stroke-width="2.6" stroke-linecap="round"/><path d="M4 7H10" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></span><span>With Permission</span></div>
+            <div class="legend-item"><span class="legend-circle" style="background-color: #D2691E;"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M4.4 4.4L9.6 9.6" stroke="rgba(0,0,0,0.75)" stroke-width="2.6" stroke-linecap="round"/><path d="M4.4 4.4L9.6 9.6" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></span><span>Private Land</span></div>
+            <div class="legend-item"><span class="legend-circle" style="background-color: #8B0000;"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M4.4 4.4L9.6 9.6M9.6 4.4L4.4 9.6" stroke="rgba(0,0,0,0.75)" stroke-width="2.6" stroke-linecap="round"/><path d="M4.4 4.4L9.6 9.6M9.6 4.4L4.4 9.6" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></span><span>Inaccessible</span></div>
             <div class="legend-item"><span class="legend-circle" style="background-color: #777777;"></span><span>Unknown</span></div>
 
             <div class="legend-title" style="margin-top: 12px;">GRAVE MARKERS</div>
@@ -1375,6 +1380,79 @@ function makeEntranceSymbol() {
     };
 }
    
+
+// ------------------------------------------------------------
+// ACCESS MARKS
+// A white mark with a dark outline, drawn on top of each cemetery's
+// colored circle so access never depends on color alone:
+//   Inaccessible = X     Private Land = \     With Permission = bar
+//   Public / Unknown = no mark
+// ------------------------------------------------------------
+
+const ACCESS_MARK_FILTER = [
+    "any",
+    ["==", ["get", "Access"], 0],
+    ["==", ["get", "Access"], 1],
+    ["==", ["get", "Access"], 2]
+];
+
+function makeAccessMark(kind) {
+
+    const size = 64;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+
+    const ctx = canvas.getContext("2d");
+    const c = size / 2;
+    const r = 12;
+
+    function tracePath() {
+        ctx.beginPath();
+
+        if (kind === "inaccessible") {
+            ctx.moveTo(c - r, c - r); ctx.lineTo(c + r, c + r);
+            ctx.moveTo(c + r, c - r); ctx.lineTo(c - r, c + r);
+        }
+        else if (kind === "private") {
+            ctx.moveTo(c - r, c - r); ctx.lineTo(c + r, c + r);
+        }
+        else {
+            ctx.moveTo(c - r, c); ctx.lineTo(c + r, c);
+        }
+    }
+
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.75)";
+    ctx.lineWidth = 12;
+    tracePath();
+    ctx.stroke();
+
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 7.5;
+    tracePath();
+    ctx.stroke();
+
+    return {
+        width: size,
+        height: size,
+        data: ctx.getImageData(0, 0, size, size).data
+    };
+}
+
+function registerAccessMarks() {
+    ["inaccessible", "private", "permission"].forEach(function (kind) {
+
+        const name = "access-mark-" + kind;
+
+        if (!map.hasImage(name)) {
+            map.addImage(name, makeAccessMark(kind), { pixelRatio: 2 });
+        }
+    });
+}
+
 
 function registerGraveSymbols() {
     const shapes = ["circle", "square"];
@@ -2864,6 +2942,13 @@ function applyCemeteryMarkerFilters() {
 
     map.setFilter("cemeteries-layer", activeFilters.length > 1 ? activeFilters : null);
 
+    if (map.getLayer("cemeteries-marks-layer")) {
+        map.setFilter(
+            "cemeteries-marks-layer",
+            ["all", ACCESS_MARK_FILTER].concat(activeFilters.slice(1))
+        );
+    }
+
     if (map.getLayer("cemeteries-highlight-layer")) {
 
         const highlightFilters = [
@@ -3794,6 +3879,7 @@ map.on("load", function () {
     }
 
     registerGraveSymbols();
+    registerAccessMarks();
 
     if (!map.hasImage("cemetery-entrance")) {
         map.addImage(
@@ -4076,6 +4162,30 @@ map.on("load", function () {
                     ],
                     "circle-stroke-width": 2,
                     "circle-stroke-color": "#ffffff"
+                }
+            });
+
+            // Access marks: same sizes as the circles, so they scale with grave count
+            map.addLayer({
+                id: "cemeteries-marks-layer",
+                type: "symbol",
+                source: "cemeteries-data",
+                filter: ACCESS_MARK_FILTER,
+                layout: {
+                    "icon-image": [
+                        "match", ["get", "Access"],
+                        0, "access-mark-inaccessible",
+                        1, "access-mark-private",
+                        "access-mark-permission"
+                    ],
+                    "icon-size": [
+                        "case",
+                        ["<", ["get", "Grave_Count"], 0],
+                        0.49,
+                        ["step", ["get", "Grave_Count"], 0.37, 25, 0.49, 100, 0.67, 250, 0.86, 500, 1.1]
+                    ],
+                    "icon-allow-overlap": true,
+                    "icon-ignore-placement": true
                 }
             });
 
