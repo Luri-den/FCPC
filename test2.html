@@ -3742,17 +3742,12 @@ map.on("load", function () {
                         ["step", ["get", "Grave_Count"], 6, 25, 8, 100, 11, 250, 14, 500, 18]
                     ],
                     "circle-color": [
-                        "case",
-                        ["<", ["get", "Grave_Count"], 0],
-                        "#777777",
-                        [
-                            "match", ["get", "Access"],
-                            0, "#8B0000",
-                            1, "#D2691E",
-                            2, "#C9A227",
-                            3, "#01796F",
-                            "#777777"
-                        ]
+                        "match", ["get", "Access"],
+                        0, "#8B0000",
+                        1, "#D2691E",
+                        2, "#C9A227",
+                        3, "#01796F",
+                        "#777777"
                     ],
                     "circle-stroke-width": 2,
                     "circle-stroke-color": "#ffffff"
