@@ -200,6 +200,47 @@ h2 {
 
 }
 
+   /* ============================================================
+   GRAVE PHOTO IN INTERMENT LIST
+   ============================================================ */
+
+.interment-with-photo {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.interment-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.grave-list-photo {
+    width: 110px;
+    height: 140px;
+    object-fit: cover;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.grave-list-photo:hover {
+    border-color: #01796F;
+}
+
+@media (max-width: 600px) {
+
+    .grave-list-photo {
+        width: 85px;
+        height: 110px;
+    }
+
+    .interment-with-photo {
+        gap: 10px;
+    }
+
+}
 
 /* ============================================================
    INTERMENT RECORDS
@@ -1071,7 +1112,28 @@ function displayInterments(
         interments.map(
             function(row) {
 
+                // ------------------------------------------------
+                // GRAVE PHOTO
+                //
+                // Uses MARKER_ID:
+                // M-202-007
+                //
+                // Looks for:
+                // photos/gravepics/M-202-007-1.jpg
+                // ------------------------------------------------
 
+                const markerID =
+                    String(
+                        row.MARKER_ID
+                        ||
+                        ""
+                    ).trim();
+
+
+                const gravePhoto =
+                    markerID
+                        ? `photos/gravepics/${encodeURIComponent(markerID)}-1.jpg`
+                        : "";
                 // ------------------------------------------------
                 // NAME
                 // ------------------------------------------------
@@ -1291,12 +1353,15 @@ function displayInterments(
                 // RETURN INTERMENT
                 // ------------------------------------------------
 
-                return `
+               return `
 
-                    <div class="interment">
+    <div class="interment">
 
+        <div class="interment-with-photo">
 
-                                                <div class="person-name">
+            <div class="interment-details">
+
+                <div class="person-name">
 
                             <span class="person-name-left">
 
@@ -1411,13 +1476,34 @@ function displayInterments(
                                 ${pioneerText}
                             </span>
 
-                        </div>
+                                              </div>
 
 
                     </div>
 
-                `;
 
+                    ${
+                        gravePhoto
+                            ? `
+
+                                <img
+                                    src="${gravePhoto}"
+                                    alt="Grave marker photograph"
+                                    class="grave-list-photo"
+                                    onclick="openGravePhoto('${gravePhoto}')"
+                                    onerror="this.style.display='none';"
+                                >
+
+                              `
+                            : ""
+                    }
+
+
+                </div>
+
+            </div>
+
+        `;
 
             }
         ).join("");
