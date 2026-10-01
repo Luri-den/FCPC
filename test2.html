@@ -174,6 +174,56 @@
     .lake-cemetery h3 { margin: 0 0 10px 0; font-size: 16px; color: #463a2d; }
     .lake-introduction { margin: 0 0 12px 0; line-height: 1.4; font-size: 14px; }
 
+    /* ---------- GRAVE PHOTO ---------- */
+
+.grave-info-with-photo {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.grave-info-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.grave-photo-link {
+    display: block;
+    flex: 0 0 110px;
+    width: 110px;
+    cursor: pointer;
+}
+
+.grave-photo-thumb {
+    display: block;
+    width: 110px;
+    height: 140px;
+    object-fit: cover;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    background: #eee9dc;
+}
+
+.grave-photo-link:hover .grave-photo-thumb {
+    border-color: #01796F;
+}
+
+@media (max-width: 700px) {
+    .grave-photo-link {
+        flex-basis: 90px;
+        width: 90px;
+    }
+
+    .grave-photo-thumb {
+        width: 90px;
+        height: 115px;
+    }
+
+    .grave-info-with-photo {
+        gap: 10px;
+    }
+}
+   
     /* ---------- MAP ---------- */
     #map { flex: 1; min-height: 0; width: 100%; position: relative; }
 
@@ -536,6 +586,54 @@
         <button id="close-grave-legend" title="Close Legend" aria-label="Close Legend">&times;</button>
         <div id="grave-legend-content"></div>
     </div>
+   <div id="grave-photo-lightbox"
+     style="
+        display:none;
+        position:absolute;
+        inset:0;
+        background:rgba(0,0,0,0.82);
+        z-index:30;
+        align-items:center;
+        justify-content:center;
+        padding:20px;
+     ">
+
+    <button
+        id="close-grave-photo-lightbox"
+        type="button"
+        aria-label="Close grave photo"
+        style="
+            position:absolute;
+            top:15px;
+            right:20px;
+            width:38px;
+            height:38px;
+            padding:0;
+            border:none;
+            border-radius:50%;
+            background:rgba(255,255,255,0.92);
+            color:#3f3528;
+            font-size:28px;
+            line-height:38px;
+            cursor:pointer;
+            z-index:31;
+        "
+    >&times;</button>
+
+    <img
+        id="grave-photo-lightbox-image"
+        src=""
+        alt="Grave marker photograph"
+        style="
+            max-width:95%;
+            max-height:92%;
+            object-fit:contain;
+            border-radius:4px;
+            box-shadow:0 4px 20px rgba(0,0,0,0.4);
+        "
+    >
+
+</div>
 </div>
 
 </main>
@@ -921,6 +1019,45 @@ function escapeHtml(value) {
         .replace(/'/g, "&#039;");
 }
 
+function gravePhotoPath(markerID) {
+
+    if (!markerID) {
+        return "";
+    }
+
+    return (
+        "photos/gravepics/" +
+        encodeURIComponent(markerID) +
+        "-1.jpg"
+    );
+}
+
+
+function buildGravePhoto(markerID) {
+
+    const path = gravePhotoPath(markerID);
+
+    if (!path) {
+        return "";
+    }
+
+    return `
+        <a
+            href="${path}"
+            class="grave-photo-link"
+            data-grave-photo="${path}"
+            aria-label="View grave marker photograph"
+        >
+            <img
+                src="${path}"
+                class="grave-photo-thumb"
+                alt="Grave marker photograph"
+                onerror="this.closest('.grave-photo-link').remove();"
+            >
+        </a>
+    `;
+}
+   
 function cleanString(value) {
     return String(value == null ? "" : value).trim();
 }
@@ -2112,9 +2249,17 @@ function handleGraveClick(event) {
         return `<h3>${title}</h3><p>${escapeHtml(value)}</p>`;
     }
 
-    let html = `<h2>${escapeHtml(person.name || "Unnamed Interment")}</h2>`;
+   const gravePhoto = buildGravePhoto(person.markerID);
 
-    html += section("Cemetery", cemeteryName || "");
+let html = `
+    <div class="grave-info-with-photo">
+
+        <div class="grave-info-details">
+
+            <h2>${escapeHtml(person.name || "Unnamed Interment")}</h2>
+
+            ${section("Cemetery", cemeteryName || "")}
+`;
 
     if (person.originalCemeteryID) {
         const formerRow = lakeRowByID(person.originalCemeteryID);
@@ -2135,6 +2280,14 @@ function handleGraveClick(event) {
     if (person.stoneInfo) { html += section("Additional Information on Stone", person.stoneInfo); }
     if (person.markerID) { html += section("Marker ID", person.markerID); }
 
+        html += `
+            </div>
+
+            ${gravePhoto}
+
+        </div>
+        `;
+   
     infoContent.innerHTML = html;
 
     if (event.originalEvent) {
@@ -4395,6 +4548,80 @@ resetButton.addEventListener("click", function () {
     updateShareLink();
 });
 
+// ============================================================
+// GRAVE PHOTO LIGHTBOX
+// ============================================================
+
+const gravePhotoLightbox =
+    document.getElementById(
+        "grave-photo-lightbox"
+    );
+
+const gravePhotoLightboxImage =
+    document.getElementById(
+        "grave-photo-lightbox-image"
+    );
+
+const closeGravePhotoLightbox =
+    document.getElementById(
+        "close-grave-photo-lightbox"
+    );
+
+
+document.addEventListener(
+    "click",
+    function(event) {
+
+        const link =
+            event.target.closest(
+                ".grave-photo-link"
+            );
+
+        if (!link) {
+            return;
+        }
+
+        event.preventDefault();
+
+        gravePhotoLightboxImage.src =
+            link.dataset.gravePhoto;
+
+        gravePhotoLightbox.style.display =
+            "flex";
+    }
+);
+
+
+closeGravePhotoLightbox.addEventListener(
+    "click",
+    function() {
+
+        gravePhotoLightbox.style.display =
+            "none";
+
+        gravePhotoLightboxImage.src = "";
+    }
+);
+
+
+gravePhotoLightbox.addEventListener(
+    "click",
+    function(event) {
+
+        if (
+            event.target ===
+            gravePhotoLightbox
+        ) {
+
+            gravePhotoLightbox.style.display =
+                "none";
+
+            gravePhotoLightboxImage.src = "";
+        }
+    }
+);
+
+   
 </script>
 </body>
 </html>
