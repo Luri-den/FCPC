@@ -306,9 +306,16 @@
     #marker-legend .gl-mods { border-left: none; border-top: 1px solid #ddd; padding: 8px 0 0 0; align-items: flex-start; }
     #marker-legend .gl-mod { align-items: flex-start; }
 
+    /* Narrow screens: types stack tightly; the two modifiers sit side by side in one row */
+    .gl-mods-row { display: flex; flex-wrap: wrap; gap: 0 18px; }
+    #marker-legend .gl-mods-row { gap: 0 14px; }
+
     @media (max-width: 700px) {
-        .gl-cols { flex-direction: column; gap: 8px; }
-        .gl-mods { border-left: none; border-top: 1px solid #ccc; padding: 8px 0 0 0; }
+        .gl-cols { flex-direction: column; gap: 6px; }
+        .gl-col { gap: 0; }
+        .gl-mods { border-left: none; border-top: 1px solid #ccc; padding: 6px 0 0 0; }
+        .grave-legend-item { gap: 4px; }
+        .grave-legend-item img { width: 24px; height: 24px; }
         #grave-legend {
             left: 8px;
             right: 60px;
@@ -1196,7 +1203,7 @@ function graveKeyHTML(seen) {
 
     return '<div class="gl-cols">' +
         (types ? '<div class="gl-col"><div class="gl-head">TYPES</div>' + types + '</div>' : '') +
-        (mods ? '<div class="gl-col gl-mods"><div class="gl-head">MODIFIERS</div>' + mods + '</div>' : '') +
+        (mods ? '<div class="gl-col gl-mods"><div class="gl-head">MODIFIERS</div><div class="gl-mods-row">' + mods + '</div></div>' : '') +
         '</div>';
 }
 
