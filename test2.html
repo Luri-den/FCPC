@@ -514,6 +514,9 @@
     .search-result-title { display: block; font-weight: bold; }
     .search-result-detail { display: block; margin-top: 2px; font-size: 13px; color: #6b6258; }
     .search-results-note { padding: 8px 12px; font-size: 13px; color: #6b6258; }
+    .search-scope-all { display: block; width: 100%; min-height: 44px; padding: 10px 12px; text-align: left;
+        border: none; border-top: 1px solid #d8d0c0; background: #f3efe6; color: #01796F;
+        font: inherit; font-weight: bold; cursor: pointer; }
 
     /* ---------- BASEMAP SWITCH (inside the legend panel) ---------- */
     #basemap-toggle { display: flex; gap: 4px; }
@@ -2621,6 +2624,7 @@ function enterCemeteryMode(feature) {
     hideLakeSpokes();
 
     selectedCemeteryFeature = feature;
+    resetSearchScope();
     resetGraveFilter();
     clearSelectedGrave();
     infoPanel.style.display = "block";
@@ -2638,6 +2642,7 @@ function enterCemeteryMode(feature) {
 function exitCemeteryMode() {
 
     selectedCemeteryFeature = null;
+    resetSearchScope();
     document.getElementById("grave-legend").style.display = "none";
     removeHoverLabel();
 
@@ -2997,8 +3002,9 @@ function updateSearchDirections() {
     searchDirections.innerHTML = "";
 
     const searchIsActive = searchBox.value.trim() !== "" || veteransOnly;
+    const graveArrowWanted = !!(selectedCemeteryFeature && selectedGraveCoords);
 
-    if (!searchIsActive) {
+    if (!searchIsActive && !graveArrowWanted) {
         return;
     }
 
@@ -3029,6 +3035,66 @@ function updateSearchDirections() {
 
     function clampY(y) {
         return Math.max(edgePadding, Math.min(height - edgePadding, y));
+    }
+
+    // Arrow back to the selected grave when it is panned off screen (or under the card).
+    if (graveArrowWanted) {
+
+        const panelBox = document.getElementById("info-panel");
+        let covered = 0;
+
+        if (isNarrow() && panelBox.style.display !== "none") {
+            covered = (sheetCollapsed ? SHEET_PEEK : panelBox.getBoundingClientRect().height) + 8;
+        }
+
+        const visibleH = Math.max(40, height - covered);
+        const gp = map.project(selectedGraveCoords);
+
+        if (!(gp.x >= 0 && gp.x <= width && gp.y >= 0 && gp.y <= visibleH)) {
+
+            const gx = gp.x - centerX;
+            const gy = gp.y - (visibleH / 2);
+            const gScale = Math.min(
+                Math.abs((width / 2 - (edgePadding + edgePaddingRight) / 2) / (gx || 0.001)),
+                Math.abs((visibleH / 2 - edgePadding) / (gy || 0.001))
+            );
+
+            const ax = clampX(centerX + gx * gScale);
+            const ay = Math.max(edgePadding, Math.min(visibleH - edgePadding, (visibleH / 2) + gy * gScale));
+
+            usedPositions.push({ x: ax, y: ay });
+
+            const gIndicator = document.createElement("div");
+            gIndicator.className = "search-direction";
+            gIndicator.style.left = ax + "px";
+            gIndicator.style.top = ay + "px";
+            gIndicator.style.transform = "translate(-50%, -50%)";
+            gIndicator.title = "Go to the selected grave";
+
+            const gArrow = document.createElement("span");
+            gArrow.className = "search-direction-arrow";
+            gArrow.textContent = "\u27A4";
+            gArrow.style.transform = "rotate(" + (Math.atan2(gy, gx) * 180 / Math.PI) + "deg)";
+
+            const gName = document.createElement("span");
+            gName.className = "search-direction-name";
+            gName.textContent = "Selected grave";
+
+            gIndicator.appendChild(gArrow);
+            gIndicator.appendChild(gName);
+
+            gIndicator.addEventListener("click", function (event) {
+                event.stopPropagation();
+                recenterSelectedGrave();
+            });
+
+            searchDirections.appendChild(gIndicator);
+        }
+    }
+
+    // Cemetery arrows belong to the wholesale search only.
+    if (!searchIsActive || isScopedSearch()) {
+        return;
     }
 
     cemeteryFeatures.forEach(function (feature) {
@@ -3122,6 +3188,25 @@ function updateSearchDirections() {
 // SEARCH / FILTER PROCESSOR
 // ============================================================
 
+// While zoomed into a cemetery, search is limited to that cemetery's people.
+// "Search all cemeteries instead" turns the limit off until the view changes.
+let searchAllCemeteries = false;
+
+function isScopedSearch() {
+    return !!selectedCemeteryFeature && !searchAllCemeteries;
+}
+
+function refreshSearchPlaceholder() {
+    const text = isScopedSearch() ? "Search this cemetery..." : "Search cemeteries or people...";
+    searchBox.placeholder = text;
+    searchBox.setAttribute("aria-label", text);
+}
+
+function resetSearchScope() {
+    searchAllCemeteries = false;
+    refreshSearchPlaceholder();
+}
+
 const MAX_CEMETERY_RESULTS = 8;
 const MAX_PERSON_RESULTS = 20;
 
@@ -3141,12 +3226,19 @@ function updateSearchResults(searchStr, filterYear) {
 
     const cemeteryHits = [];
     const personHits = [];
+    const scopedID = isScopedSearch()
+        ? cleanString(selectedCemeteryFeature.properties.Cemetery_ID)
+        : null;
 
     cemeteryFeatures.forEach(function (feature) {
 
         const props = feature.properties;
 
-        if (filterYear < 1900) {
+        if (scopedID && cleanString(props.Cemetery_ID) !== scopedID) {
+            return;
+        }
+
+        if (!scopedID && filterYear < 1900) {
             const year = Number(props.Established_Year);
 
             if (!(year > 0 && year <= filterYear)) {
@@ -3157,7 +3249,7 @@ function updateSearchResults(searchStr, filterYear) {
         const data = intermentsByCemetery[cleanString(props.Cemetery_ID)] ||
             { rows: [], veteran: false };
 
-        if (veteransOnly && !(Number(props.Vets) === 1 || data.veteran)) {
+        if (!scopedID && veteransOnly && !(Number(props.Vets) === 1 || data.veteran)) {
             return;
         }
 
@@ -3165,14 +3257,14 @@ function updateSearchResults(searchStr, filterYear) {
             (String(props.Cemetery_Name || "") + " " + String(props.Other_Names || ""))
                 .toLowerCase();
 
-        if (searchCemetery && cemeteryText.includes(searchStr)) {
+        if (!scopedID && searchCemetery && cemeteryText.includes(searchStr)) {
             cemeteryHits.push({ type: "cemetery", feature: feature });
         }
 
-        if (searchPerson) {
+        if (searchPerson || scopedID) {
             (data.rows || []).forEach(function (person) {
 
-                if (veteransOnly && !person.veteran) {
+                if (!scopedID && veteransOnly && !person.veteran) {
                     return;
                 }
 
@@ -3203,7 +3295,8 @@ function updateSearchResults(searchStr, filterYear) {
     let html = "";
 
     if (!currentSearchResults.length) {
-        html = '<div class="search-results-note">No matches found.</div>';
+        html = '<div class="search-results-note">' +
+               (scopedID ? "No matches in this cemetery." : "No matches found.") + '</div>';
     }
 
     if (shownCemeteries.length) {
@@ -3257,6 +3350,10 @@ function updateSearchResults(searchStr, filterYear) {
         if (personHits.length > shownPeople.length) {
             html += `<div class="search-results-note">+ ${personHits.length - shownPeople.length} more. Keep typing to narrow the list.</div>`;
         }
+    }
+
+    if (scopedID) {
+        html += '<button type="button" class="search-scope-all" id="search-all-btn">Search all cemeteries instead</button>';
     }
 
     searchResultsBox.innerHTML = html;
@@ -3715,6 +3812,7 @@ function clearCemeterySelection() {
     }
 
     selectedCemeteryFeature = null;
+    resetSearchScope();
     removeHoverLabel();
     updateCemeteryBoundary();
     updateCemeteryFeatures();
@@ -4933,6 +5031,13 @@ map.on("click", function (event) {
         }
     }
 
+    // One level at a time: grave card -> cemetery card -> main map.
+    if (selectedGraveCoords && selectedCemeteryFeature) {
+        clearSelectedGrave();
+        showCemeteryPanel(selectedCemeteryFeature);
+        return;
+    }
+
     exitCemeteryMode();
 });
 
@@ -4970,6 +5075,19 @@ searchResultsBox.addEventListener("click", function (event) {
     closeSearchResults();
     searchBox.blur();
     selectSearchResult(result);
+});
+
+searchResultsBox.addEventListener("click", function (event) {
+
+    if (!event.target.closest("#search-all-btn")) {
+        return;
+    }
+
+    event.stopPropagation();      // the button is replaced below; keep the outside-click closer from firing
+    searchAllCemeteries = true;
+    refreshSearchPlaceholder();
+    searchResultsOpen = true;
+    processMapFilters();
 });
 
 document.addEventListener("click", function (event) {
