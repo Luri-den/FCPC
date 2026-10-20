@@ -246,6 +246,47 @@
         padding: 14px; z-index: 4;
     }
 
+    /* ---------- CEMETERY MODE: county controls collapse into one Filters button ---------- */
+    #controls > #filters-btn { display: none; text-align: center; }
+    body.cemetery-mode #controls > #filters-btn { display: block; }
+    body.cemetery-mode #search-toggles,
+    body.cemetery-mode #year-filter-container,
+    body.cemetery-mode #export-all-btn { display: none !important; }
+
+    /* ---------- DETAILS CARD: drag handle (phones only) ---------- */
+    #sheet-handle { display: none; }
+
+    @media (max-width: 700px) {
+        /* No padding on the scrolling box itself, so the sticky handle sits flush at the top
+           in every browser; the padding moves to #info-content instead. */
+        #info-panel { padding: 0; transition: transform 0.25s ease; }
+        #info-panel.dragging { transition: none; }
+        #info-content { padding: 4px 24px 14px 14px; }
+
+        #sheet-handle {
+            display: block; position: sticky; top: 0; z-index: 2;
+            width: 100%; height: 28px;
+            margin: 0; padding: 0;
+            border: none; border-radius: 5px 5px 0 0;
+            background: rgba(255, 255, 255, 0.98);
+            cursor: grab; touch-action: none;
+        }
+        #sheet-handle:hover { background: rgba(255, 255, 255, 0.98); }
+        #sheet-handle::before {
+            content: ""; position: absolute; top: 9px; left: 50%;
+            width: 44px; height: 5px; margin-left: -22px;
+            border-radius: 3px; background: #b9b09f;
+        }
+        #close-info { z-index: 3; }
+    }
+
+    /* ---------- GRAVE CARD ---------- */
+    .grave-sub { margin: 0 0 8px 0; font-size: 13px; color: #6b6258; }
+    #info-panel .grave-info-details h2 { margin: 0 0 2px 0; font-size: 19px; }
+    .grave-facts { display: grid; grid-template-columns: 82px 1fr; gap: 3px 8px; margin: 0; font-size: 14px; line-height: 1.35; }
+    .grave-facts dt { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.03em; color: #6b6258; padding-top: 2px; }
+    .grave-facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+
     /* ---------- GRAVE LEGEND (cemetery mode only) ---------- */
     #grave-legend {
         display: none;
@@ -306,6 +347,18 @@
     #marker-legend .gl-mods { border-left: none; border-top: 1px solid #ddd; padding: 8px 0 0 0; align-items: flex-start; }
     #marker-legend .gl-mod { align-items: flex-start; }
 
+    /* Filter toggles (the key doubles as the filter) */
+    .gl-toggle {
+        background: transparent; color: #3f3528; border: 1px solid transparent;
+        border-radius: 6px; padding: 3px 6px; font-size: 13px; font-family: inherit;
+        text-align: left; cursor: pointer;
+    }
+    .gl-toggle:hover { background: #eee9dc; color: #3f3528; }
+    .gl-type[aria-pressed="false"] { opacity: 0.45; text-decoration: line-through; }
+    .gl-mod-btn[aria-pressed="true"] { background: #d7ebe8; border-color: #01796F; }
+    .gl-hint { font-size: 12px; color: #6b6258; margin: 0 0 6px 0; padding-right: 24px; max-width: 320px; }
+    @media (pointer: coarse) { .gl-toggle { min-height: 40px; } }
+
     /* Narrow screens: types stack tightly; the two modifiers sit side by side in one row */
     .gl-mods-row { display: flex; flex-wrap: wrap; gap: 0 18px; }
     #marker-legend .gl-mods-row { gap: 0 14px; }
@@ -323,6 +376,8 @@
             bottom: auto;
             transform: none;
             max-width: none;
+            max-height: calc(100% - 70px);
+            overflow-y: auto;
         }
     }
    
@@ -512,7 +567,7 @@
 
         #info-panel {
             position: absolute; top: auto; right: 8px; bottom: calc(8px + env(safe-area-inset-bottom)); left: 8px;
-            width: auto; max-width: none; max-height: 65%;
+            width: auto; max-width: none; max-height: 50%;
         }
 
         .popup-field { grid-template-columns: 120px 1fr; }
@@ -546,6 +601,8 @@
         <button id="clear-search" type="button" title="Clear search" aria-label="Clear search">&times;</button>
         <div id="search-results" aria-label="Search results"></div>
     </div>
+
+    <button id="filters-btn" type="button" aria-expanded="false" aria-controls="grave-legend">Filters &#9662;</button>
 
     <div id="search-toggles">
         <button type="button" class="search-toggle active" id="search-cemetery" aria-pressed="true">Cemetery</button>
@@ -608,6 +665,7 @@
     </div>
 
     <div id="info-panel">
+        <button id="sheet-handle" type="button" aria-label="Collapse or expand the details panel" aria-expanded="true"></button>
         <button id="close-info" title="Close Panel" aria-label="Close Panel">&times;</button>
         <div id="info-content">
             <div class="placeholder">
@@ -1166,46 +1224,300 @@ function findCemetery(cemeteryID) {
     });
 }
 
-// Builds the two-column key (TYPES | MODIFIERS) from the "seen" flags.
-// Used by the bottom legend (only what's in the cemetery) and by the
-// Layers & Legend panel (everything). Icons come from drawGraveSymbol,
-// so they always match the map.
-function graveKeyHTML(seen) {
+// Which marker kinds are currently shown on the map (cemetery view).
+// Types: true = shown. Modifiers: true = "show only these".
+const graveFilter = {
+    circleSingle: true, circleDot: true, squareSingle: true, squareDot: true,
+    veteranOnly: false, pioneerOnly: false
+};
 
-    function item(opts, label) {
-        return '<div class="grave-legend-item">' + legendSVG(opts) +
-               '<span>' + label + '</span></div>';
+function resetGraveFilter() {
+    graveFilter.circleSingle = true;
+    graveFilter.circleDot = true;
+    graveFilter.squareSingle = true;
+    graveFilter.squareDot = true;
+    graveFilter.veteranOnly = false;
+    graveFilter.pioneerOnly = false;
+}
+
+// Builds the two-column key (TYPES | MODIFIERS) from the "seen" flags.
+// interactive = true  -> rows are toggle buttons (the cemetery Filters panel)
+// interactive = false -> plain rows (the Layers & Legend panel)
+// Icons come from drawGraveSymbol, so they always match the map.
+function graveKeyHTML(seen, interactive) {
+
+    function pressed(key) {
+        return graveFilter[key] ? "true" : "false";
+    }
+
+    function item(opts, label, key) {
+        const inner = legendSVG(opts) + '<span>' + label + '</span>';
+
+        if (!interactive) {
+            return '<div class="grave-legend-item">' + inner + '</div>';
+        }
+
+        return '<button type="button" class="grave-legend-item gl-toggle gl-type" data-filter="' +
+               key + '" aria-pressed="' + pressed(key) + '">' + inner + '</button>';
     }
 
     // Modifier example: the base shapes are drawn faded so the
     // ring or pip is what stands out.
-    function modifier(flag, label) {
+    function modifier(flag, label, key) {
         const circle = { shape: "circle", faded: true };
         const square = { shape: "square", faded: true };
         circle[flag] = true;
         square[flag] = true;
-        return '<div class="gl-mod"><div class="gl-mod-icons">' +
-               legendSVG(circle) + legendSVG(square) +
-               '</div><span>' + label + '</span></div>';
+
+        const inner = '<div class="gl-mod-icons">' + legendSVG(circle) + legendSVG(square) +
+                      '</div><span>' + label + '</span>';
+
+        if (!interactive) {
+            return '<div class="gl-mod">' + inner + '</div>';
+        }
+
+        return '<button type="button" class="gl-mod gl-toggle gl-mod-btn" data-filter="' +
+               key + '" aria-pressed="' + pressed(key) + '">' + inner + '</button>';
     }
 
     let types = "";
-    if (seen.circleSingle) types += item({ shape: "circle" }, "Single (One Marker)");
-    if (seen.circleDot)    types += item({ shape: "circle", dot: true }, "Multiple (One Marker)");
-    if (seen.squareSingle) types += item({ shape: "square" }, "Single (Above Ground)");
-    if (seen.squareDot)    types += item({ shape: "square", dot: true }, "Multiple (Above Ground)");
+    if (seen.circleSingle) types += item({ shape: "circle" }, "Single (One Marker)", "circleSingle");
+    if (seen.circleDot)    types += item({ shape: "circle", dot: true }, "Multiple (One Marker)", "circleDot");
+    if (seen.squareSingle) types += item({ shape: "square" }, "Single (Above Ground)", "squareSingle");
+    if (seen.squareDot)    types += item({ shape: "square", dot: true }, "Multiple (Above Ground)", "squareDot");
 
     let mods = "";
-    if (seen.veteran) mods += modifier("veteran", "Veteran");
-    if (seen.pioneer) mods += modifier("pioneer", "Pioneer");
+    if (seen.veteran) mods += modifier("veteran", "Veteran", "veteranOnly");
+    if (seen.pioneer) mods += modifier("pioneer", "Pioneer", "pioneerOnly");
 
     if (types === "" && mods === "") return "";
 
-    return '<div class="gl-cols">' +
+    return (interactive ? '<div class="gl-hint">Tap a type to hide it. Tap a modifier to show only those.</div>' : '') +
+        '<div class="gl-cols">' +
         (types ? '<div class="gl-col"><div class="gl-head">TYPES</div>' + types + '</div>' : '') +
         (mods ? '<div class="gl-col gl-mods"><div class="gl-head">MODIFIERS</div><div class="gl-mods-row">' + mods + '</div></div>' : '') +
         '</div>';
 }
+
+// ============================================================
+// FILTERS PANEL, SELECTED-GRAVE HIGHLIGHT, AND DRAGGABLE DETAILS CARD
+// ============================================================
+
+let selectedGraveCoords = null;
+let sheetCollapsed = false;
+const SHEET_PEEK = 60;          // px of the card left showing when collapsed
+
+function isNarrow() {
+    return window.matchMedia("(max-width: 700px)").matches;
+}
+
+function setGraveFilterPanel(open) {
+    const panel = document.getElementById("grave-legend");
+    const button = document.getElementById("filters-btn");
+    if (panel) { panel.style.display = open ? "block" : "none"; }
+    if (button) { button.setAttribute("aria-expanded", open ? "true" : "false"); }
+}
+
+// Applies the Filters panel choices to the grave layers.
+function applyGraveFilters() {
+
+    const NEVER = ["==", ["get", "Marker_ID"], "__never__"];
+    const isMaus = ["==", ["get", "Mausoleum"], true];
+    const notMaus = ["!=", ["get", "Mausoleum"], true];
+    const vet = ["==", ["get", "Veteran"], true];
+    const pio = ["==", ["get", "Pioneer"], true];
+
+    let mod = null;
+    if (graveFilter.veteranOnly && graveFilter.pioneerOnly) { mod = ["any", vet, pio]; }
+    else if (graveFilter.veteranOnly) { mod = vet; }
+    else if (graveFilter.pioneerOnly) { mod = pio; }
+
+    function symbolFilter(base, on) {
+        if (!on) { return NEVER; }
+        return mod ? ["all", base, mod] : base;
+    }
+
+    function tapFilter(circleOn, squareOn) {
+        if (!circleOn && !squareOn) { return NEVER; }
+        if (circleOn && squareOn) { return mod; }          // null = no filter
+        const kind = circleOn ? notMaus : isMaus;
+        return mod ? ["all", kind, mod] : kind;
+    }
+
+    function set(id, filter) {
+        if (map.getLayer(id)) { map.setFilter(id, filter); }
+    }
+
+    set("graves-symbol-layer", symbolFilter(notMaus, graveFilter.circleSingle));
+    set("graves-maus-layer", symbolFilter(isMaus, graveFilter.squareSingle));
+    set("shared-markers-symbol-layer", symbolFilter(notMaus, graveFilter.circleDot));
+    set("shared-markers-maus-layer", symbolFilter(isMaus, graveFilter.squareDot));
+    set("graves-tap-layer", tapFilter(graveFilter.circleSingle, graveFilter.squareSingle));
+    set("shared-markers-tap-layer", tapFilter(graveFilter.circleDot, graveFilter.squareDot));
+}
+
+function setSelectedGraveRing(coordinates) {
+    const source = map.getSource("selected-grave-data");
+    if (!source) { return; }
+
+    source.setData(coordinates ? {
+        type: "FeatureCollection",
+        features: [{ type: "Feature", properties: {}, geometry: { type: "Point", coordinates: coordinates } }]
+    } : EMPTY_COLLECTION);
+}
+
+function clearSelectedGrave() {
+    selectedGraveCoords = null;
+    setSelectedGraveRing(null);
+}
+
+// Pans so the selected grave sits in the middle of the map area that the
+// details card is NOT covering. Uses a pixel offset, so no map padding
+// is left behind afterwards.
+function recenterSelectedGrave(minZoom) {
+
+    if (!selectedGraveCoords) { return; }
+
+    const panel = document.getElementById("info-panel");
+    let covered = 0;
+
+    if (isNarrow() && panel.style.display !== "none") {
+        covered = (sheetCollapsed ? SHEET_PEEK : panel.getBoundingClientRect().height) + 8;
+    }
+
+    const options = { center: selectedGraveCoords, offset: [0, -covered / 2], duration: 500 };
+
+    if (minZoom) {
+        options.zoom = Math.max(map.getZoom(), minZoom);
+    }
+
+    map.easeTo(options);
+}
+
+function focusGrave(coordinates, minZoom) {
+
+    if (!Array.isArray(coordinates)) { return; }
+
+    selectedGraveCoords = coordinates.slice(0, 2);
+    setSelectedGraveRing(selectedGraveCoords);
+
+    requestAnimationFrame(function () { recenterSelectedGrave(minZoom); });
+
+    // The photo can change the card height once it loads.
+    const photo = document.querySelector("#info-panel .grave-photo-thumb");
+    if (photo && !photo.complete) {
+        photo.addEventListener("load", function () { recenterSelectedGrave(); }, { once: true });
+    }
+}
+
+// ---- Draggable details card (phones) ----
+function sheetOffsetPx() {
+    const panel = document.getElementById("info-panel");
+    return Math.max(0, panel.offsetHeight - SHEET_PEEK);
+}
+
+function resetSheet() {
+    const panel = document.getElementById("info-panel");
+    const handle = document.getElementById("sheet-handle");
+    sheetCollapsed = false;
+    panel.style.transform = "";
+    if (handle) { handle.setAttribute("aria-expanded", "true"); }
+}
+
+function setSheet(collapsed) {
+    const panel = document.getElementById("info-panel");
+    const handle = document.getElementById("sheet-handle");
+
+    sheetCollapsed = collapsed && isNarrow();
+    panel.classList.remove("dragging");
+    panel.style.transform = sheetCollapsed ? "translateY(" + sheetOffsetPx() + "px)" : "";
+    handle.setAttribute("aria-expanded", sheetCollapsed ? "false" : "true");
+
+    recenterSelectedGrave();
+}
+
+(function setupSheetDrag() {
+
+    const panel = document.getElementById("info-panel");
+    const handle = document.getElementById("sheet-handle");
+    const content = document.getElementById("info-content");
+
+    if (!panel || !handle || !content) { return; }
+
+    let dragging = false;
+    let moved = false;
+    let startY = 0;
+    let startOffset = 0;
+    let currentOffset = 0;
+    let ignoreClickUntil = 0;
+
+    handle.addEventListener("pointerdown", function (event) {
+        dragging = true;
+        moved = false;
+        startY = event.clientY;
+        startOffset = sheetCollapsed ? sheetOffsetPx() : 0;
+        currentOffset = startOffset;
+        handle.setPointerCapture(event.pointerId);
+    });
+
+    handle.addEventListener("pointermove", function (event) {
+
+        if (!dragging) { return; }
+
+        const dy = event.clientY - startY;
+
+        if (Math.abs(dy) > 6) { moved = true; }
+        if (!moved) { return; }
+
+        currentOffset = Math.min(sheetOffsetPx(), Math.max(0, startOffset + dy));
+        panel.classList.add("dragging");
+        panel.style.transform = "translateY(" + currentOffset + "px)";
+    });
+
+    function endDrag() {
+
+        if (!dragging) { return; }
+
+        dragging = false;
+
+        if (moved) {
+            ignoreClickUntil = Date.now() + 350;
+            setSheet(currentOffset > sheetOffsetPx() / 2);
+        }
+    }
+
+    handle.addEventListener("pointerup", endDrag);
+    handle.addEventListener("pointercancel", endDrag);
+
+    // A plain tap (or Enter / Space) also toggles it.
+    handle.addEventListener("click", function () {
+        if (Date.now() < ignoreClickUntil) { return; }
+        setSheet(!sheetCollapsed);
+    });
+
+    // New content in the card always opens it back up.
+    new MutationObserver(resetSheet).observe(content, { childList: true });
+})();
+
+// ---- Filters button and toggle rows ----
+document.getElementById("filters-btn").addEventListener("click", function () {
+    const panel = document.getElementById("grave-legend");
+    setGraveFilterPanel(panel.style.display !== "block");
+});
+
+document.getElementById("grave-legend-content").addEventListener("click", function (event) {
+
+    const button = event.target.closest(".gl-toggle");
+
+    if (!button) { return; }
+
+    const key = button.getAttribute("data-filter");
+
+    graveFilter[key] = !graveFilter[key];
+    button.setAttribute("aria-pressed", graveFilter[key] ? "true" : "false");
+
+    applyGraveFilters();
+});
 
 // Compute which legend rows apply to this cemetery, and render them.
 function updateGraveLegend(cemeteryID) {
@@ -1260,16 +1572,20 @@ function updateGraveLegend(cemeteryID) {
     });
 
     // Build the key (shared with the Layers & Legend panel).
-    const html = graveKeyHTML(seen);
+    const html = graveKeyHTML(seen, true);
+    const filtersButton = document.getElementById("filters-btn");
 
     if (html === "") {
-        // Nothing to show — hide the panel entirely.
-        document.getElementById("grave-legend").style.display = "none";
+        // Nothing to filter: no Filters button, no panel.
+        container.innerHTML = "";
+        filtersButton.style.display = "none";
+        setGraveFilterPanel(false);
         return;
     }
 
     container.innerHTML = html;
-    document.getElementById("grave-legend").style.display = "block";
+    filtersButton.style.display = "";
+    setGraveFilterPanel(false);       // starts collapsed; the Filters button opens it
 }
 
 // ============================================================
@@ -1677,10 +1993,11 @@ function copyText(text) {
 
 document.getElementById("close-info").addEventListener("click", function () {
     infoPanel.style.display = "none";
+    clearSelectedGrave();
 });
 
 document.getElementById("close-grave-legend").addEventListener("click", function () {
-    document.getElementById("grave-legend").style.display = "none";
+    setGraveFilterPanel(false);
 });
    
 function closeCemeteryRecord() {
@@ -2140,6 +2457,14 @@ function getBoundaryBounds(cemeteryID) {
 
 function updateCemeteryGraves() {
 
+    // Cemetery view collapses the county controls into the Filters button.
+    document.body.classList.toggle("cemetery-mode", !!selectedCemeteryFeature);
+
+    if (!selectedCemeteryFeature) {
+        setGraveFilterPanel(false);
+        clearSelectedGrave();
+    }
+
     const gravesSource = map.getSource("graves-data");
     const sharedSource = map.getSource("shared-markers-data");
 
@@ -2262,6 +2587,8 @@ function updateCemeteryGraves() {
         setLayerVisibility("shared-markers-symbol-layer", "visible");
         setLayerVisibility("shared-markers-maus-layer", "visible");
     }
+
+    applyGraveFilters();
 }
 
 function fitSelectedCemetery() {
@@ -2294,6 +2621,8 @@ function enterCemeteryMode(feature) {
     hideLakeSpokes();
 
     selectedCemeteryFeature = feature;
+    resetGraveFilter();
+    clearSelectedGrave();
     infoPanel.style.display = "block";
 
     updateCemeteryBoundary();
@@ -2376,50 +2705,51 @@ function handleGraveClick(event) {
 
     const cemeteryName = cemetery ? cemetery.properties.Cemetery_Name : props.Cemetery_ID;
 
-    function section(title, value) {
-        return `<h3>${title}</h3><p>${escapeHtml(value)}</p>`;
+    const gravePhoto = buildGravePhoto(person.markerID);
+
+    function fact(label, value) {
+        return "<dt>" + label + "</dt><dd>" + escapeHtml(value) + "</dd>";
     }
 
-   const gravePhoto = buildGravePhoto(person.markerID);
-
-let html = `
-    <div class="grave-info-with-photo">
-
-        <div class="grave-info-details">
-
-            <h2>${escapeHtml(person.name || "Unnamed Interment")}</h2>
-
-            ${section("Cemetery", cemeteryName || "")}
-`;
+    let facts = "";
 
     if (person.originalCemeteryID) {
         const formerRow = lakeRowByID(person.originalCemeteryID);
-        html += section("Originally Buried At", formerRow ? formerRow.NAME : person.originalCemeteryID);
+        facts += fact("Originally Buried", formerRow ? formerRow.NAME : person.originalCemeteryID);
     }
 
-    if (person.birth) { html += section("Birth", person.birth); }
-    if (person.death) { html += section("Death", person.death); }
+    if (person.birth) { facts += fact("Birth", person.birth); }
+    if (person.death) { facts += fact("Death", person.death); }
 
-    html += section("Veteran", person.veteran ? "Yes" : "No");
-   if (person.war) { 
-        html += section("Service", person.war); 
-    }
+    let veteranText = person.veteran ? "Yes" : "No";
+    if (person.veteran && person.war) { veteranText += " \u00b7 " + person.war; }
+    facts += fact("Veteran", veteranText);
 
-    if (person.vetDetails) { html += section("Details", person.vetDetails); }
-    if (person.row) { html += section("Row", person.row); }
-    if (person.plot) { html += section("Plot", person.plot); }
-    if (person.stoneInfo) { html += section("Additional Information on Stone", person.stoneInfo); }
-    if (person.markerID) { html += section("Marker ID", person.markerID); }
+    if (person.war && !person.veteran) { facts += fact("Service", person.war); }
+    if (person.vetDetails) { facts += fact("Details", person.vetDetails); }
+    if (person.row) { facts += fact("Row", person.row); }
+    if (person.plot) { facts += fact("Plot", person.plot); }
+    if (person.stoneInfo) { facts += fact("On Stone", person.stoneInfo); }
+    if (person.markerID) { facts += fact("Marker ID", person.markerID); }
 
-        html += `
+    infoContent.innerHTML = `
+        <div class="grave-info-with-photo">
+            <div class="grave-info-details">
+                <h2>${escapeHtml(person.name || "Unnamed Interment")}</h2>
+                <p class="grave-sub">${escapeHtml(cemeteryName || "")}</p>
+                <dl class="grave-facts">${facts}</dl>
             </div>
-
             ${gravePhoto}
+        </div>`;
 
-        </div>
-        `;
-   
-    infoContent.innerHTML = html;
+    // Frees up map space on phones, then centers the grave above the card.
+    if (isNarrow()) { setGraveFilterPanel(false); }
+
+    const graveGeometry = event.features[0].geometry;
+    focusGrave(
+        graveGeometry && Array.isArray(graveGeometry.coordinates) ? graveGeometry.coordinates : person.coordinates,
+        event.focusZoom
+    );
 
     if (event.originalEvent) {
         event.originalEvent.stopPropagation();
@@ -2518,6 +2848,13 @@ function handleSharedMarkerClick(event) {
     const props = event.features[0].properties;
 
     showSharedMarkerPanel(props.Cemetery_ID, props.Marker_ID, false);
+
+    if (isNarrow()) { setGraveFilterPanel(false); }
+
+    const sharedGeometry = event.features[0].geometry;
+    if (sharedGeometry && Array.isArray(sharedGeometry.coordinates)) {
+        focusGrave(sharedGeometry.coordinates);
+    }
 
     if (event.originalEvent) {
         event.originalEvent.stopPropagation();
@@ -2945,16 +3282,9 @@ function selectSearchResult(result) {
                 Cemetery_ID: result.feature.properties.Cemetery_ID,
                 Person_Data: JSON.stringify([person])
             }
-        }]
+        }],
+        focusZoom: 18
     });
-
-    if (Array.isArray(person.coordinates)) {
-        map.flyTo({
-            center: person.coordinates,
-            zoom: Math.max(map.getZoom(), 18),
-            duration: 1000
-        });
-    }
 }
 
 // Applies the year / search / veterans filters to the cemetery markers,
@@ -4131,6 +4461,7 @@ map.on("load", function () {
 
     // ---- Individual grave layer ----
     map.addSource("graves-data", { type: "geojson", data: EMPTY_COLLECTION });
+    map.addSource("selected-grave-data", { type: "geojson", data: EMPTY_COLLECTION });
 
     // ---- Main cemetery CSV ----
     Papa.parse(CSV_PATH, {
@@ -4360,6 +4691,21 @@ map.on("load", function () {
                     "icon-ignore-placement": true
                 }
             });
+
+            // Gold ring under the grave symbols marks the grave whose card is open
+            map.addLayer({
+                id: "selected-grave-ring",
+                type: "circle",
+                source: "selected-grave-data",
+                paint: {
+                    "circle-radius": 17,
+                    "circle-color": "#FFD700",
+                    "circle-opacity": 0.3,
+                    "circle-stroke-width": 3,
+                    "circle-stroke-color": "#FFD700",
+                    "circle-stroke-opacity": 0.95
+                }
+            }, "graves-symbol-layer");
 
             // ---------------- CLICK HANDLERS ----------------
             map.on("click", "cemeteries-layer", handleCemeteryClick);
