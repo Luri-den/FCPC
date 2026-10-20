@@ -2568,6 +2568,7 @@ function updateCemeteryGraves() {
                 Veteran: person.veteran,
                 War: person.war || "",
                 Pioneer: person.pioneer === true,
+                Sex: person.sex || "",
                 Birth: person.birth || "",
                 Death: person.death || "",
                 Row: person.row || "",
@@ -2858,6 +2859,7 @@ function handleGraveClick(event) {
             veteran: props.Veteran === true,
             war: props.War || "",
             pioneer: props.Pioneer === true,
+            sex: props.Sex || "",
             birth: props.Birth || "",
             death: props.Death || "",
             row: props.Row || "",
@@ -2887,6 +2889,7 @@ function handleGraveClick(event) {
 
     if (person.birth) { facts += fact("Birth", person.birth); }
     if (person.death) { facts += fact("Death", person.death); }
+    if (person.sex) { facts += fact("Sex", { F: "Female", M: "Male", U: "Unknown" }[person.sex] || person.sex); }
 
     let veteranText = person.veteran ? "Yes" : "No";
     if (person.veteran && person.war) { veteranText += " \u00b7 " + person.war; }
@@ -2904,7 +2907,7 @@ function handleGraveClick(event) {
     if (briefYears) { briefParts.push(briefYears); }
     if (person.veteran) { briefParts.push("Veteran"); }
     if (person.pioneer) { briefParts.push("Pioneer"); }
-    if (person.sex) { briefParts.push(person.sex); }
+    if (person.sex && person.sex !== "U") { briefParts.push(person.sex); }
 
     infoContent.innerHTML = `
         <div class="grave-info-with-photo">
@@ -3748,6 +3751,7 @@ function loadInterments(path) {
                     originalCemeteryID: cleanString(row["ORIGINAL CEMETERY ID"]),
                     mausoleum: cleanString(row.MAUS) === "1",
                     pioneer: cleanString(row.PIONEER) === "1",
+                    sex: cleanString(row.SEX).toUpperCase().charAt(0),   // F, M or U
                     coordinates: hasCoordinates ? [lon, lat] : null
                 };
 
