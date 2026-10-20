@@ -1453,7 +1453,10 @@ function focusGrave(coordinates, minZoom) {
     // The photo can change the card height once it loads.
     const photo = document.querySelector("#info-panel .grave-photo-thumb");
     if (photo && !photo.complete) {
-        photo.addEventListener("load", function () { recenterSelectedGrave(); }, { once: true });
+        photo.addEventListener("load", function () {
+            // the photo changes the card height, so re-apply the peek position if collapsed
+            if (sheetCollapsed) { setSheet(true); } else { recenterSelectedGrave(); }
+        }, { once: true });
     }
 }
 
@@ -2930,7 +2933,9 @@ function handleGraveClick(event) {
     );
 
     // On phones the card starts as a small peek (name + key facts); swipe up for the rest.
-    if (isNarrow() && !event.focusZoom) { setSheet(true); }
+    // The sheet's MutationObserver resets the card to open each time its content changes,
+    // and it runs after this function finishes, so the peek has to be applied after it.
+    if (isNarrow() && !event.focusZoom) { setTimeout(function () { setSheet(true); }, 0); }
 
     if (event.originalEvent) {
         event.originalEvent.stopPropagation();
