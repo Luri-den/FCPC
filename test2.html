@@ -175,6 +175,11 @@
         object-fit: contain; margin: 0 0 12px 0; border-radius: 4px;
     }
 
+    /* Phones: the cemetery photo becomes a small thumbnail beside the text instead of filling the card */
+    @media (max-width: 700px) {
+        .cemetery-popup-photo { float: right; width: 42%; max-height: 120px; margin: 0 0 6px 10px; object-fit: cover; }
+    }
+
     .popup-field { display: grid; grid-template-columns: 130px 1fr; column-gap: 10px; margin-bottom: 8px; }
     .popup-label { font-weight: bold; }
 
@@ -356,6 +361,16 @@
     .gl-toggle:hover { background: #eee9dc; color: #3f3528; }
     .gl-type[aria-pressed="false"] { opacity: 0.45; text-decoration: line-through; }
     .gl-mod-btn[aria-pressed="true"] { background: #d7ebe8; border-color: #01796F; }
+    #graves-list-btn { display: none; padding: 10px 14px; border: 1px solid #8d8375; border-radius: 4px;
+        background: #01796F; color: #fff; font-size: 15px; font-weight: bold; cursor: pointer; }
+    body.cemetery-mode #graves-list-btn { display: block; flex: 1 1 calc(50% - 4px); width: auto; }
+    body.cemetery-mode #filters-btn { flex: 1 1 calc(50% - 4px); width: auto; }
+    .grave-brief { margin: 0 0 2px 0; font-size: 14px; font-weight: bold; color: #3f3528; }
+    .grave-list-item { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%;
+        min-height: 44px; padding: 8px 6px; text-align: left; border: none; border-bottom: 1px solid #e3dccd;
+        background: none; font: inherit; color: #3f3528; cursor: pointer; }
+    .grave-list-item:hover { background: #f3efe6; }
+    .grave-list-item small { color: #6b6258; white-space: nowrap; }
     .gl-hint { font-size: 12px; color: #6b6258; margin: 0 0 6px 0; padding-right: 24px; max-width: 320px; }
     @media (pointer: coarse) { .gl-toggle { min-height: 40px; } }
 
@@ -606,6 +621,8 @@
     </div>
 
     <button id="filters-btn" type="button" aria-expanded="false" aria-controls="grave-legend">Filters &#9662;</button>
+
+    <button id="graves-list-btn" type="button">Graves on screen</button>
 
     <div id="search-toggles">
         <button type="button" class="search-toggle active" id="search-cemetery" aria-pressed="true">Cemetery</button>
@@ -1295,7 +1312,7 @@ function graveKeyHTML(seen, interactive) {
 
     if (types === "" && mods === "") return "";
 
-    return (interactive ? '<div class="gl-hint">Tap a type to hide it. Tap a modifier to show only those.</div>' : '') +
+    return (interactive ? '<div class="gl-hint">Tap a type to fade it. Tap a modifier to highlight only those.</div>' : '') +
         '<div class="gl-cols">' +
         (types ? '<div class="gl-col"><div class="gl-head">TYPES</div>' + types + '</div>' : '') +
         (mods ? '<div class="gl-col gl-mods"><div class="gl-head">MODIFIERS</div><div class="gl-mods-row">' + mods + '</div></div>' : '') +
@@ -1308,7 +1325,8 @@ function graveKeyHTML(seen, interactive) {
 
 let selectedGraveCoords = null;
 let sheetCollapsed = false;
-const SHEET_PEEK = 60;          // px of the card left showing when collapsed
+let graveListShowing = false;
+const SHEET_PEEK = 100;          // px of the card left showing when collapsed
 
 function isNarrow() {
     return window.matchMedia("(max-width: 700px)").matches;
@@ -1324,7 +1342,7 @@ function setGraveFilterPanel(open) {
 // Applies the Filters panel choices to the grave layers.
 function applyGraveFilters() {
 
-    const NEVER = ["==", ["get", "Marker_ID"], "__never__"];
+    const DIM = 0.22;                       // how faded a filtered-out marker looks
     const isMaus = ["==", ["get", "Mausoleum"], true];
     const notMaus = ["!=", ["get", "Mausoleum"], true];
     const vet = ["==", ["get", "Veteran"], true];
@@ -1335,28 +1353,57 @@ function applyGraveFilters() {
     else if (graveFilter.veteranOnly) { mod = vet; }
     else if (graveFilter.pioneerOnly) { mod = pio; }
 
-    function symbolFilter(base, on) {
-        if (!on) { return NEVER; }
-        return mod ? ["all", base, mod] : base;
+    function opacityFor(on) {
+        if (!on) { return DIM; }
+        return mod ? ["case", mod, 1, DIM] : 1;
     }
 
-    function tapFilter(circleOn, squareOn) {
-        if (!circleOn && !squareOn) { return NEVER; }
-        if (circleOn && squareOn) { return mod; }          // null = no filter
-        const kind = circleOn ? notMaus : isMaus;
-        return mod ? ["all", kind, mod] : kind;
+    function style(id, base, on) {
+        if (!map.getLayer(id)) { return; }
+        map.setFilter(id, base);
+        map.setPaintProperty(id, "icon-opacity", opacityFor(on));
     }
 
-    function set(id, filter) {
-        if (map.getLayer(id)) { map.setFilter(id, filter); }
+    style("graves-symbol-layer", notMaus, graveFilter.circleSingle);
+    style("graves-maus-layer", isMaus, graveFilter.squareSingle);
+    style("shared-markers-symbol-layer", notMaus, graveFilter.circleDot);
+    style("shared-markers-maus-layer", isMaus, graveFilter.squareDot);
+
+    // Faded markers stay tappable, so the tap layers are never filtered.
+    ["graves-tap-layer", "shared-markers-tap-layer"].forEach(function (id) {
+        if (map.getLayer(id)) { map.setFilter(id, null); }
+    });
+}
+
+// Pulses the gold ring for a few seconds so the eye finds it.
+let pulseFrame = null;
+
+function pulseSelectedRing() {
+
+    if (pulseFrame) { cancelAnimationFrame(pulseFrame); pulseFrame = null; }
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { return; }
+
+    const start = performance.now();
+
+    function step(now) {
+        const t = (now - start) / 1000;
+
+        if (t > 4 || !map.getLayer("selected-grave-ring")) {
+            if (map.getLayer("selected-grave-ring")) {
+                map.setPaintProperty("selected-grave-ring", "circle-radius", 17);
+                map.setPaintProperty("selected-grave-ring", "circle-opacity", 0.3);
+            }
+            pulseFrame = null;
+            return;
+        }
+
+        const k = (Math.sin(t * Math.PI * 2.2) + 1) / 2;
+        map.setPaintProperty("selected-grave-ring", "circle-radius", 15 + k * 9);
+        map.setPaintProperty("selected-grave-ring", "circle-opacity", 0.15 + (1 - k) * 0.3);
+        pulseFrame = requestAnimationFrame(step);
     }
 
-    set("graves-symbol-layer", symbolFilter(notMaus, graveFilter.circleSingle));
-    set("graves-maus-layer", symbolFilter(isMaus, graveFilter.squareSingle));
-    set("shared-markers-symbol-layer", symbolFilter(notMaus, graveFilter.circleDot));
-    set("shared-markers-maus-layer", symbolFilter(isMaus, graveFilter.squareDot));
-    set("graves-tap-layer", tapFilter(graveFilter.circleSingle, graveFilter.squareSingle));
-    set("shared-markers-tap-layer", tapFilter(graveFilter.circleDot, graveFilter.squareDot));
+    pulseFrame = requestAnimationFrame(step);
 }
 
 function setSelectedGraveRing(coordinates) {
@@ -1367,6 +1414,8 @@ function setSelectedGraveRing(coordinates) {
         type: "FeatureCollection",
         features: [{ type: "Feature", properties: {}, geometry: { type: "Point", coordinates: coordinates } }]
     } : EMPTY_COLLECTION);
+
+    if (coordinates) { pulseSelectedRing(); }
 }
 
 function clearSelectedGrave() {
@@ -1409,7 +1458,10 @@ function focusGrave(coordinates, minZoom) {
     // The photo can change the card height once it loads.
     const photo = document.querySelector("#info-panel .grave-photo-thumb");
     if (photo && !photo.complete) {
-        photo.addEventListener("load", function () { recenterSelectedGrave(); }, { once: true });
+        photo.addEventListener("load", function () {
+            // the photo changes the card height, so re-apply the peek position if collapsed
+            if (sheetCollapsed) { setSheet(true); } else { recenterSelectedGrave(); }
+        }, { once: true });
     }
 }
 
@@ -2524,6 +2576,7 @@ function updateCemeteryGraves() {
                 Veteran: person.veteran,
                 War: person.war || "",
                 Pioneer: person.pioneer === true,
+                Sex: person.sex || "",
                 Birth: person.birth || "",
                 Death: person.death || "",
                 Row: person.row || "",
@@ -2641,6 +2694,7 @@ function enterCemeteryMode(feature) {
 
 function exitCemeteryMode() {
 
+    graveListShowing = false;
     selectedCemeteryFeature = null;
     resetSearchScope();
     document.getElementById("grave-legend").style.display = "none";
@@ -2663,11 +2717,128 @@ function exitCemeteryMode() {
 // GRAVE CLICK HANDLER
 // ============================================================
 
+function yearOf(text) {
+    const m = String(text || "").match(/\d{4}/);
+    return m ? m[0] : "";
+}
+
+function yearsText(birth, death) {
+    const b = yearOf(birth), d = yearOf(death);
+    return (b || d) ? (b || "?") + " \u2013 " + (d || "?") : "";
+}
+
+let graveListFeatures = [];
+
+// Fills the details card with a tappable list of graves.
+function showGraveList(features, where) {
+
+    const MAX_ROWS = 150;
+    const seen = {};
+    const items = [];
+
+    features.forEach(function (f) {
+        const p = f.properties || {};
+        const key = (p.Marker_ID || "") + "|" + JSON.stringify(f.geometry && f.geometry.coordinates);
+        if (seen[key]) { return; }
+        seen[key] = true;
+
+        const shared = !!(f.layer && String(f.layer.id).indexOf("shared") === 0);
+        let name = p.Person_Name || "Unnamed Interment";
+        let birth = p.Birth || "", death = p.Death || "";
+        let isVet = p.Veteran === true, isPio = p.Pioneer === true;
+
+        if (p.Person_Data) {
+            try {
+                const arr = JSON.parse(p.Person_Data);
+                if (Array.isArray(arr) && arr.length) {
+                    name = arr[0].name || name;
+                    birth = arr[0].birth || birth;
+                    death = arr[0].death || death;
+                    isVet = arr[0].veteran === true || isVet;
+                    isPio = arr[0].pioneer === true || isPio;
+                }
+            } catch (error) { /* keep the fallback name */ }
+        }
+
+        if (shared) {
+            const group = getGroups(p.Cemetery_ID)[p.Marker_ID] || [];
+            name = "Shared marker (" + group.length + " people)";
+            birth = ""; death = ""; isVet = false; isPio = false;
+        }
+
+        let tags = "";
+        if (isVet) { tags += " \u2605"; }
+        if (isPio) { tags += " \u25BC"; }
+        items.push({ feature: f, name: name, years: yearsText(birth, death) + tags });
+    });
+
+    items.sort(function (a, b) { return a.name.localeCompare(b.name); });
+
+    const shown = items.slice(0, MAX_ROWS);
+    graveListFeatures = shown.map(function (i) { return i.feature; });
+
+    let html = "<h2>" + items.length + " grave" + (items.length === 1 ? "" : "s") + " " + escapeHtml(where) + "</h2>";
+
+    if (!items.length) {
+        html += '<p class="grave-sub">Nothing here. Zoom in or pan to a cemetery.</p>';
+    }
+    else if (where.indexOf("select") === -1) {
+        html += '<p class="grave-sub">Tap a name to open it. \u2605 veteran, \u25BC pioneer.' +
+                (items.length > MAX_ROWS ? " Showing the first " + MAX_ROWS + "; zoom in for the rest." : "") + "</p>";
+    }
+
+    shown.forEach(function (item, i) {
+        html += '<button type="button" class="grave-list-item" data-i="' + i + '"><span>' +
+                escapeHtml(item.name) + "</span><small>" + escapeHtml(item.years) + "</small></button>";
+    });
+
+    infoContent.innerHTML = html;
+    infoPanel.style.display = "block";
+    resetSheet();
+    graveListShowing = true;
+    announce(items.length + " graves " + where);
+}
+
+infoContent.addEventListener("click", function (event) {
+    const btn = event.target.closest(".grave-list-item");
+    if (!btn) { return; }
+    const f = graveListFeatures[Number(btn.dataset.i)];
+    if (!f) { return; }
+
+    if (f.layer && String(f.layer.id).indexOf("shared") === 0) {
+        handleSharedMarkerClick({ features: [f] });
+    } else {
+        handleGraveClick({ features: [f], fromList: true });
+    }
+});
+
+document.getElementById("graves-list-btn").addEventListener("click", function () {
+    const layers = ["graves-tap-layer", "shared-markers-tap-layer"].filter(function (id) { return map.getLayer(id); });
+    const features = layers.length ? map.queryRenderedFeatures({ layers: layers }) : [];
+    setGraveFilterPanel(false);
+    clearSelectedGrave();
+    showGraveList(features, "on screen");
+});
+
 function handleGraveClick(event) {
 
     if (!event.features || !event.features.length) {
         return;
     }
+
+    // Mausoleum markers are also covered by the tap layer; let that one answer.
+    if (event.features[0].layer && event.features[0].layer.id === "graves-maus-layer") {
+        return;
+    }
+
+    // Several graves under the finger: let the user pick a name.
+    if (!event.fromList && event.features.length > 1) {
+        showGraveList(event.features, "here \u2014 select a name");
+        if (event.originalEvent) { event.originalEvent.stopPropagation(); }
+        return;
+    }
+
+    graveListShowing = false;
 
     const props = event.features[0].properties;
 
@@ -2696,6 +2867,7 @@ function handleGraveClick(event) {
             veteran: props.Veteran === true,
             war: props.War || "",
             pioneer: props.Pioneer === true,
+            sex: props.Sex || "",
             birth: props.Birth || "",
             death: props.Death || "",
             row: props.Row || "",
@@ -2725,6 +2897,7 @@ function handleGraveClick(event) {
 
     if (person.birth) { facts += fact("Birth", person.birth); }
     if (person.death) { facts += fact("Death", person.death); }
+    if (person.sex) { facts += fact("Sex", { F: "Female", M: "Male", U: "Unknown" }[person.sex] || person.sex); }
 
     let veteranText = person.veteran ? "Yes" : "No";
     if (person.veteran && person.war) { veteranText += " \u00b7 " + person.war; }
@@ -2737,10 +2910,18 @@ function handleGraveClick(event) {
     if (person.stoneInfo) { facts += fact("On Stone", person.stoneInfo); }
     if (person.markerID) { facts += fact("Marker ID", person.markerID); }
 
+    const briefParts = [];
+    const briefYears = yearsText(person.birth, person.death);
+    if (briefYears) { briefParts.push(briefYears); }
+    if (person.veteran) { briefParts.push("Veteran"); }
+    if (person.pioneer) { briefParts.push("Pioneer"); }
+    if (person.sex && person.sex !== "U") { briefParts.push(person.sex); }
+
     infoContent.innerHTML = `
         <div class="grave-info-with-photo">
             <div class="grave-info-details">
                 <h2>${escapeHtml(person.name || "Unnamed Interment")}</h2>
+                <p class="grave-brief">${escapeHtml(briefParts.join(" \u00b7 "))}</p>
                 <p class="grave-sub">${escapeHtml(cemeteryName || "")}</p>
                 <dl class="grave-facts">${facts}</dl>
             </div>
@@ -2755,6 +2936,11 @@ function handleGraveClick(event) {
         graveGeometry && Array.isArray(graveGeometry.coordinates) ? graveGeometry.coordinates : person.coordinates,
         event.focusZoom
     );
+
+    // On phones the card starts as a small peek (name + key facts); swipe up for the rest.
+    // The sheet's MutationObserver resets the card to open each time its content changes,
+    // and it runs after this function finishes, so the peek has to be applied after it.
+    if (isNarrow() && !event.focusZoom) { setTimeout(function () { setSheet(true); }, 0); }
 
     if (event.originalEvent) {
         event.originalEvent.stopPropagation();
@@ -2852,6 +3038,7 @@ function handleSharedMarkerClick(event) {
 
     const props = event.features[0].properties;
 
+    graveListShowing = false;
     showSharedMarkerPanel(props.Cemetery_ID, props.Marker_ID, false);
 
     if (isNarrow()) { setGraveFilterPanel(false); }
@@ -3574,6 +3761,7 @@ function loadInterments(path) {
                     originalCemeteryID: cleanString(row["ORIGINAL CEMETERY ID"]),
                     mausoleum: cleanString(row.MAUS) === "1",
                     pioneer: cleanString(row.PIONEER) === "1",
+                    sex: cleanString(row.SEX).toUpperCase().charAt(0),   // F, M or U
                     coordinates: hasCoordinates ? [lon, lat] : null
                 };
 
@@ -5032,7 +5220,8 @@ map.on("click", function (event) {
     }
 
     // One level at a time: grave card -> cemetery card -> main map.
-    if (selectedGraveCoords && selectedCemeteryFeature) {
+    if ((selectedGraveCoords || graveListShowing) && selectedCemeteryFeature) {
+        graveListShowing = false;
         clearSelectedGrave();
         showCemeteryPanel(selectedCemeteryFeature);
         return;
@@ -5167,6 +5356,12 @@ map.on("resize", updateLakeSiteLabels);
 // ============================================================
 // RESET FILTERS
 // ============================================================
+
+// In cemetery view this button is the way back to the county map, so say so.
+new MutationObserver(function () {
+    resetButton.textContent = document.body.classList.contains("cemetery-mode")
+        ? "Back to All Cemeteries" : "Reset Filters";
+}).observe(document.body, { attributes: true, attributeFilter: ["class"] });
 
 resetButton.addEventListener("click", function () {
 
