@@ -294,7 +294,21 @@
         flex-shrink: 0;
     }
 
+    /* Two-column key: TYPES | MODIFIERS (used by both marker legends) */
+    .gl-cols { display: flex; align-items: flex-start; gap: 0 18px; }
+    .gl-col { display: flex; flex-direction: column; gap: 4px; }
+    .gl-mods { border-left: 1px solid #ccc; padding-left: 18px; }
+    .gl-head { font-size: 11px; font-weight: bold; letter-spacing: 0.04em; color: #555; margin-bottom: 2px; }
+    .gl-mod { display: flex; flex-direction: column; align-items: center; gap: 0; margin-bottom: 4px; }
+    .gl-mod-icons { display: flex; }
+    .gl-mod span { font-size: 12px; color: #3f3528; }
+    #marker-legend .gl-cols { flex-direction: column; gap: 8px; }
+    #marker-legend .gl-mods { border-left: none; border-top: 1px solid #ddd; padding: 8px 0 0 0; align-items: flex-start; }
+    #marker-legend .gl-mod { align-items: flex-start; }
+
     @media (max-width: 700px) {
+        .gl-cols { flex-direction: column; gap: 8px; }
+        .gl-mods { border-left: none; border-top: 1px solid #ccc; padding: 8px 0 0 0; }
         #grave-legend {
             left: 8px;
             right: 60px;
@@ -1145,6 +1159,47 @@ function findCemetery(cemeteryID) {
     });
 }
 
+// Builds the two-column key (TYPES | MODIFIERS) from the "seen" flags.
+// Used by the bottom legend (only what's in the cemetery) and by the
+// Layers & Legend panel (everything). Icons come from drawGraveSymbol,
+// so they always match the map.
+function graveKeyHTML(seen) {
+
+    function item(opts, label) {
+        return '<div class="grave-legend-item">' + legendSVG(opts) +
+               '<span>' + label + '</span></div>';
+    }
+
+    // Modifier example: the base shapes are drawn faded so the
+    // ring or pip is what stands out.
+    function modifier(flag, label) {
+        const circle = { shape: "circle", faded: true };
+        const square = { shape: "square", faded: true };
+        circle[flag] = true;
+        square[flag] = true;
+        return '<div class="gl-mod"><div class="gl-mod-icons">' +
+               legendSVG(circle) + legendSVG(square) +
+               '</div><span>' + label + '</span></div>';
+    }
+
+    let types = "";
+    if (seen.circleSingle) types += item({ shape: "circle" }, "Single (One Marker)");
+    if (seen.circleDot)    types += item({ shape: "circle", dot: true }, "Multiple (One Marker)");
+    if (seen.squareSingle) types += item({ shape: "square" }, "Single (Above Ground)");
+    if (seen.squareDot)    types += item({ shape: "square", dot: true }, "Multiple (Above Ground)");
+
+    let mods = "";
+    if (seen.veteran) mods += modifier("veteran", "Veteran");
+    if (seen.pioneer) mods += modifier("pioneer", "Pioneer");
+
+    if (types === "" && mods === "") return "";
+
+    return '<div class="gl-cols">' +
+        (types ? '<div class="gl-col"><div class="gl-head">TYPES</div>' + types + '</div>' : '') +
+        (mods ? '<div class="gl-col gl-mods"><div class="gl-head">MODIFIERS</div>' + mods + '</div>' : '') +
+        '</div>';
+}
+
 // Compute which legend rows apply to this cemetery, and render them.
 function updateGraveLegend(cemeteryID) {
 
@@ -1197,21 +1252,8 @@ function updateGraveLegend(cemeteryID) {
         if (group.some(function (p) { return p.pioneer === true; })) seen.pioneer = true;
     });
 
-    // Build the rows.
-    let html = "";
-
-    function row(svgOpts, label) {
-        html += '<div class="grave-legend-item">' +
-                legendSVG(svgOpts) +
-                '<span>' + label + '</span></div>';
-    }
-
-    if (seen.circleSingle) row({ shape: "circle" }, "Single");
-    if (seen.circleDot)    row({ shape: "circle", dot: true }, "Multiple");
-    if (seen.squareSingle) row({ shape: "square" }, "Structure");
-    if (seen.squareDot)    row({ shape: "square", dot: true }, "Structure, Multiple");
-    if (seen.veteran)      row({ shape: "circle", veteran: true }, "Veteran");
-    if (seen.pioneer)      row({ shape: "circle", pioneer: true }, "Pioneer");
+    // Build the key (shared with the Layers & Legend panel).
+    const html = graveKeyHTML(seen);
 
     if (html === "") {
         // Nothing to show — hide the panel entirely.
@@ -1263,7 +1305,7 @@ function drawGraveSymbol(ctx, cx, cy, opts) {
 
     outline(half);
     ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2; ctx.stroke();
-    ctx.fillStyle = GRAVE_INK; ctx.fill();
+    ctx.fillStyle = opts.faded ? "#cfcabe" : GRAVE_INK; ctx.fill();   // faded = legend modifier examples
 
     if (opts.dot) {
         outline(2.4);
@@ -1319,18 +1361,10 @@ function buildMarkerLegend() {
         return;
     }
 
-    [
-        [{ shape: "circle" }, "Single"],
-        [{ shape: "circle", dot: true }, "Multiple (single marker)"],
-        [{ shape: "square" }, "Structure (single interment)"],
-        [{ shape: "square", dot: true }, "Structure (multiple interments)"],
-        [{ shape: "circle", veteran: true }, "Veteran"],
-        [{ shape: "circle", pioneer: true }, "Pioneer"]
-    ].forEach(function (item) {
-        const row = document.createElement("div");
-        row.className = "legend-item";
-        row.innerHTML = legendSVG(item[0], 24) + "<span>" + item[1] + "</span>";
-        box.appendChild(row);
+    box.innerHTML = graveKeyHTML({
+        circleSingle: true, circleDot: true,
+        squareSingle: true, squareDot: true,
+        veteran: true, pioneer: true
     });
 }
 
