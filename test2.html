@@ -243,7 +243,7 @@
 
     /* ---------- INFO PANEL ---------- */
     #info-panel {
-        position: absolute; top: 10px; right: 10px; width: 310px;
+        position: absolute; top: 10px; right: 10px; width: 360px;
         max-width: calc(100% - 20px); max-height: calc(100% - 20px);
         overflow-y: auto; background: rgba(255, 255, 255, 0.96);
         border: 1px solid #aaa; border-radius: 5px;
@@ -288,7 +288,7 @@
     /* ---------- GRAVE CARD ---------- */
     .grave-sub { margin: 0 0 8px 0; font-size: 13px; color: #6b6258; }
     #info-panel .grave-info-details h2 { margin: 0 0 2px 0; font-size: 19px; }
-    .grave-facts { display: grid; grid-template-columns: 82px 1fr; gap: 3px 8px; margin: 0; font-size: 14px; line-height: 1.35; }
+    .grave-facts { display: grid; grid-template-columns: 82px 1fr; gap: 3px 8px; margin: 8px 0 0 0; font-size: 14px; line-height: 1.35; }
     .grave-facts dt { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.03em; color: #6b6258; padding-top: 2px; }
     .grave-facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 
@@ -2923,10 +2923,10 @@ function handleGraveClick(event) {
                 <h2>${escapeHtml(person.name || "Unnamed Interment")}</h2>
                 <p class="grave-brief">${escapeHtml(briefParts.join(" \u00b7 "))}</p>
                 <p class="grave-sub">${escapeHtml(cemeteryName || "")}</p>
-                <dl class="grave-facts">${facts}</dl>
             </div>
             ${gravePhoto}
-        </div>`;
+        </div>
+        <dl class="grave-facts">${facts}</dl>`;
 
     // Frees up map space on phones, then centers the grave above the card.
     if (isNarrow()) { setGraveFilterPanel(false); }
