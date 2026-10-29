@@ -3061,6 +3061,11 @@ function handleSharedMarkerClick(event) {
 const ACCESS_LABELS = { 0: "Inaccessible", 1: "Private Land", 2: "With Permission", 3: "Public" };
 const STATUS_LABELS = { 1: "Inactive", 2: "Active" };
 const VETS_LABELS = { 1: "Yes", 2: "No" };
+// 1450 -> "1,450"
+function formatCount(n) {
+    return Number(n).toLocaleString("en-US");
+}
+
 const CONDITION_LABELS = { 3: "Good", 2: "Fair", 1: "Poor", 0: "Lost" };
 
 // Translates a row of the cemetery list into the names the rest of the page reads.
@@ -3164,16 +3169,13 @@ function showCemeteryPanel(feature) {
 
     const recN = Number(props.Grave_Recorded);
     const estN = Number(props.Grave_Estimate);
-    let graveCountText = "Unknown";
 
-    if (recN >= 0 && estN >= 0 && estN !== recN) {
-        graveCountText = `${recN} recorded (about ${estN} estimated)`;
-    } else if (recN >= 0) {
-        graveCountText = `${recN} recorded`;
-    } else if (estN >= 0) {
-        graveCountText = `About ${estN} estimated`;
-    } else if (Number(props.Grave_Count) >= 0) {
-        graveCountText = `${escapeHtml(props.Grave_Count)} Visible`;     // old-style file
+    // Recorded = stones actually counted. Estimated = how many people we think are there.
+    let recordedText = recN >= 0 ? formatCount(recN) : "Unknown";
+    const estimatedText = estN >= 0 ? formatCount(estN) : "Unknown";
+
+    if (recN < 0 && estN < 0 && Number(props.Grave_Count) >= 0) {
+        recordedText = formatCount(props.Grave_Count) + " (visible)";     // old-style file
     }
 
     const establishedText =
@@ -3206,10 +3208,8 @@ function showCemeteryPanel(feature) {
         </div>
 
         <h3>Cemetery Information</h3>
-        <div class="popup-field">
-            <span class="popup-label">Grave Count:</span>
-            <span>${graveCountText}</span>
-        </div>
+        ${popupField("Recorded Graves", recordedText)}
+        ${popupField("Estimated Graves", estimatedText)}
         ${popupField("Approximate Size", props.Approximate_Size || "Unknown")}
         ${popupField("Status", statusText)}
         ${popupField("Accessibility", accessText)}
@@ -4894,6 +4894,8 @@ map.on("load", function () {
                 id: "cemeteries-layer",
                 type: "circle",
                 source: "cemeteries-data",
+                // Smaller circles are drawn on top of larger ones so they aren't hidden
+                layout: { "circle-sort-key": ["-", ["get", "Grave_Count"]] },
                 paint: {
                     "circle-radius": [
                         "case",
@@ -4921,6 +4923,7 @@ map.on("load", function () {
                 source: "cemeteries-data",
                 filter: ACCESS_MARK_FILTER,
                 layout: {
+                    "symbol-sort-key": ["-", ["get", "Grave_Count"]],
                     "icon-image": [
                         "match", ["get", "Access"],
                         0, "access-mark-inaccessible",
