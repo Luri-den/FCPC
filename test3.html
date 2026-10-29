@@ -1,536 +1,461 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Franklin County Pioneer Cemetery Map</title>
-    
-    <!-- Leaflet CSS & JS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<meta charset="UTF-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#01796F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
 
-    <style>
-        /* Modern 2026 Mobile-First GIS Shell Styling */
-        :root {
-            --bg-glass: rgba(255, 255, 255, 0.88);
-            --bg-glass-dark: rgba(26, 26, 26, 0.9);
-            --border-glass: rgba(255, 255, 255, 0.4);
-            --primary-accent: #2e5b88;
-            --primary-accent-hover: #1f3f60;
-            --text-main: #1f2937;
-            --text-muted: #6b7280;
-            --radius-pill: 999px;
-            --radius-card: 20px;
-            --shadow-float: 0 8px 32px rgba(0, 0, 0, 0.12);
-        }
+<title>Franklin County Indiana Pioneer Cemeteries Archive</title>
 
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="manifest" href="manifest.json">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
 
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            color: var(--text-main);
-            background: #e5e7eb;
-        }
+<style>
+    * { box-sizing: border-box; }
 
-        /* Full Screen Edge-to-Edge Map Canvas */
-        #map {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 1;
-        }
+    html, body {
+        margin: 0; padding: 0; width: 100%; height: 100%;
+        overflow: hidden;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+        background: #f4f1e8;
+    }
 
-        /* Floating Minimalist Top Bar */
-        .top-app-bar {
-            position: absolute;
-            top: 12px;
-            left: 12px;
-            right: 12px;
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 6px 14px;
-            background: var(--bg-glass);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border-radius: var(--radius-pill);
-            box-shadow: var(--shadow-float);
-            border: 1px solid var(--border-glass);
-        }
+    body { display: flex; flex-direction: column; }
 
-        .top-app-bar .brand-title {
-            font-weight: 700;
-            font-size: 15px;
-            color: var(--primary-accent);
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
+    /* ---------- FULLSCREEN MAP ---------- */
+    #map {
+        position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1;
+    }
 
-        .top-app-bar input[type="search"] {
-            flex: 1;
-            border: none;
-            background: rgba(0, 0, 0, 0.04);
-            padding: 8px 14px;
-            border-radius: var(--radius-pill);
-            font-size: 14px;
-            outline: none;
-            color: var(--text-main);
-        }
+    /* ---------- FLOATING TOP APP BAR (2026) ---------- */
+    .app-top-bar {
+        position: absolute; top: 12px; left: 12px; right: 12px; z-index: 10;
+        display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.90);
+        backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+        border-radius: 28px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+    }
 
-        .top-app-bar input[type="search"]:focus {
-            background: rgba(255, 255, 255, 0.9);
-            box-shadow: 0 0 0 2px var(--primary-accent);
-        }
+    .county-logo {
+        width: 30px; height: 32px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    }
+    .county-logo svg { width: 100%; height: 100%; fill: #01796F; stroke: #015851; stroke-width: 1.2; }
 
-        .icon-btn {
-            background: transparent;
-            border: none;
-            font-size: 18px;
-            cursor: pointer;
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.2s;
-            color: var(--text-main);
-            flex-shrink: 0;
-        }
+    #search-wrapper { position: relative; flex: 1; display: flex; align-items: center; }
+    #search {
+        width: 100%; padding: 8px 30px 8px 10px; border: none; background: transparent;
+        font-size: 15px; outline: none; color: #1a1a1a;
+    }
+    #clear-search {
+        position: absolute; right: 4px; border: none; background: transparent;
+        font-size: 18px; color: #777; cursor: pointer; display: none; padding: 4px;
+    }
 
-        .icon-btn:hover, .icon-btn:active {
-            background: rgba(0, 0, 0, 0.08);
-        }
+    .app-bar-btn {
+        background: #01796F; color: white; border: none; border-radius: 20px;
+        padding: 8px 14px; font-size: 13px; font-weight: bold; cursor: pointer;
+        display: flex; align-items: center; gap: 6px; white-space: nowrap;
+        transition: background 0.2s;
+    }
+    .app-bar-btn:hover { background: #015851; }
 
-        /* Floating Utility Action Stack (Right Edge) */
-        .floating-action-stack {
-            position: absolute;
-            top: 74px;
-            right: 12px;
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
+    /* ---------- RIGHT FLOATING ACTION STACK ---------- */
+    .fab-stack {
+        position: absolute; top: 76px; right: 12px; z-index: 10;
+        display: flex; flex-direction: column; gap: 10px;
+    }
 
-        .fab-button {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            background: var(--bg-glass);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--border-glass);
-            box-shadow: var(--shadow-float);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 18px;
-            transition: transform 0.2s, background 0.2s;
-        }
+    .fab-btn {
+        width: 44px; height: 44px; border-radius: 50%; border: none;
+        background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(12px);
+        box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; color: #3f3528; transition: transform 0.15s, background 0.2s;
+    }
+    .fab-btn:active { transform: scale(0.92); }
+    .fab-btn svg { width: 20px; height: 20px; fill: currentColor; }
 
-        .fab-button:active {
-            transform: scale(0.92);
-        }
+    /* ---------- SEARCH RESULTS DROPDOWN ---------- */
+    #search-results {
+        display: none; position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+        max-height: min(50vh, 380px); overflow-y: auto; background: rgba(255, 255, 255, 0.98);
+        border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); z-index: 40;
+        border: 1px solid rgba(0,0,0,0.08); padding: 6px 0;
+    }
+    .search-results-heading { padding: 8px 16px 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; color: #6b6258; }
+    .search-result {
+        display: block; width: 100%; padding: 10px 16px; border: none; background: transparent;
+        text-align: left; font-size: 14px; cursor: pointer; color: #222;
+    }
+    .search-result:hover { background: #eee9dc; }
+    .search-result-title { display: block; font-weight: bold; }
+    .search-result-detail { display: block; font-size: 12px; color: #666; margin-top: 2px; }
 
-        /* Generic Bottom Sheet Drawer */
-        .bottom-sheet {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            background: var(--bg-glass);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-top-left-radius: var(--radius-card);
-            border-top-right-radius: var(--radius-card);
-            box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.18);
-            padding: 12px 20px 24px 20px;
-            transform: translateY(100%);
-            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-            max-height: 82vh;
-            overflow-y: auto;
-            border-top: 1px solid var(--border-glass);
-        }
+    /* ---------- DRAWER / BOTTOM SHEET OVERLAYS ---------- */
+    .sheet-panel {
+        position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        border-top-left-radius: 24px; border-top-right-radius: 24px;
+        box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.2);
+        transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        max-height: 85vh; display: flex; flex-direction: column; overflow: hidden;
+    }
+    .sheet-panel.open { transform: translateY(0); }
 
-        .bottom-sheet.open {
-            transform: translateY(0);
-        }
+    .sheet-drag-handle {
+        width: 100%; height: 24px; display: flex; align-items: center; justify-content: center;
+        cursor: grab; touch-action: none; flex-shrink: 0;
+    }
+    .sheet-drag-handle::before {
+        content: ""; width: 40px; height: 5px; background: #ccc; border-radius: 3px;
+    }
 
-        .sheet-handle {
-            width: 40px;
-            height: 4px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 2px;
-            margin: 0 auto 14px auto;
-            cursor: pointer;
-        }
+    .sheet-body { padding: 0 20px 24px 20px; overflow-y: auto; flex: 1; }
 
-        .sheet-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
+    /* ---------- CEMETERY CARD PREVIEW SPECIFICS ---------- */
+    .preview-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+    .preview-title { margin: 0; font-size: 20px; color: #222; font-weight: bold; }
+    .preview-badge {
+        display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; color: white;
+    }
+    .stat-grid {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; background: #f4f1e8; padding: 12px; border-radius: 12px;
+    }
+    .stat-box { text-align: center; }
+    .stat-val { font-size: 18px; font-weight: bold; color: #01796F; }
+    .stat-lbl { font-size: 11px; text-transform: uppercase; color: #666; font-weight: bold; }
 
-        .sheet-header h2 {
-            margin: 0;
-            font-size: 18px;
-            color: var(--primary-accent);
-        }
+    /* ---------- GRAVE LEGEND & CONTROLS IN DRAWER ---------- */
+    .filter-section { margin-bottom: 20px; }
+    .filter-section h3 { margin: 0 0 8px 0; font-size: 13px; font-weight: bold; color: #555; text-transform: uppercase; }
 
-        /* Controls & Filter Layouts */
-        .control-group {
-            margin-bottom: 20px;
-        }
+    .basemap-switch { display: flex; gap: 8px; }
+    .basemap-opt {
+        flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 8px; background: white;
+        text-align: center; font-size: 13px; cursor: pointer; font-weight: bold; color: #444;
+    }
+    .basemap-opt.active { background: #01796F; color: white; border-color: #01796F; }
 
-        .control-group label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-muted);
-            margin-bottom: 8px;
-        }
+    .legend-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; font-size: 13px; }
+    .legend-dot { width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.2); }
 
-        .range-slider-container {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+    /* ---------- MODALS ---------- */
+    .modal-overlay {
+        display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.6);
+        align-items: center; justify-content: center; padding: 16px;
+    }
+    .modal-card {
+        background: white; border-radius: 16px; padding: 24px; max-width: 500px; width: 100%;
+        max-height: 85vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .modal-card h2 { margin-top: 0; color: #01796F; }
+    .modal-btn {
+        width: 100%; padding: 12px; background: #01796F; color: white; border: none;
+        border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 16px;
+    }
 
-        .range-slider-container input[type="range"] {
-            flex: 1;
-            accent-color: var(--primary-accent);
-        }
-
-        .range-value {
-            font-weight: 700;
-            font-size: 14px;
-            min-width: 42px;
-        }
-
-        .chip-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .chip {
-            padding: 6px 14px;
-            border-radius: var(--radius-pill);
-            background: rgba(0, 0, 0, 0.05);
-            border: 1px solid transparent;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .chip.active {
-            background: var(--primary-accent);
-            color: white;
-        }
-
-        .btn-primary {
-            width: 100%;
-            padding: 12px;
-            border-radius: var(--radius-pill);
-            background: var(--primary-accent);
-            color: white;
-            border: none;
-            font-weight: 600;
-            font-size: 15px;
-            cursor: pointer;
-            margin-top: 10px;
-            transition: background 0.2s;
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-accent-hover);
-        }
-
-        /* Legend Badges */
-        .legend-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 13px;
-        }
-
-        .legend-color {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-        }
-
-        /* Modal Overlay Backdrop for Startup Disclaimers */
-        .modal-backdrop {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(4px);
-            z-index: 90;
-            display: none;
-        }
-
-        .modal-backdrop.active {
-            display: block;
-        }
-    </style>
+    .see-more-btn {
+        width: 100%; padding: 12px; background: #01796F; color: white; border: none;
+        border-radius: 10px; font-size: 14px; font-weight: bold; cursor: pointer; text-align: center; margin-top: 10px;
+    }
+    .export-btn {
+        width: 100%; padding: 10px; background: transparent; color: #01796F; border: 1px solid #01796F;
+        border-radius: 10px; font-size: 13px; font-weight: bold; cursor: pointer; text-align: center; margin-top: 8px;
+    }
+</style>
 </head>
+
 <body>
 
-    <!-- 1. Minimalist Top App Bar -->
-    <header class="top-app-bar">
-        <div class="brand-title">
-            <span>🪦</span> FCPC
-        </div>
-        <input type="search" id="searchInput" placeholder="Search cemeteries or graves..." aria-label="Search map">
-        <button class="icon-btn" onclick="toggleSheet('filtersDrawer')" title="Filters & Layers" aria-label="Open Filters">
-            🎛️
-        </button>
-    </header>
+<!-- 1. FULLSCREEN MAP CANVAS -->
+<div id="map" role="region" aria-label="Interactive map"></div>
 
-    <!-- 2. Floating Action Utility Stack -->
-    <aside class="floating-action-stack">
-        <button class="fab-button" onclick="triggerGPS()" title="My Location" aria-label="My Location">📍</button>
-        <button class="fab-button" onclick="toggleSheet('filtersDrawer')" title="Map Layers" aria-label="Map Layers">🗺️</button>
-        <button class="fab-button" onclick="toggleSheet('savedDrawer')" title="Bookmarked Graves" aria-label="Saved Graves">⭐</button>
-    </aside>
+<!-- 2. FLOATING TOP APP BAR WITH COUNTY SVG LOGO -->
+<header class="app-top-bar">
+    <div class="county-logo" title="Franklin County, Indiana">
+        <!-- SVG Vector Path Outline of Franklin County, Indiana -->
+        <svg viewBox="0 0 100 100" aria-label="Franklin County Outline">
+            <path d="M 15 15 L 85 15 L 85 85 L 35 85 L 35 65 L 15 65 Z" />
+        </svg>
+    </div>
+    <div id="search-wrapper">
+        <input type="text" id="search" placeholder="Search cemeteries or people..." aria-label="Search">
+        <button id="clear-search" type="button" title="Clear search">&times;</button>
+        <div id="search-results" role="group"></div>
+    </div>
+    <button class="app-bar-btn" id="open-filters-btn" type="button">
+        <span>Filters</span>
+    </button>
+</header>
 
-    <!-- 3. Full-Screen Interactive Map Canvas -->
-    <main id="map" aria-label="Franklin County Pioneer Cemetery Interactive Map"></main>
+<!-- 3. FLOATING ACTION STACK (RIGHT EDGE) -->
+<div class="fab-stack">
+    <button class="fab-btn" id="gps-fab" title="Locate Me">
+        <svg viewBox="0 0 24 24"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0 0 13 3.06V1h-2v2.06A8.994 8.994 0 0 0 3.06 11H1v2h2.06A8.994 8.994 0 0 0 11 20.94V23h2v-2.06A8.994 8.994 0 0 0 20.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
+    </button>
+    <button class="fab-btn" id="reset-fab" title="Reset Filters & Zoom">
+        <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+    </button>
+</div>
 
-    <!-- 4. Modal Backdrop for Disclaimers -->
-    <div id="modalBackdrop" class="modal-backdrop" onclick="closeAllSheets()"></div>
-
-    <!-- 5. Filters & Overlay Controls Bottom Sheet -->
-    <div id="filtersDrawer" class="bottom-sheet" role="dialog" aria-label="Filters and Overlay Controls">
-        <div class="sheet-handle" onclick="closeAllSheets()"></div>
-        <div class="sheet-header">
-            <h2>Filters & Map Overlays</h2>
-            <button class="icon-btn" onclick="closeAllSheets()">✕</button>
-        </div>
-
-        <!-- Established Year Filter -->
-        <div class="control-group">
-            <label for="yearSlider">Established Before Year</label>
-            <div class="range-slider-container">
-                <input type="range" id="yearSlider" min="1800" max="1950" value="1950" step="5" oninput="updateYearLabel(this.value)">
-                <span id="yearValue" class="range-value">1950</span>
+<!-- 4. FILTERS & LAYERS BOTTOM DRAWER -->
+<div id="filters-sheet" class="sheet-panel">
+    <div class="sheet-drag-handle" id="filters-drag"></div>
+    <div class="sheet-body">
+        <h2>Map Layers & Controls</h2>
+        
+        <div class="filter-section">
+            <h3>Basemap View</h3>
+            <div class="basemap-switch">
+                <button type="button" class="basemap-opt active" data-basemap="street">Street</button>
+                <button type="button" class="basemap-opt" data-basemap="aerial">Aerial</button>
             </div>
         </div>
 
-        <!-- Historical Map Overlay Opacity -->
-        <div class="control-group">
-            <label for="opacitySlider">1882 Historical Map Opacity</label>
-            <div class="range-slider-container">
-                <input type="range" id="opacitySlider" min="0" max="100" value="70" oninput="updateOpacityLabel(this.value)">
-                <span id="opacityValue" class="range-value">70%</span>
+        <div class="filter-section">
+            <h3>Historical Overlay Maps</h3>
+            <div id="overlay-checkboxes"></div>
+            <div style="margin-top: 10px;">
+                <label style="font-size: 12px; color: #666;">Opacity: <span id="opacity-val">80%</span></label>
+                <input type="range" id="opacity-slider" min="0" max="100" value="80" style="width: 100%;">
             </div>
         </div>
 
-        <!-- Cemetery Access Types -->
-        <div class="control-group">
-            <label>Access Status</label>
-            <div class="chip-group">
-                <button class="chip active" onclick="this.classList.toggle('active')">Public Access</button>
-                <button class="chip active" onclick="this.classList.toggle('active')">Permission Needed</button>
-                <button class="chip active" onclick="this.classList.toggle('active')">Private / Restricted</button>
+        <div class="filter-section">
+            <h3>Established Before Year</h3>
+            <input type="range" id="year-slider" min="1800" max="1900" step="5" value="1900" style="width: 100%;">
+            <div style="text-align: center; font-weight: bold; margin-top: 4px;" id="year-val-display">All</div>
+        </div>
+
+        <div class="filter-section">
+            <h3>Cemetery Accessibility Legend</h3>
+            <div class="legend-row"><span class="legend-dot" style="background:#01796F;"></span> Public</div>
+            <div class="legend-row"><span class="legend-dot" style="background:#C9A227;"></span> With Permission</div>
+            <div class="legend-row"><span class="legend-dot" style="background:#D2691E;"></span> Private Land</div>
+            <div class="legend-row"><span class="legend-dot" style="background:#8B0000;"></span> Inaccessible</div>
+        </div>
+    </div>
+</div>
+
+<!-- 5. CEMETERY / GRAVE RECORD PREVIEW CARD (MOBILE SWIPE SHEET) -->
+<div id="record-sheet" class="sheet-panel">
+    <div class="sheet-drag-handle" id="record-drag"></div>
+    <div class="sheet-body" id="record-content">
+        <!-- Dynamic content injected here -->
+    </div>
+</div>
+
+<!-- 6. NOTICES & DISCLAIMER MODAL -->
+<div id="notices-modal" class="modal-overlay">
+    <div class="modal-card">
+        <h2>Before You Explore!</h2>
+        <p>This archive documents historic pioneer cemeteries in Franklin County, Indiana. Access to private land requires owner permission. Please respect cemeteries and obey local laws.</p>
+        <button class="modal-btn" id="close-notices-btn">I Understand</button>
+    </div>
+</div>
+
+<script>
+// ============================================================
+// CORE STATE & CONFIGURATION
+// ============================================================
+const DEFAULT_CENTER = [-85.0626, 39.3992];
+const DEFAULT_ZOOM = 11;
+
+let cemeteryFeatures = [];
+let intermentsByCemetery = {};
+let selectedCemeteryFeature = null;
+
+const ACCESS_LABELS = { 0: "Inaccessible", 1: "Private Land", 2: "With Permission", 3: "Public" };
+const ACCESS_COLORS = { 0: "#8B0000", 1: "#D2691E", 2: "#C9A227", 3: "#01796F" };
+
+// ============================================================
+// INITIALIZE MAPLIBRE MAP
+// ============================================================
+const map = new maplibregl.Map({
+    container: "map",
+    style: {
+        version: 8,
+        sources: {
+            "osm-tiles": { type: "raster", tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"], tileSize: 256, maxzoom: 19 },
+            "usgs-tiles": { type: "raster", tiles: ["https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}"], tileSize: 256, maxzoom: 16 }
+        },
+        layers: [
+            { id: "osm-layer", type: "raster", source: "osm-tiles" },
+            { id: "usgs-layer", type: "raster", source: "usgs-tiles", layout: { visibility: "none" } }
+        ]
+    },
+    zoom: DEFAULT_ZOOM,
+    center: DEFAULT_CENTER
+});
+
+// ============================================================
+// UI DRAWER CONTROLS
+// ============================================================
+const filtersSheet = document.getElementById("filters-sheet");
+const recordSheet = document.getElementById("record-sheet");
+const openFiltersBtn = document.getElementById("open-filters-btn");
+
+openFiltersBtn.addEventListener("click", () => {
+    filtersSheet.classList.toggle("open");
+});
+
+document.getElementById("filters-drag").addEventListener("click", () => {
+    filtersSheet.classList.remove("open");
+});
+
+document.getElementById("record-drag").addEventListener("click", () => {
+    recordSheet.classList.remove("open");
+});
+
+// Basemap Switcher
+document.querySelectorAll(".basemap-opt").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+        document.querySelectorAll(".basemap-opt").forEach(b => b.classList.remove("active"));
+        e.target.classList.add("active");
+        const type = e.target.dataset.basemap;
+        map.setLayoutProperty("osm-layer", "visibility", type === "street" ? "visible" : "none");
+        map.setLayoutProperty("usgs-layer", "visibility", type === "aerial" ? "visible" : "none");
+    });
+});
+
+// ============================================================
+// CEMETERY SELECTION & BOTTOM SHEET PREVIEW
+// ============================================================
+function showCemeteryPreview(feature) {
+    selectedCemeteryFeature = feature;
+    const props = feature.properties;
+    
+    // Zoom to location
+    map.flyTo({ center: feature.geometry.coordinates, zoom: 16, duration: 1000 });
+
+    const accessBadgeColor = ACCESS_COLORS[props.Access] || "#777";
+    const accessText = ACCESS_LABELS[props.Access] || "Unknown";
+
+    const html = `
+        <div class="preview-header">
+            <div>
+                <h2 class="preview-title">${props.Cemetery_Name || "Unnamed Cemetery"}</h2>
+                <div style="font-size: 13px; color: #666; margin-top: 2px;">${props.Other_Names ? "Alt: " + props.Other_Names : "Township: " + (props.Township || "N/A")}</div>
+            </div>
+            <span class="preview-badge" style="background:${accessBadgeColor};">${accessText}</span>
+        </div>
+
+        <div class="stat-grid">
+            <div class="stat-box">
+                <div class="stat-val">${props.Established_Year > 0 ? props.Established_Year : "N/A"}</div>
+                <div class="stat-lbl">Established</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-val">${props.Grave_Recorded >= 0 ? props.Grave_Recorded : "0"}</div>
+                <div class="stat-lbl">Recorded Graves</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-val">${props.Grave_Estimate >= 0 ? props.Grave_Estimate : "N/A"}</div>
+                <div class="stat-lbl">Estimated Graves</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-val">${props.Approximate_Size || "N/A"}</div>
+                <div class="stat-lbl">Approx. Size</div>
             </div>
         </div>
 
-        <!-- Access Legend -->
-        <div class="control-group">
-            <label>Accessibility Legend</label>
-            <div class="legend-list">
-                <div class="legend-item"><span class="legend-color" style="background:#10b981;"></span> Publicly Accessible</div>
-                <div class="legend-item"><span class="legend-color" style="background:#f59e0b;"></span> Requires Permission / Escort</div>
-                <div class="legend-item"><span class="legend-color" style="background:#ef4444;"></span> Private Land / Inaccessible</div>
-            </div>
-        </div>
+        <button class="see-more-btn" onclick="openFullCemeteryRecord('${props.Cemetery_ID}')">SEE FULL RECORDS & NOTES →</button>
+        <button class="export-btn" onclick="exportCemeteryCSV('${props.Cemetery_ID}')">EXPORT DATA (CSV)</button>
+    `;
 
-        <button class="btn-primary" onclick="closeAllSheets()">Apply Filters</button>
-    </div>
+    document.getElementById("record-content").innerHTML = html;
+    recordSheet.classList.add("open");
+}
 
-    <!-- 6. Startup Disclaimer Bottom Sheet -->
-    <div id="disclaimerDrawer" class="bottom-sheet" role="dialog" aria-label="Before You Explore Disclaimer">
-        <div class="sheet-handle" onclick="closeDisclaimer()"></div>
-        <div class="sheet-header">
-            <h2>Before You Explore</h2>
-        </div>
-        <p style="font-size: 14px; line-height: 1.5; color: var(--text-main);">
-            Welcome to the <strong>Franklin County Pioneer Cemetery Survey</strong> map. Pioneer cemeteries are sensitive historical sites. Many exist on private property or working farmland.
-        </p>
-        <ul style="font-size: 13px; line-height: 1.6; color: var(--text-muted); padding-left: 20px;">
-            <li>Always respect property boundaries and obtain landowner permission where required.</li>
-            <li>GPS markers and grave plots are intended for genealogical reference, not exact turn-by-turn navigation.</li>
-            <li>Do not disturb markers or grounds.</li>
-        </ul>
-        <button class="btn-primary" onclick="closeDisclaimer()">I Agree & Explore Map</button>
-    </div>
+function openFullCemeteryRecord(cemeteryID) {
+    alert("Opening full historic archive records for cemetery ID: " + cemeteryID);
+}
 
-    <!-- 7. Cemetery Details Bottom Sheet -->
-    <div id="cemeteryDrawer" class="bottom-sheet" role="dialog" aria-label="Cemetery Information">
-        <div class="sheet-handle" onclick="closeAllSheets()"></div>
-        <div class="sheet-header">
-            <h2 id="cemTitle">Cemetery Name</h2>
-            <button class="icon-btn" onclick="closeAllSheets()">✕</button>
-        </div>
-        <div id="cemContent" style="font-size: 14px; line-height: 1.5;">
-            <!-- Dynamic cemetery details populate here -->
-        </div>
-    </div>
+// ============================================================
+// DATA LOADING
+// ============================================================
+map.on("load", () => {
+    Papa.parse("cemlist.csv", {
+        download: true, header: true, skipEmptyLines: true,
+        complete: function(results) {
+            const features = [];
+            results.data.forEach(row => {
+                const lat = parseFloat(row.LAT);
+                const lon = parseFloat(row.LONG);
+                if (isNaN(lat) || isNaN(lon)) return;
 
-    <!-- 8. Bookmarked Graves Sheet -->
-    <div id="savedDrawer" class="bottom-sheet" role="dialog" aria-label="Bookmarked Graves">
-        <div class="sheet-handle" onclick="closeAllSheets()"></div>
-        <div class="sheet-header">
-            <h2>Bookmarked Graves</h2>
-            <button class="icon-btn" onclick="closeAllSheets()">✕</button>
-        </div>
-        <div id="savedList" style="font-size: 14px; color: var(--text-muted);">
-            <p>No saved graves yet. Tap any grave marker on the map to pin it for quick reference during field trips.</p>
-        </div>
-    </div>
-
-    <script>
-        // Initialize Map
-        const map = L.map('map', { zoomControl: false }).setView([39.42, -85.01], 11);
-
-        // OpenStreetMap Base Tile Layer
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap contributors | Pioneer Cemetery Project'
-        }).addTo(map);
-
-        // Position Zoom Control on Bottom Right
-        L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-        // Sample Pioneer Cemeteries Data
-        const cemeteries = [
-            { id: "FC054", name: "Old Metamora Pioneer Cemetery", lat: 39.4475, lng: -85.1372, est: 1832, status: "Public Access" },
-            { id: "FC012", name: "Vance Family Plot", lat: 39.4120, lng: -85.0150, est: 1818, status: "Permission Needed" },
-            { id: "FC089", name: "Fairfield Historic Burial Ground", lat: 39.4890, lng: -84.9810, est: 1825, status: "Public Access" }
-        ];
-
-        // Render Cemetery Markers
-        cemeteries.forEach(cem => {
-            const marker = L.circleMarker([cem.lat, cem.lng], {
-                radius: 8,
-                fillColor: cem.status === "Public Access" ? "#10b981" : "#f59e0b",
-                color: "#ffffff",
-                weight: 2,
-                opacity: 1,
-                fillOpacity: 0.9
-            }).addTo(map);
-
-            marker.on('click', () => {
-                showCemeteryDetails(cem);
-            });
-        });
-
-        // Bottom Sheet UI Handlers
-        function toggleSheet(sheetId) {
-            const sheet = document.getElementById(sheetId);
-            const isOpen = sheet.classList.contains('open');
-            closeAllSheets();
-            if (!isOpen) {
-                sheet.classList.add('open');
-            }
-        }
-
-        function closeAllSheets() {
-            document.querySelectorAll('.bottom-sheet').forEach(sheet => {
-                sheet.classList.remove('open');
-            });
-            document.getElementById('modalBackdrop').classList.remove('active');
-        }
-
-        function showDisclaimer() {
-            document.getElementById('disclaimerDrawer').classList.add('open');
-            document.getElementById('modalBackdrop').classList.add('active');
-        }
-
-        function closeDisclaimer() {
-            document.getElementById('disclaimerDrawer').classList.remove('open');
-            document.getElementById('modalBackdrop').classList.remove('active');
-            localStorage.setItem('disclaimerAccepted', 'true');
-        }
-
-        function showCemeteryDetails(cem) {
-            document.getElementById('cemTitle').innerText = cem.name;
-            document.getElementById('cemContent').innerHTML = `
-                <p><strong>Cemetery ID:</strong> ${cem.id}</p>
-                <p><strong>Established:</strong> c. ${cem.est}</p>
-                <p><strong>Access:</strong> <span style="color: ${cem.status === 'Public Access' ? '#10b981' : '#f59e0b'}; font-weight:600;">${cem.status}</span></p>
-                <button class="btn-primary" style="margin-top:12px;" onclick="alert('Zooming to individual plot markers...')">View Grave Markers →</button>
-            `;
-            toggleSheet('cemeteryDrawer');
-        }
-
-        // Filter Controls Logic
-        function updateYearLabel(val) {
-            document.getElementById('yearValue').innerText = val;
-        }
-
-        function updateOpacityLabel(val) {
-            document.getElementById('opacityValue').innerText = val + '%';
-        }
-
-        function triggerGPS() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(position => {
-                    const { latitude, longitude } = position.coords;
-                    map.flyTo([latitude, longitude], 15);
-                    L.marker([latitude, longitude]).addTo(map).bindPopup("You are here").openPopup();
-                }, () => {
-                    alert("Unable to access your location.");
+                features.push({
+                    type: "Feature",
+                    properties: {
+                        Cemetery_ID: row.ID || "",
+                        Cemetery_Name: row.NAME || "",
+                        Other_Names: row.OTHER_NAMES || "",
+                        Township: row.TOWNSHIP || "",
+                        Established_Year: parseInt(row.ESTABLISHED || row["EST."], 10) || 0,
+                        Grave_Recorded: parseInt(row.GRAVE_RECORDED, 10) || 0,
+                        Grave_Estimate: parseInt(row.GRAVES_ESTIMATE, 10) || 0,
+                        Access: parseInt(row.ACCESS, 10) || 3,
+                        Approximate_Size: row.SIZE || ""
+                    },
+                    geometry: { type: "Point", coordinates: [lon, lat] }
                 });
-            }
-        }
+            });
 
-        // Handle URL Parameters (e.g. ?cemetery=FC054)
-        window.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const cemParam = urlParams.get('cemetery');
-            
-            if (cemParam) {
-                const target = cemeteries.find(c => c.id === cemParam);
-                if (target) {
-                    map.setView([target.lat, target.lng], 15);
-                    showCemeteryDetails(target);
+            cemeteryFeatures = features;
+            map.addSource("cemeteries-data", {
+                type: "geojson",
+                data: { type: "FeatureCollection", features: features }
+            });
+
+            map.addLayer({
+                id: "cemeteries-layer",
+                type: "circle",
+                source: "cemeteries-data",
+                paint: {
+                    "circle-radius": 10,
+                    "circle-color": [
+                        "match", ["get", "Access"],
+                        0, "#8B0000",
+                        1, "#D2691E",
+                        2, "#C9A227",
+                        3, "#01796F",
+                        "#777777"
+                    ],
+                    "circle-stroke-width": 2,
+                    "circle-stroke-color": "#ffffff"
                 }
-            } else if (!localStorage.getItem('disclaimerAccepted')) {
-                showDisclaimer();
-            }
-        });
-    </script>
+            });
+
+            map.on("click", "cemeteries-layer", (e) => {
+                if (e.features.length) showCemeteryPreview(e.features[0]);
+            });
+
+            map.on("mouseenter", "cemeteries-layer", () => map.getCanvas().style.cursor = "pointer");
+            map.on("mouseleave", "cemeteries-layer", () => map.getCanvas().style.cursor = "");
+        }
+    });
+});
+
+// Modals
+document.getElementById("close-notices-btn").addEventListener("click", () => {
+    document.getElementById("notices-modal").style.display = "none";
+});
+
+// Reset FAB
+document.getElementById("reset-fab").addEventListener("click", () => {
+    map.flyTo({ center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM });
+    recordSheet.classList.remove("open");
+    filtersSheet.classList.remove("open");
+});
+</script>
 </body>
 </html>
