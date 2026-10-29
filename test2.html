@@ -922,7 +922,7 @@ let intermentRows = [];
 let intermentFields = [];
 
 const BOUNDARY_FILE = "test-cemetery.geojson";
-const BOUNDARY_ID_ALIASES = { TEST001: "FC0202" };
+const BOUNDARY_ID_ALIASES = { TEST001: "FCTEST1" };
 
 let boundaryData = null;
 let selectedCemeteryFeature = null;
@@ -3061,6 +3061,64 @@ function handleSharedMarkerClick(event) {
 const ACCESS_LABELS = { 0: "Inaccessible", 1: "Private Land", 2: "With Permission", 3: "Public" };
 const STATUS_LABELS = { 1: "Inactive", 2: "Active" };
 const VETS_LABELS = { 1: "Yes", 2: "No" };
+const CONDITION_LABELS = { 3: "Good", 2: "Fair", 1: "Poor", 0: "Lost" };
+
+// Translates a row of the cemetery list into the names the rest of the page reads.
+// Understands the new layout (OTHER_NAMES, ESTABLISHED, PLSS, PUBLIC_NOTES, GRAVES_ESTIMATE,
+// GRAVE_RECORDED, SIZE, ACTIVE, VETERANS, numeric CONDITION) and the old one (OTHER NAMES, EST., COUNT ...).
+function normalizeCemeteryRow(row) {
+
+    function pick() {
+        for (let i = 0; i < arguments.length; i++) {
+            const v = row[arguments[i]];
+            if (v !== undefined && v !== null && String(v).trim() !== "") {
+                return String(v).trim();
+            }
+        }
+        return "";
+    }
+
+    const out = Object.assign({}, row);
+
+    out["OTHER NAMES"] = pick("OTHER_NAMES", "OTHER NAMES");
+    out["EST."] = pick("ESTABLISHED", "EST.");
+    out["MAP LOCATION"] = pick("PLSS", "MAP LOCATION");
+    out.NOTES = pick("PUBLIC_NOTES", "NOTES");
+
+    // Grave count: the estimate wins; otherwise the recorded count (shown as "Recorded").
+    let count = pick("GRAVES_ESTIMATE");
+    let kind = "est";
+    if (count === "") { count = pick("GRAVE_RECORDED"); kind = "rec"; }
+    if (count === "") { count = pick("COUNT"); kind = "est"; }
+    out.COUNT = count;
+    out._COUNT_KIND = count === "" ? "" : kind;
+    // Keep both figures: "recorded" = stones counted, "estimated" = plots suspected (usually higher).
+    out._REC = pick("GRAVE_RECORDED");
+    out._EST = pick("GRAVES_ESTIMATE");
+
+    let size = pick("SIZE", "APPROXIMATE SIZE");
+    if (/^\d+(\.\d+)?$/.test(size)) { size += " acres"; }
+    out["APPROXIMATE SIZE"] = size;
+
+    // New files: ACTIVE 1/0 and VETERANS 1/0 (blank = unknown). The page's own codes are
+    // Status 2 = Active, 1 = Inactive and Vets 1 = Yes, 2 = No.
+    if (row.ACTIVE !== undefined) {
+        const a = pick("ACTIVE");
+        out.STATUS = a === "1" ? "2" : (a === "0" ? "1" : "");
+    }
+    if (row.VETERANS !== undefined) {
+        const v = pick("VETERANS");
+        out.VETS = v === "1" ? "1" : (v === "0" ? "2" : "");
+    }
+
+    // Numeric CONDITION (3 Good, 2 Fair, 1 Poor, 0 Lost) becomes words; old text is left alone.
+    const cond = pick("CONDITION");
+    if (/^[0-3]$/.test(cond)) { out.CONDITION = CONDITION_LABELS[Number(cond)]; }
+
+    out._HAZARDS = pick("HAZARDS") === "1";
+
+    return out;
+}
 
 function handleCemeteryClick(event) {
 
@@ -3104,10 +3162,19 @@ function showCemeteryPanel(feature) {
     const statusText = STATUS_LABELS[Number(props.Status)] || "Unknown";
     const vetsText = VETS_LABELS[Number(props.Vets)] || "Unknown";
 
-    const graveCountText =
-        Number(props.Grave_Count) >= 0
-            ? `${escapeHtml(props.Grave_Count)} Visible`
-            : "Unknown";
+    const recN = Number(props.Grave_Recorded);
+    const estN = Number(props.Grave_Estimate);
+    let graveCountText = "Unknown";
+
+    if (recN >= 0 && estN >= 0 && estN !== recN) {
+        graveCountText = `${recN} recorded (about ${estN} estimated)`;
+    } else if (recN >= 0) {
+        graveCountText = `${recN} recorded`;
+    } else if (estN >= 0) {
+        graveCountText = `About ${estN} estimated`;
+    } else if (Number(props.Grave_Count) >= 0) {
+        graveCountText = `${escapeHtml(props.Grave_Count)} Visible`;     // old-style file
+    }
 
     const establishedText =
         Number(props.Established_Year) > 0
@@ -3150,9 +3217,12 @@ function showCemeteryPanel(feature) {
 
         <h3>Condition Status</h3>
         <p>${escapeHtml(props.Condition_Notes || "No condition information on file.")}</p>
+        ${props.Hazards === true || props.Hazards === "true" ? "<p><strong>Caution:</strong> Hazards have been noted at this cemetery. Use care.</p>" : ""}
 
         <h3>Location Notes</h3>
         <p>${escapeHtml(props.General_Notes || "No notes currently recorded.")}</p>
+        ${(props.Location_Details && !(props.Hide_Location === true || props.Hide_Location === "true"))
+            ? "<h3>How to Get There</h3><p>" + escapeHtml(props.Location_Details) + "</p>" : ""}
 
         <h3>Records Status</h3>
         <p>
@@ -4755,8 +4825,11 @@ map.on("load", function () {
         download: true,
         header: true,
         skipEmptyLines: true,
+        transformHeader: function (h) { return h.trim(); },
 
         complete: function (results) {
+
+            results.data = results.data.map(normalizeCemeteryRow);
 
             const mapFeatures = [];
 
@@ -4794,6 +4867,12 @@ map.on("load", function () {
                         Approximate_Size: row["APPROXIMATE SIZE"] || "",
                         Status: isNaN(status) ? -1 : status,
                         Vets: isNaN(vets) ? -1 : vets,
+                        Grave_Count_Kind: row._COUNT_KIND || "",
+                        Grave_Recorded: row._REC === "" || row._REC === undefined ? -1 : (parseInt(row._REC, 10) || 0),
+                        Grave_Estimate: row._EST === "" || row._EST === undefined ? -1 : (parseInt(row._EST, 10) || 0),
+                        Hazards: row._HAZARDS === true,
+                        Hide_Location: parseInt(row.HIDE, 10) === 1,
+                        Location_Details: row.LOCATION_DETAILS || "",
                         Search_Match: false,
                         Search_Active: false
                     },
