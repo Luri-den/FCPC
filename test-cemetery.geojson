@@ -4,7 +4,7 @@
     {
       "type": "Feature",
       "properties": {
-        "CEMETERY_ID": "FC0202",
+        "CEMETERY_ID": "FCTEST1",
         "NAME": "Test Cemetery",
         "ENTRANCES": [
           { "label": "Main Entrance", "coords": [-85.04533500, 39.42423460] }
@@ -19,7 +19,7 @@
     {
       "type": "Feature",
       "properties": {
-        "CEMETERY_ID": "FC0187",
+        "CEMETERY_ID": "FC046",
         "NAME": "Wesley Chapel",
         "ENTRANCES": [
           { "label": "Main Entrance", "coords": [-84.8552558, 39.3778247] }
@@ -35,7 +35,7 @@
     {
       "type": "Feature",
       "properties": {
-        "CEMETERY_ID": "FC0028",
+        "CEMETERY_ID": "FC023",
         "NAME": "Brookville Town",
         "ENTRANCES": [
           { "label": "Main Entrance", "coords": [-85.009759, 39.425224] }
@@ -50,7 +50,7 @@
     {
       "type": "Feature",
       "properties": {
-        "CEMETERY_ID": "FC0150",
+        "CEMETERY_ID": "FC078",
         "NAME": "St. Michael",
         "ENTRANCES": [
           { "label": "Main Entrance", "coords": [-85.0096736, 39.4309485] }
