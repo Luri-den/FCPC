@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cemetery Map Editor</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script>
+/* Spreadsheet safety. Papa already wraps commas, quotes and line breaks correctly, so a value can't break out of its cell.
+   This adds one more guard: a cell starting with = + @ (or - followed by a letter) is run as a formula by Excel,
+   so someone could send "=HYPERLINK(...)" in a story. Such a cell gets a leading space: Excel then shows it as text,
+   and the map shows it unchanged. Numbers such as -84.9 are left alone. */
+(function () {
+  if (!window.Papa) return;
+  const unparse = Papa.unparse, risky = /^[=+@\t\r]|^-[^\d.\s]/;
+  const cell = v => typeof v === "string" && risky.test(v) ? " " + v : v;
+  const row = r => Array.isArray(r) ? r.map(cell) : r && typeof r === "object" ? Object.fromEntries(Object.entries(r).map(([k, v]) => [k, cell(v)])) : r;
+  Papa.unparse = function (data, config) {
+    if (Array.isArray(data)) data = data.map(row);
+    else if (data && Array.isArray(data.data)) data = Object.assign({}, data, { data: data.data.map(row) });
+    return unparse.call(Papa, data, config);
+  };
+})();
+</script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;height:100vh;display:flex;font:14px Arial,sans-serif;color:#3f3528;background:#f4f1e8}
+aside{width:350px;max-width:45vw;display:flex;flex-direction:column;border-right:1px solid #c9c1b2}
+#map{flex:1;position:relative}
+.top{padding:10px;background:#01796F;color:#fff}
+.top button{margin:0 4px 4px 0}
+#msg{font-size:12px;min-height:16px}
+.tabs{display:flex;flex-wrap:wrap}
+.tabs button{flex:1 0 auto;padding:10px 4px;font-size:13px;border:0;border-bottom:3px solid transparent;background:#eee9dc;font-weight:bold;cursor:pointer}
+.tabs button.on{border-color:#01796F;background:#fff}
+.pane{display:none;padding:10px;overflow:auto;flex:1}
+.pane.on{display:block}
+label{display:block;margin:8px 0 2px;font-size:12px;font-weight:bold}
+input:not([type=checkbox]):not([type=color]),select,textarea{width:100%;padding:6px;border:1px solid #aaa;border-radius:4px;font:inherit}
+textarea{height:60px}
+button{padding:7px 10px;border:1px solid #888;border-radius:4px;background:#fff;cursor:pointer;font:inherit}
+button.go{background:#01796F;color:#fff;border-color:#01796F}
+button.bad{color:#8B0000}
+.row{display:flex;gap:6px;align-items:center;margin:6px 0}
+.row input[type=color]{width:44px;height:28px;padding:0}
+.list{max-height:190px;overflow:auto;border:1px solid #c9c1b2;background:#fff;margin:8px 0}
+.list div{padding:6px 8px;border-bottom:1px solid #eee;cursor:pointer}
+.list div.on{background:#d7ebe8;font-weight:bold}
+.box{border:1px solid #c9c1b2;border-radius:6px;padding:8px;margin:10px 0;background:#fff}
+h3{margin:12px 0 4px;font-size:15px}
+small{color:#6b6258}
+#hint{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:#fff7d6;border:2px solid #C9A227;padding:8px 12px;border-radius:6px;z-index:5;max-width:80%;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+#bm{position:absolute;bottom:28px;right:10px;z-index:5}
+.pin{border:3px solid #fff;border-radius:50%;box-shadow:0 0 3px #000;cursor:grab}
+.pin.cem{width:26px;height:26px;background:#FFD700}
+.pin.primary{width:26px;height:26px;background:#01796F}
+.pin.start{width:26px;height:26px;background:#d4351c}
+.pin.secondary{width:16px;height:16px;background:#7fb5b0}
+.pin.gr{width:18px;height:18px;background:#3b6fd4}
+.vtx{width:12px;height:12px;background:#fff;border:2px solid #000;cursor:move}
+@media(max-width:700px){body{flex-direction:column-reverse}aside{width:100%;max-width:none;height:55vh}#map{height:45vh}}
+</style>
+<link rel="stylesheet" href="editor-theme.css">
+</head>
+<body>
+<aside>
+  <div class="top">
+    <button id="open" class="go" style="background:#fff;color:#01796F">Open My Map Files</button>
+    <button id="gopen">Open From GitHub</button>
+    <button id="new">New County</button>
+    <button id="save" disabled>Save to Folder</button><button id="dlBtn" hidden>Download</button>
+    <div id="msg">Click “Open My Map Files” and pick your map folder to begin.</div>
+  </div>
+  <div class="tabs"><button data-t="set" class="on">Map</button><button data-t="cem">Cemeteries</button><button data-t="grv">Graves</button><button data-t="gui">Guides</button><button data-t="qst">Survey</button><button data-t="inb">Review</button></div>
+
+  <div class="pane on" id="set">
+    <label>Map Name</label><input id="sname">
+    <label>Short Name (Mobile)</label><input id="sshort">
+    <label>Cemetery ID Letters (New Cemetery ID System, for example UC001)</label><input id="spre" maxlength="6">
+    <h3>Colors</h3><div id="cols"></div>
+    <h3>Starting View</h3>
+    <small>Zoom and move the map to how you feel visitors should first see it, then press the button.</small>
+    <div class="row"><button id="setview">Use What I'm Looking At Now</button></div>
+    <small id="viewtxt"></small>
+    <h3>County or Town Outline</h3>
+    <small>Pick a county, town or state and the official US Census outline is fetched for you! It also sets the start view and allowed area based on size.</small>
+    <div class="row"><select id="stype"><option value="COUNTY">County</option><option value="PLACE">Town / City</option><option value="STATE">State</option></select><select id="sstate"><option value="">— State —</option><option value="01">AL</option><option value="02">AK</option><option value="04">AZ</option><option value="05">AR</option><option value="06">CA</option><option value="08">CO</option><option value="09">CT</option><option value="10">DE</option><option value="11">DC</option><option value="12">FL</option><option value="13">GA</option><option value="15">HI</option><option value="16">ID</option><option value="17">IL</option><option value="18">IN</option><option value="19">IA</option><option value="20">KS</option><option value="21">KY</option><option value="22">LA</option><option value="23">ME</option><option value="24">MD</option><option value="25">MA</option><option value="26">MI</option><option value="27">MN</option><option value="28">MS</option><option value="29">MO</option><option value="30">MT</option><option value="31">NE</option><option value="32">NV</option><option value="33">NH</option><option value="34">NJ</option><option value="35">NM</option><option value="36">NY</option><option value="37">NC</option><option value="38">ND</option><option value="39">OH</option><option value="40">OK</option><option value="41">OR</option><option value="42">PA</option><option value="44">RI</option><option value="45">SC</option><option value="46">SD</option><option value="47">TN</option><option value="48">TX</option><option value="49">UT</option><option value="50">VT</option><option value="51">VA</option><option value="53">WA</option><option value="54">WV</option><option value="55">WI</option><option value="56">WY</option><option value="60">AS</option><option value="66">GU</option><option value="69">MP</option><option value="72">PR</option><option value="78">VI</option></select></div>
+    <div class="row"><input id="sname2" placeholder="Name, for example Fayette"><button id="sgo" class="go">Find</button></div>
+    <div class="list" id="schoose" hidden></div>
+    <div class="row"><button id="cedit">Reshape Outline</button><button id="cload">Load Outline File…</button></div>
+    <h3>Allowed Area</h3>
+    <small>Visitors can't scroll outside of this red box. The Red Pin is the starting point: Drag it to change it.</small>
+    <div class="row"><button id="aedit">Edit Box</button><button id="afit">Fit to Outline</button><button id="aview">Use Screen</button></div>
+    <input type="file" id="cfile" accept=".json,.geojson" hidden>
+    <h3>Historical Overlays</h3>
+    <small>Old maps drawn over the base map. Visitors switch them on from the page.</small>
+    <div class="list" id="olist"></div>
+    <div class="row"><button id="oadd" class="go">+ Add Overlay</button></div>
+    <div id="odet"></div>
+    <input type="file" id="ofile" accept="image/*" hidden>
+  </div>
+
+  <div class="pane" id="cem">
+    <input id="csearch" placeholder="Search cemeteries…">
+    <div class="list" id="clist"></div>
+    <div class="row"><button id="cadd" class="go">+ Add Cemetery</button></div>
+    <div id="cdet"></div>
+  </div>
+
+  <div class="pane" id="grv"><div id="gdet"></div></div>
+
+  <div class="pane" id="gui"></div>
+
+  <div class="pane" id="qst"></div>
+
+  <div class="pane" id="inb"></div>
+</aside>
+<div id="map"><div id="hint" hidden></div><button id="bm">Street Map</button></div>
+<input type="file" id="gfile" accept=".json" hidden>
+<input type="file" id="files" multiple accept=".csv,.json,.geojson" hidden>
+
+<script>
+if (!window.maplibregl || !window.Papa) {
+  document.body.innerHTML = "<p style='padding:20px;font:16px Arial'>The map libraries didn't load. Open this page from your website (not a preview window) with an internet connection.</p>";
+  throw new Error("map libraries missing");
+}
+// ---------- helpers ----------
+const $ = s => document.querySelector(s);
+const el = (t, p, kids) => { const e = document.createElement(t); Object.assign(e, p || {}); (kids || []).forEach(k => e.append(k)); return e; };
+const EMPTY = { type: "FeatureCollection", features: [] };
+const ll = r => { const a = parseFloat(r.LONG), b = parseFloat(r.LAT); return isNaN(a) || isNaN(b) ? null : [a, b]; };
+const fix = p => [+p[0].toFixed(7), +p[1].toFixed(7)];
+
+const ACC = [["3","public","Public"],["2","permission","With permission"],["1","private","Private land"],["0","inaccessible","Inaccessible"]];
+const YN = [["","Unknown"],["1","Yes"],["0","No"]];
+const CEMF = [["NAME","Name"],["OTHER_NAMES","Other names"],["TOWNSHIP","Township"],["PLSS","Section, Township, Range (for example S34, T12N, R12E)"],["ESTABLISHED","Year established"],
+  ["ACCESS","Can visitors get in?","sel",[["","Unknown"]].concat(ACC.map(a => [a[0], a[2]]))],
+  ["ACTIVE","Still in use?","sel",YN],["VETERANS","Veterans buried here?","sel",YN],["PIONEERS","Pioneers buried here?","sel",YN],
+  ["CONDITION","Condition","sel",[["","Not recorded"],["Unknown","Unknown"],["3","Good"],["2","Fair"],["1","Poor"],["0","Extreme damage or lost"]]],
+  ["GRAVES_ESTIMATE","Estimated grave count"],["GRAVE_RECORDED","Official grave count (stones recorded)"],["SHAARD_ID","SHAARD ID"],
+  ["SIZE","Size"],["PUBLIC_NOTES","Notes shown to visitors","area"],["LOCATION_DETAILS","How to find it","area"]];
+const GRF = [["FIRST NAME","First name"],["LAST NAME","Last name"],["BIRTH","Born"],["DEATH","Died"],
+  ["SEX","Sex","sel",[["","Unknown"],["F","Female"],["M","Male"]]],["WAR","War"],["VET DETAILS","Veteran details"],
+  ["STONE_TYPE","Stone Type","sel",[["","Not Recorded"],["Flush With Ground","Flush With Ground"],["Flat Tablet / Slab","Flat Tablet / Slab"],["Obelisk / Column / Monument","Obelisk / Column / Monument"],["Standing (Vertical) Block / Arch / Slab","Standing (Vertical) Block / Arch / Slab"],["Military Marker (Official)","Military Marker (Official)"],["Boulder / Rock","Boulder / Rock"],["Above Ground (Single Interment)","Above Ground (Single Interment)"],["Above Ground Structure (Mausoleum, etc.)","Above Ground Structure (Mausoleum, etc.)"]]],
+  ["ROW","Row"],["PLOT","Plot"],["ADDITIONAL INFORMATION ON STONE","Writing on the stone","area"]];
+const FLAGS = [["VETERAN","Veteran"],["PIONEER","Pioneer"],["MAUS","Above ground (mausoleum, vault)"]];
+const COL = [["accent","Page Header"],["public","Public Cemeteries"],["permission","Ask Permission"],["private","Private Land"],
+  ["inaccessible","Inaccessible"],["unknown","Access Unknown"],["boundary","Cemetery Boundary Line"],["county","County Outline"],["grave","Grave Markers"]];
+const CEM_DEF = "ID,NAME,OTHER_NAMES,SHAARD_ID,TOWNSHIP,PLSS,LAT,LONG,COORD_SOURCE,ESTABLISHED,HIDE,CONDITION,HAZARDS,ACCESS,ACTIVE,SIZE,GRAVES_ESTIMATE,GRAVE_RECORDED,VETERANS,PIONEERS,HAS_GRAVES,SURVEY_STATUS,SURVEY_DATE,PHOTOS,LAST_UPDATED,PUBLIC_NOTES,LOCATION_DETAILS".split(",");
+const INT_DEF = "CEMETERY_ID,MARKER_ID,PERSON_ID,LAST NAME,FIRST NAME,BIRTH,DEATH,ROW,PLOT,ADDITIONAL INFORMATION ON STONE,VETERAN,WAR,VET DETAILS,MAUS,LAT,LONG,PIONEER,SEX".split(",");
+const COLOR_DEF = { accent:"#01796F", public:"#01796F", permission:"#C9A227", private:"#D2691E", inaccessible:"#8B0000", unknown:"#777777", boundary:"#01796F", county:"#555555", grave:"#3f3528" };
+const FILES_DEF = { cemeteries:"cemlist.csv", interments:"interments.csv", boundaries:"cemetery-boundaries.geojson", county:"county.geojson", motifs:"motifs.json" };
+
+// ---------- state ----------
+let S, cems, cemF, ints, intF, bounds, county, dir, sel, selG, mode, ready, tmp = [];
+const dirty = new Set();
+let guide = null;   // the visitor guide (motifs.json)
+let hadSettings = false;   // true when a settings.json was found on open
+const photos = new Map();   // pending photos: path in the repository -> image Blob
+// Where pictures live. settings.json "paths" can move them; the defaults are the folders this map has always used.
+const PATHS_DEF = { cemeteries:"photos/", graves:"photos/gravepics/", stories:"photos/stories/", base:"" };
+function photoDir(k) { const v = String((S && S.paths && S.paths[k]) || PATHS_DEF[k]).trim().replace(/\\/g, "/").replace(/^\/+/, "").replace(/\/+$/, ""); return v && !v.split("/").includes("..") ? v + "/" : PATHS_DEF[k]; }
+function photoUrl(path) { const b = String((S && S.paths && S.paths.base) || "").trim(); return !b || /^(https?:|blob:|data:)/.test(path) ? path : b.replace(/\/+$/, "") + "/" + path; }
+function blank() {
+  S = { name:"", shortName:"", idPrefix:"CEM", center:null, zoom:null, colors:Object.assign({}, COLOR_DEF), files:Object.assign({}, FILES_DEF) };
+  cems = []; cemF = CEM_DEF.slice(); ints = []; intF = INT_DEF.slice();
+  bounds = { type:"FeatureCollection", features:[] }; county = null; sel = null; selG = null; mode = null; dirty.clear(); photos.clear(); hadSettings = false; guide = null;
+}
+blank();
+const cem = () => cems.find(r => r.ID === sel);
+function say(t) { $("#msg").textContent = t; }
+function touch(k) { dirty.add(k); $("#save").disabled = false; $("#save").className = "go"; say("You have unsaved changes."); }
+
+// ---------- map ----------
+const WEB = /^https?:/.test(location.protocol);   // OpenStreetMap refuses pages opened from a file on a computer, so the street map falls back to USGS Topo there
+const map = new maplibregl.Map({
+  container: "map", center: [-98, 39], zoom: 3, maxZoom: 21,
+  style: { version: 8, sources: {
+      street: WEB ? { type:"raster", tiles:["https://tile.openstreetmap.org/{z}/{x}/{y}.png"], tileSize:256, maxzoom:19, attribution:"© OpenStreetMap contributors" } : { type:"raster", tiles:["https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}"], tileSize:256, maxzoom:16, attribution:"USGS The National Map" },
+      aerial: { type:"raster", tiles:["https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}"], tileSize:256, maxzoom:16, attribution:"Imagery: USGS The National Map / USDA NAIP" },
+      indiana: { type:"raster", tiles:["https://di-ingov.img.arcgis.com/arcgis/rest/services/DynamicWebMercator/Indiana_Current_Imagery/ImageServer/exportImage?bbox={bbox-epsg-3857}&bboxSR=3857&imageSR=3857&size=256,256&format=jpgpng&f=image"], tileSize:256, maxzoom:20, attribution:"Imagery: Indiana Geographic Information Office (IGIO)" } },
+    layers: [{ id:"street", type:"raster", source:"street" }, { id:"aerial", type:"raster", source:"aerial" }, { id:"indiana", type:"raster", source:"indiana" }] }
+});
+map.addControl(new maplibregl.NavigationControl({ showCompass:false }), "top-right");
+map.addControl(new maplibregl.ScaleControl({ unit:"imperial" }), "bottom-left");
+
+$("#bm").onclick = () => {
+  const aerial = map.getLayoutProperty("aerial", "visibility") === "none";   // aerial starts visible
+  ["aerial", "indiana"].forEach(l => map.setLayoutProperty(l, "visibility", aerial ? "visible" : "none"));
+  $("#bm").textContent = aerial ? "Street Map" : "Aerial View";
+};
+
+map.on("load", () => {
+  map.addSource("cnty", { type:"geojson", data:EMPTY });
+  map.addSource("bnd", { type:"geojson", data:EMPTY });
+  map.addSource("cems", { type:"geojson", data:EMPTY });
+  map.addSource("gr", { type:"geojson", data:EMPTY });
+  map.addLayer({ id:"cnty", type:"line", source:"cnty", paint:{ "line-width":2, "line-dasharray":[2,2] } });
+  map.addSource("area", { type:"geojson", data:EMPTY });
+  map.addLayer({ id:"area", type:"line", source:"area", paint:{ "line-color":"#d4351c", "line-width":2, "line-dasharray":[4,3] } });
+  map.addLayer({ id:"bnd", type:"line", source:"bnd", paint:{ "line-width":2.5 } });
+  map.addLayer({ id:"cems", type:"circle", source:"cems", paint:{ "circle-radius":7, "circle-stroke-width":2, "circle-stroke-color":"#fff" } });
+  map.addLayer({ id:"gr", type:"circle", source:"gr", paint:{
+    "circle-radius":["case",["==",["get","m"],1],8,6], "circle-stroke-width":3,
+    "circle-stroke-color":["case",["==",["get","v"],1],"#d4a017",["==",["get","p"],1],"#7a3e9d","#ffffff"] } });
+  ready = true; refresh();
+});
+
+map.on("click", e => {
+  if (e.originalEvent.target.closest(".maplibregl-marker") || mode === "newGrave" || mode === "putCem") return;
+  const p = fix([e.lngLat.lng, e.lngLat.lat]);
+  if (mode === "addCem") {
+    const n = Math.max(0, ...cems.map(r => parseInt((r.ID || "").replace(/\D/g, ""), 10) || 0)) + 1;
+    const row = {}; cemF.forEach(f => row[f] = "");
+    Object.assign(row, { ID: S.idPrefix + String(n).padStart(3, "0"), NAME: "New cemetery", LAT: p[1], LONG: p[0] });
+    cems.push(row); touch("cem"); setMode(null); pick(row.ID); tab("cem"); return;
+  }
+  if (mode === "addEnt") {
+    const f = holder(sel, true), list = f.properties.ENTRANCES = f.properties.ENTRANCES || [];
+    list.push({ label:"Entrance", size:list.length ? "secondary" : "primary", coords:p });
+    touch("bounds"); setMode(null); refresh(); return;
+  }
+  if (mode === "putGrave") { moveStone(selG, p[1], p[0]); touch("ints"); setMode(null); refresh(); return; }
+  if (mode === "bound") { addVertex(ringOf(holder(sel)), p); touch("bounds"); refresh(); return; }
+  if (mode === "county") { addVertex(ringOf(county), p); touch("county"); refresh(); return; }
+  const hit = map.queryRenderedFeatures(e.point, { layers:["gr", "cems"] })[0];
+  if (!hit) return;
+  if (hit.layer.id === "gr") { selG = ints[hit.properties.i]; refresh(); tab("grv"); }
+  else { pick(hit.properties.id); tab("cem"); }
+});
+map.on("mouseenter", "cems", () => map.getCanvas().style.cursor = "pointer");
+map.on("mouseleave", "cems", () => map.getCanvas().style.cursor = "");
+
+// ---------- boundaries, entrances, vertices ----------
+function holder(id, make) {
+  let f = bounds.features.find(x => (x.properties || {}).CEMETERY_ID === id && !(x.properties.TYPE && x.properties.TYPE !== "BOUNDARY"));
+  if (!f && make) { f = { type:"Feature", properties:{ CEMETERY_ID:id, NAME:cem().NAME, ENTRANCES:[] }, geometry:null }; bounds.features.push(f); }
+  return f;
+}
+function ringOf(f) {
+  const g = f && f.geometry;
+  return !g ? null : g.type === "Polygon" ? g.coordinates[0] : g.type === "MultiPolygon" ? g.coordinates[0][0] : null;
+}
+function segD(p, a, b) {
+  const dx = b[0] - a[0], dy = b[1] - a[1], L = dx * dx + dy * dy;
+  const t = L ? Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / L)) : 0;
+  const x = a[0] + t * dx - p[0], y = a[1] + t * dy - p[1];
+  return x * x + y * y;
+}
+function addVertex(r, p) {
+  let best = Infinity, at = 0;
+  for (let i = 0; i < r.length - 1; i++) { const d = segD(p, r[i], r[i + 1]); if (d < best) { best = d; at = i; } }
+  r.splice(at + 1, 0, p);
+}
+function bbox(r) {
+  const b = new maplibregl.LngLatBounds();
+  r.forEach(c => b.extend(c));
+  return b;
+}
+
+function setMode(m, text) {
+  mode = m; const h = $("#hint"); h.hidden = !m; h.textContent = "";
+  if (m) h.append(text + " ", el("button", { textContent:(m === "bound" || m === "county" || m === "area" || m === "ovpos") ? "Done" : "Cancel", onclick:() => { if (m === "bound") autoSize(); setMode(null); refresh(); } }));
+  map.getCanvas().style.cursor = m ? "crosshair" : "";
+  if (ready) refresh();
+}
+
+function drag(pos, cls, onEnd, title, onDbl) {
+  const e = el("div", { className:cls, title:title || "" });
+  e.addEventListener("dblclick", ev => { ev.stopPropagation(); if (onDbl) onDbl(); });
+  const m = new maplibregl.Marker({ element:e, draggable:true }).setLngLat(pos).addTo(map);
+  m.on("dragend", () => { const p = m.getLngLat(); onEnd(fix([p.lng, p.lat])); });
+  tmp.push(m);
+}
+
+function vertexMarkers(r, key, source, feat) {
+  r.slice(0, -1).forEach((c, i) => drag(c, "vtx", p => {
+    r[i] = p; if (i === 0) r[r.length - 1] = p;
+    touch(key); src(source, feat());
+  }, "Drag to move. Double-click to delete.", () => {
+    if (r.length <= 4) return;
+    r.splice(i, 1); if (i === 0) r[r.length - 1] = r[0];
+    touch(key); refresh();
+  }));
+}
+
+// ---------- drawing the map from the data ----------
+const src = (id, d) => map.getSource(id) && map.getSource(id).setData(d);
+const fc = f => ({ type:"FeatureCollection", features:f });
+
+function applyColors() {
+  const C = S.colors;
+  map.setPaintProperty("cems", "circle-color", ["match", ["get","a"], 0, C.inaccessible, 1, C.private, 2, C.permission, 3, C.public, C.unknown]);
+  map.setPaintProperty("bnd", "line-color", C.boundary);
+  map.setPaintProperty("cnty", "line-color", C.county);
+  map.setPaintProperty("gr", "circle-color", C.grave);
+}
+
+function refresh() {
+  if (!ready) return;
+  applyColors();
+  src("cems", fc(cems.filter(ll).map(r => ({ type:"Feature", properties:{ id:r.ID, a:r.ACCESS === "" || r.ACCESS == null ? -1 : +r.ACCESS }, geometry:{ type:"Point", coordinates:ll(r) } }))));
+  const bf = () => fc(bounds.features.filter(f => f.geometry));
+  src("bnd", bf());
+  const cf = () => fc(county ? [county] : []);
+  src("cnty", cf());
+  const A = S.maxBounds;
+  src("area", A ? fc([{ type:"Feature", properties:{}, geometry:{ type:"Polygon", coordinates:[[[A[0][0],A[0][1]],[A[1][0],A[0][1]],[A[1][0],A[1][1]],[A[0][0],A[1][1]],[A[0][0],A[0][1]]]] } }]) : EMPTY);
+  const g = [];
+  const seen = new Map();
+  if (sel) ints.forEach((r, i) => {
+    const c = ll(r); if (r.CEMETERY_ID !== sel || !c) return;
+    const k = (r.MARKER_ID || "#" + i) + "|" + c; let f = seen.get(k);
+    if (!f) { f = { type:"Feature", properties:{ i, v:0, p:0, m:0 }, geometry:{ type:"Point", coordinates:c } }; seen.set(k, f); g.push(f); }
+    if (r.VETERAN === "1") f.properties.v = 1; if (r.PIONEER === "1") f.properties.p = 1; if (r.MAUS === "1") f.properties.m = 1;
+  });
+  src("gr", fc(g));
+
+  tmp.forEach(m => m.remove()); tmp = [];
+  const r = cem();
+  if (r && ll(r)) drag(ll(r), "pin cem", p => { r.LAT = p[1]; r.LONG = p[0]; touch("cem"); drawCem(); src("cems", fc(cems.filter(ll).map(x => ({ type:"Feature", properties:{ id:x.ID, a:x.ACCESS === "" ? -1 : +x.ACCESS }, geometry:{ type:"Point", coordinates:ll(x) } })))); }, r.NAME + " (drag to move)");
+  const f = r && holder(sel);
+  if (f) (f.properties.ENTRANCES || []).forEach(en => drag(en.coords, "pin " + (en.size || "primary"), p => { en.coords = p; touch("bounds"); }, en.label + " (drag to move)"));
+  if (mode === "bound" && ringOf(f)) vertexMarkers(ringOf(f), "bounds", "bnd", bf);
+  if (mode === "county" && ringOf(county)) vertexMarkers(ringOf(county), "county", "cnty", cf);
+  if (mode === "area" && A) [[0, 0], [1, 1]].forEach(([i, j]) => drag([A[i][0], A[j][1]], "vtx", p => { A[i][0] = p[0]; A[j][1] = p[1]; touch("settings"); refresh(); }, "Drag to resize"));
+  if (mode === "ovpos" && ov) {
+    const c = corners(ov);
+    [[0, "Top Left"], [1, "Top Right"], [2, "Bottom Right"], [3, "Bottom Left"]].forEach(([i, nm]) => drag(c[i], "vtx", p => { moveCorner(ov, i, p); touch("settings"); refresh(); }, (ovMode === "free" ? "Drag to Move This Corner (" : "Drag to Turn and Resize (") + nm + ")"));
+    drag([(c[0][0] + c[2][0]) / 2, (c[0][1] + c[2][1]) / 2], "pin cem", p => { shiftOverlay(ov, p); touch("settings"); refresh(); }, "Drag to Move the Whole Overlay");
+  }
+  ovView();
+  if (curTab === "set" && S.center) drag(S.center, "pin start", p => { S.center = p; touch("settings"); drawSet(); }, "Starting Point (Drag to Move)");
+  if (selG && ll(selG)) drag(ll(selG), "pin gr", p => { moveStone(selG, p[1], p[0]); touch("ints"); refresh(); }, "Drag to move this grave");
+
+  drawCem(); drawGrv(); drawOv();
+}
+
+// ---------- forms ----------
+function form(box, row, desc, key, F) {
+  desc.forEach(([f, label, type, opts]) => {
+    const i = type === "sel" ? el("select", {}, opts.map(o => el("option", { value:o[0], textContent:o[1] })))
+      : el(type === "area" ? "textarea" : "input", {});
+    i.value = row[f] || "";
+    i.onchange = () => {
+      row[f] = i.value; if (!F.includes(f)) F.push(f);
+      if (key === "ints" && f === "STONE_TYPE") {   // the stone type belongs to the stone, so everyone on it gets it
+        sameStone(row).forEach(x => x.STONE_TYPE = i.value);
+        if (/^Above Ground/.test(i.value)) { sameStone(row).forEach(x => x.MAUS = "1"); if (!intF.includes("MAUS")) intF.push("MAUS"); }
+        touch(key); refresh(); return;
+      }
+      touch(key); listCem();
+    };
+    box.append(el("label", { textContent:label }), i);
+  });
+}
+function flags(box, row) {
+  FLAGS.forEach(([f, label]) => box.append(el("label", {}, [el("input", { type:"checkbox", checked:row[f] === "1", onchange:e => {
+    row[f] = e.target.checked ? "1" : "0"; if (!intF.includes(f)) intF.push(f); touch("ints"); refresh();
+  } }), " " + label])));
+}
+
+// ---------- hazards ----------
+const HAZ = ["Unstable / Uneven Ground", "Steep Slope(s)", "Heavy Brush / Roots", "Livestock / Animals", "Poison Ivy / Oak", "Fallen / Broken Stones", "Open / Damaged Vault", "Frequent Flooding / Mud"];
+function hazardBox(box, r) {
+  const parts = (r.HAZARD_DETAILS || "").split(";").map(x => x.trim()).filter(Boolean);
+  const b = el("div", { className:"box" }, [el("b", { textContent:"Hazards" })]);
+  const any = el("input", { type:"checkbox", checked:r.HAZARDS === "1" });
+  const boxes = HAZ.map(h => el("input", { type:"checkbox", checked:parts.includes(h) }));
+  const other = el("input", { value:parts.filter(x => !HAZ.includes(x)).join("; "), placeholder:"Other Hazards (Optional)" });
+  const save = () => {
+    const list = HAZ.filter((h, i) => boxes[i].checked).concat(other.value.trim() ? [other.value.trim()] : []);
+    if (list.length) any.checked = true;
+    r.HAZARDS = any.checked ? "1" : ""; r.HAZARD_DETAILS = any.checked ? list.join("; ") : "";
+    ["HAZARDS", "HAZARD_DETAILS"].forEach(f => { if (!cemF.includes(f)) cemF.push(f); });
+    touch("cem");
+  };
+  b.append(el("label", {}, [any, " The Following Hazards Have Been Noted:"]));
+  HAZ.forEach((h, i) => b.append(el("label", {}, [boxes[i], " " + h])));
+  b.append(other);
+  [any, other].concat(boxes).forEach(x => x.onchange = save);
+  box.append(b);
+}
+
+// ---------- size from boundary ----------
+// Under 1 acre: best-fit rectangle in feet, rounded to 5 ft (like "100' x 60'"). 1 acre or more: just the acres number (the page adds the word "acres").
+function measure(ring) {
+  const kx = 111320 * Math.cos(ring[0][1] * Math.PI / 180), ky = 110540;
+  const P = ring.slice(0, -1).map(c => [(c[0] - ring[0][0]) * kx, (c[1] - ring[0][1]) * ky]);
+  let a = 0; P.forEach((p, i) => { const q = P[(i + 1) % P.length]; a += p[0] * q[1] - q[0] * p[1]; });
+  const acres = Math.abs(a) / 2 / 4046.856; let best = null;
+  P.forEach((p, i) => {
+    const q = P[(i + 1) % P.length], t = Math.atan2(q[1] - p[1], q[0] - p[0]), c = Math.cos(t), s = Math.sin(t);
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    P.forEach(r => { const x = r[0] * c + r[1] * s, y = -r[0] * s + r[1] * c; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); });
+    if (!best || (x1 - x0) * (y1 - y0) < best.a) best = { a:(x1 - x0) * (y1 - y0), w:x1 - x0, h:y1 - y0 };
+  });
+  const ft = m => Math.max(5, Math.round(m * 3.28084 / 5) * 5), d = [ft(best.w), ft(best.h)].sort((u, v) => v - u);
+  return { acres, text:acres >= 1 ? acres.toFixed(1) : d[0] + "' x " + d[1] + "'" };
+}
+function autoSize() {   // fills Size when leaving boundary editing, but only if Size is still empty
+  const r = cem(), ring = ringOf(holder(sel)), v = r && (r.SIZE || "").trim().toLowerCase();
+  if (!ring || (v && v !== "unknown")) return;
+  r.SIZE = measure(ring).text; if (!cemF.includes("SIZE")) cemF.push("SIZE"); touch("cem");
+}
+
+// ---------- shared stones (several people, one marker) ----------
+const sameStone = r => r.MARKER_ID ? ints.filter(x => x.CEMETERY_ID === r.CEMETERY_ID && x.MARKER_ID === r.MARKER_ID) : [r];
+function moveStone(r, lat, lon) { sameStone(r).forEach(x => { x.LAT = lat; x.LONG = lon; }); }
+function addPerson(r) {
+  const grp = sameStone(r), row = {}, letter = n => n < 26 ? String.fromCharCode(65 + n) : String(n);
+  intF.forEach(f => row[f] = "");
+  grp.forEach(x => { if (x.PERSON_ID === x.MARKER_ID) x.PERSON_ID = x.MARKER_ID + "A"; });   // first person becomes ...A, like your other stones
+  let n = grp.length, id;
+  do { id = r.MARKER_ID + letter(n++); } while (ints.some(x => x.PERSON_ID === id));
+  Object.assign(row, { CEMETERY_ID:r.CEMETERY_ID, MARKER_ID:r.MARKER_ID, PERSON_ID:id, "LAST NAME":r["LAST NAME"] || "", VETERAN:"0", PIONEER:"0", MAUS:r.MAUS || "0", STONE_TYPE:r.STONE_TYPE || "", ROW:r.ROW || "", PLOT:r.PLOT || "", LAT:r.LAT, LONG:r.LONG });
+  ints.push(row); selG = row; touch("ints"); refresh();
+}
+
+// ---------- location field ----------
+function coordBox(box, row, key) {
+  const c = ll(row), i = el("input", { value:c ? c[1] + ", " + c[0] : "", placeholder:"39.12345, -85.12345" });
+  i.onchange = () => {
+    const n = (i.value.match(/-?\d+(?:\.\d+)?/g) || []).map(Number);
+    if (n.length !== 2) return say("Type the location as latitude, longitude, for example 39.12345, -85.12345.");
+    let [a, o] = n; if (Math.abs(a) > 90) [a, o] = [o, a];
+    if (Math.abs(a) > 90 || Math.abs(o) > 180) return say("Those numbers don't look like a location.");
+    row.LAT = +a.toFixed(7); row.LONG = +o.toFixed(7); if (key === "ints") moveStone(row, row.LAT, row.LONG); touch(key); refresh();
+    map.flyTo({ center:[row.LONG, row.LAT], zoom:Math.max(map.getZoom(), 17) });
+  };
+  box.append(el("label", { textContent:"Location (latitude, longitude)" }), i, el("small", { textContent:"Paste straight from Google Maps, or drag the pin on the map." }));
+}
+
+// ---------- fence ----------
+const FENCES = ["Stone", "Wire", "Cast Iron", "Aluminum / Vinyl", "Pipe", "Chain Link"];
+function fenceBox(box, r) {
+  const parts = (r.FENCE_TYPES || "").split(";").map(x => x.trim()).filter(Boolean);
+  const b = el("div", { className:"box" }, [el("b", { textContent:"Fence" })]);
+  const yn = el("select", {}, [["", "Not Recorded"], ["1", "Yes, This Cemetery Has a Fence"], ["0", "No Fence"]].map(o => el("option", { value:o[0], textContent:o[1] })));
+  yn.value = r.FENCE || "";
+  const boxes = FENCES.map(t => el("input", { type:"checkbox", checked:parts.includes(t) }));
+  const rows = FENCES.map((t, i) => el("label", {}, [boxes[i], " " + t]));
+  const gray = () => { boxes.forEach(c => c.disabled = yn.value !== "1"); rows.forEach(l => l.style.opacity = yn.value === "1" ? 1 : 0.4); };
+  const save = () => {
+    r.FENCE = yn.value; r.FENCE_TYPES = yn.value === "1" ? FENCES.filter((t, i) => boxes[i].checked).join("; ") : "";
+    ["FENCE", "FENCE_TYPES"].forEach(f => { if (!cemF.includes(f)) cemF.push(f); });
+    gray(); touch("cem");
+  };
+  yn.onchange = save; boxes.forEach(c => c.onchange = save); gray();
+  b.append(el("label", { textContent:"Does this cemetery have a fence?" }), yn, el("label", { textContent:"What kind? (check all that apply)" }));
+  rows.forEach(l => b.append(l));
+  box.append(b);
+}
+
+// ---------- photos ----------
+async function shrink(file, max = 1600) {
+  const bmp = await createImageBitmap(file), k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const c = el("canvas", { width:Math.round(bmp.width * k), height:Math.round(bmp.height * k) });
+  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+  return new Promise(r => c.toBlob(r, "image/jpeg", 0.85));
+}
+function photoBox(box, path, label) {
+  const b = el("div", { className:"box" }, [el("b", { textContent:label })]), exts = ["jpg", "jpeg", "png", "webp", "gif"];
+  const img = el("img", { style:"max-width:100%;max-height:160px;display:block;margin:6px 0" }); let k = 0;
+  const show = () => { img.hidden = false; img.src = photos.has(path) ? URL.createObjectURL(photos.get(path)) : photoUrl(path.replace(/\.jpg$/, "." + exts[k])); };
+  img.onerror = () => { if (!photos.has(path) && ++k < exts.length) show(); else img.hidden = true; };
+  show();
+  const f = el("input", { type:"file", accept:"image/*", hidden:true, onchange:async e => {
+    const file = e.target.files[0]; if (!file) return;
+    try { photos.set(path, await shrink(file)); touch("photos"); k = 0; show(); say("Photo Ready. It goes up with Publish or Save."); }
+    catch (err) { say("Couldn't Read That Picture: " + err.message); } } });
+  b.append(img, f, el("button", { textContent:"Choose Photo…", onclick:() => f.click() }),
+    el("div", {}, [el("small", { textContent:"Saved as " + path + ". New Photos Replace Old Ones." })]));
+  box.append(b);
+}
+
+// ---------- Cemeteries tab ----------
+function pick(id) {
+  sel = id; selG = null; setMode(null); refresh();
+  const r = cem(); if (r && ll(r)) map.flyTo({ center:ll(r), zoom:Math.max(map.getZoom(), 15) });
+}
+function listCem() {
+  const q = $("#csearch").value.toLowerCase(), box = $("#clist"); box.textContent = "";
+  cems.filter(r => (r.NAME || "").toLowerCase().includes(q)).slice(0, 300).forEach(r =>
+    box.append(el("div", { className:r.ID === sel ? "on" : "", textContent:(r.NAME || "(no name)") + (ll(r) ? "" : "  – no location"), onclick:() => { pick(r.ID); tab("cem"); } })));
+}
+$("#csearch").oninput = listCem;
+$("#cadd").onclick = () => setMode("addCem", "Click anywhere on the map to place the new cemetery.");
+
+function drawCem() {
+  listCem();
+  const box = $("#cdet"); box.textContent = "";
+  const r = cem(); if (!r) { box.append(el("small", { textContent:"Pick a cemetery above or click one on the map." })); return; }
+  box.append(el("h3", { textContent:"Edit: " + r.NAME }));
+  if (!ll(r)) box.append(el("button", { className:"go", textContent:"Place it on the map", onclick:() => setMode("putCem", "Click anywhere on the map to place this cemetery.") }));
+  else box.append(el("small", { textContent:"Drag the yellow pin on the map to move it." }));
+  coordBox(box, r, "cem");
+  form(box, r, CEMF, "cem", cemF);
+  hazardBox(box, r);
+  fenceBox(box, r);
+  [["", "Entrance photo (shown first)"], ["-2", "Photo 2"], ["-3", "Photo 3"]].forEach(([sfx, label], i) => {
+    photoBox(box, photoDir("cemeteries") + r.ID + sfx + ".jpg", label);
+    form(box.lastChild, r, [["PHOTO" + (i + 1) + "_CAPTION", "Caption (optional)"]], "cem", cemF);
+  });
+
+  const f = holder(sel), b = el("div", { className:"box" }, [el("b", { textContent:"Boundary" })]);
+  b.append(el("div", { className:"row" }, [
+    el("button", { textContent:ringOf(f) ? "Reshape boundary" : "Draw boundary", onclick:() => {
+      if (!ringOf(f)) { const c = ll(r) || fix([map.getCenter().lng, map.getCenter().lat]), d = 0.0003, h = holder(sel, true);
+        h.geometry = { type:"Polygon", coordinates:[[[c[0]-d,c[1]-d],[c[0]+d,c[1]-d],[c[0]+d,c[1]+d],[c[0]-d,c[1]+d],[c[0]-d,c[1]-d]]] }; touch("bounds"); }
+      setMode("bound", "Drag white squares to reshape. Click the map to add a corner. Double-click a square to delete it."); } }),
+    ringOf(f) ? el("button", { className:"bad", textContent:"Remove", onclick:() => { if (confirm("Remove This Cemetery's Boundary?")) { f.geometry = null; touch("bounds"); refresh(); } } }) : ""]));
+  if (ringOf(f)) {
+    const m = measure(ringOf(f));
+    b.append(el("div", {}, [el("small", { textContent:"Measures About " + (m.text.includes("'") ? m.text + " (" + m.acres.toFixed(2) + " acres)" : m.text + " acres") })]),
+      el("button", { textContent:"Set Size from boundary", onclick:() => { r.SIZE = measure(ringOf(holder(sel))).text; if (!cemF.includes("SIZE")) cemF.push("SIZE"); touch("cem"); drawCem(); } }));
+  }
+  box.append(b);
+
+  const en = el("div", { className:"box" }, [el("b", { textContent:"Entrances" })]);
+  const list = f ? (f.properties.ENTRANCES || []) : [];
+  list.forEach((e, i) => en.append(el("div", { className:"row" }, [
+    el("input", { value:e.label || "", onchange:ev => { e.label = ev.target.value; touch("bounds"); } }),
+    el("select", { onchange:ev => { e.size = ev.target.value; touch("bounds"); refresh(); } },
+      [["primary","Main"],["secondary","Side"]].map(o => el("option", { value:o[0], textContent:o[1], selected:(e.size || "primary") === o[0] }))),
+    el("button", { className:"bad", textContent:"✕", title:"Delete entrance", onclick:() => { list.splice(i, 1); touch("bounds"); refresh(); } })])));
+  en.append(el("button", { textContent:"+ Add entrance", onclick:() => setMode("addEnt", "Click on the map where you want to place this entrance.") }));
+  en.append(el("div", {}, [el("small", { textContent:"Main Entrance == Large Green Dot, Side Entrances = Small Light Dot. Drag them to move them around." })]));
+  box.append(en);
+
+  box.append(el("button", { className:"bad", textContent:"Delete This Cemetery", onclick:() => {
+    const n = ints.filter(x => x.CEMETERY_ID === sel).length;
+    if (!confirm("Delete " + r.NAME + (n ? " and its " + n + " graves" : "") + "? This can't be undone after you save.")) return;
+    cems = cems.filter(x => x !== r); ints = ints.filter(x => x.CEMETERY_ID !== sel);
+    bounds.features = bounds.features.filter(x => (x.properties || {}).CEMETERY_ID !== sel);
+    touch("cem"); touch("ints"); touch("bounds"); sel = null; selG = null; refresh(); } }));
+}
+
+// ---------- Graves tab ----------
+function drawGrv() {
+  const box = $("#gdet"); box.textContent = "";
+  const r = cem(); if (!r) { box.append(el("small", { textContent:"Pick a cemetery on the Cemeteries tab first." })); return; }
+  const rows = ints.filter(x => x.CEMETERY_ID === sel);
+  box.append(el("h3", { textContent:r.NAME + " – " + rows.length + " people" }));
+  box.append(el("small", { textContent:"Map: Gold Ring == Veteran, Purple Ring == Pioneer, Large Dot == Above Ground." }));
+  const list = el("div", { className:"list" });
+  const groups = new Map(); rows.forEach(x => { const k = x.MARKER_ID || x; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(x); });
+  let shown = 0;
+  groups.forEach(g => g.forEach((x, i) => { if (shown++ > 400) return; list.append(el("div", { className:x === selG ? "on" : "",
+    textContent:(i ? "   ↳ " : "") + ((x["LAST NAME"] || "?") + ", " + (x["FIRST NAME"] || "")) + (x.VETERAN === "1" ? " ★" : "") + (!i && g.length > 1 ? "  (" + g.length + " people, one stone)" : "") + (ll(x) ? "" : "  – no location"),
+    onclick:() => { selG = x; refresh(); if (ll(x)) map.flyTo({ center:ll(x), zoom:Math.max(map.getZoom(), 19) }); else setMode("putGrave", "Click the map to place this grave."); } })); }));
+  box.append(list, el("button", { className:"go", textContent:"+ Add grave", onclick:() => setMode("newGrave", "Click the map where the grave is.") }));
+  if (selG && selG.CEMETERY_ID === sel) {
+    box.append(el("h3", { textContent:"Edit grave" }));
+    if (ll(selG)) box.append(el("small", { textContent:"Drag the Blue Pin on the map to move it." }));
+    else box.append(el("button", { textContent:"Place on map", onclick:() => setMode("putGrave", "Click the map to place this grave.") }));
+    coordBox(box, selG, "ints"); form(box, selG, GRF, "ints", intF); flags(box, selG);
+    if (selG.MARKER_ID) box.append(el("button", { className:"go", textContent:"+ Add Another Person to This Stone", onclick:() => addPerson(selG) }),
+      el("div", {}, [el("small", { textContent:"Stone " + selG.MARKER_ID + ": " + sameStone(selG).length + " person(s). Moving the pin moves everyone on it." })]));
+    if (selG.MARKER_ID) photoBox(box, photoDir("graves") + selG.MARKER_ID + "-1.jpg", "Grave photo");
+    else box.append(el("small", { textContent:"This grave has no Marker ID, so it can't have a photo yet." }));
+    box.append(el("p", {}, [el("button", { className:"bad", textContent:"Delete This Grave", onclick:() => {
+      if (!confirm("Delete this grave record?")) return; ints = ints.filter(x => x !== selG); selG = null; touch("ints"); refresh(); } })]));
+  }
+}
+// "newGrave" shares the click handler through its own mode check
+map.on("click", e => {
+  if (mode !== "newGrave" || e.originalEvent.target.closest(".maplibregl-marker")) return;
+  const digits = (sel.replace(/\D/g, "") || "0").slice(-3).padStart(3, "0"); let n = ints.filter(x => x.CEMETERY_ID === sel).length + 1, id;
+  do { id = "M-" + digits + "-" + String(n++).padStart(3, "0"); } while (ints.some(x => x.MARKER_ID === id));
+  const row = {}; intF.forEach(f => row[f] = "");
+  Object.assign(row, { CEMETERY_ID:sel, MARKER_ID:id, PERSON_ID:id, "LAST NAME":"Unknown", "FIRST NAME":"", VETERAN:"0", PIONEER:"0", MAUS:"0", LAT:e.lngLat.lat.toFixed(7), LONG:e.lngLat.lng.toFixed(7) });
+  ints.push(row); selG = row; touch("ints"); setMode(null);
+});
+// "putCem" (placing an existing cemetery that has no location)
+map.on("click", e => {
+  if (mode !== "putCem") return;
+  const r = cem(); r.LAT = +e.lngLat.lat.toFixed(7); r.LONG = +e.lngLat.lng.toFixed(7); touch("cem"); setMode(null);
+});
+
+let ov = null;   // the overlay being previewed or positioned
+const blobUrls = new Map();   // preview addresses for pictures not published yet
+function solve3(M, b) {
+  const d = m => m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+  const D = d(M); return [0, 1, 2].map(i => d(M.map((r, j) => r.map((v, k) => k === i ? b[j] : v))) / D);
+}
+function fit(o) {   // picture pixel (x, y) -> [lon, lat], a best fit through the control points, like the map page does
+  const A = [[0,0,0],[0,0,0],[0,0,0]], bl = [0,0,0], bt = [0,0,0];
+  o.controlPoints.forEach(([x, y, lon, lat]) => { const v = [x, y, 1]; for (let i = 0; i < 3; i++) { for (let j = 0; j < 3; j++) A[i][j] += v[i] * v[j]; bl[i] += v[i] * lon; bt[i] += v[i] * lat; } });
+  const L = solve3(A, bl), T = solve3(A, bt);
+  return (x, y) => [L[0] * x + L[1] * y + L[2], T[0] * x + T[1] * y + T[2]];
+}
+const corners = o => o.corners || (f => [f(0, 0), f(o.width, 0), f(o.width, o.height), f(0, o.height)])(fit(o));   // top left, top right, bottom right, bottom left
+function setQuad(o, q) {   // keeps the four corners exactly, and the control points (for older pages) in step
+  o.corners = q;
+  o.controlPoints = [[0, 0, ...q[0]], [o.width, 0, ...q[1]], [o.width, o.height, ...q[2]], [0, o.height, ...q[3]]];
+}
+function setCorners(o, tl, tr, bl) { setQuad(o, [tl, tr, [tr[0] + bl[0] - tl[0], tr[1] + bl[1] - tl[1]], bl]); }   // a straight (undistorted) placement
+const ovHint = () => ovMode === "free" ? "Drag a white square to move only that corner. The others stay put. Drag the yellow pin to move all of it." : "Drag a white square to turn and resize the old map around the opposite corner. Drag the yellow pin to move all of it.";
+let ovMode = "free";   // free: dragging a square moves only that corner. pivot: the picture turns and resizes around the opposite corner.
+function moveCorner(o, i, p) {
+  const c = corners(o);
+  if (ovMode === "free") { const q = c.map(x => x.slice()); q[i] = p; return setQuad(o, q); }
+  const k = Math.cos(c[0][1] * Math.PI / 180), pl = q => [q[0] * k, q[1]], un = q => [q[0] / k, q[1]];
+  const a = pl(c[(i + 2) % 4]), old = pl(c[i]).map((v, j) => v - a[j]), nw = pl(p).map((v, j) => v - a[j]);
+  if (!Math.hypot(...old) || !Math.hypot(...nw)) return;
+  const s = Math.hypot(...nw) / Math.hypot(...old), th = Math.atan2(nw[1], nw[0]) - Math.atan2(old[1], old[0]), co = Math.cos(th) * s, si = Math.sin(th) * s;
+  setQuad(o, c.map(q => { const d = pl(q).map((v, j) => v - a[j]); return un([a[0] + co * d[0] - si * d[1], a[1] + si * d[0] + co * d[1]]); }));
+}
+function shiftOverlay(o, p) { const c = corners(o), m = [(c[0][0] + c[2][0]) / 2, (c[0][1] + c[2][1]) / 2], d = [p[0] - m[0], p[1] - m[1]]; setQuad(o, c.map(q => [q[0] + d[0], q[1] + d[1]])); }
+let ovBase = null;   // how the overlay looked when you picked it, for Reset Map
+const ovSnap = o => JSON.parse(JSON.stringify({ corners:o.corners, controlPoints:o.controlPoints }));
+function ovView() {   // shows the overlay being edited, half see-through, on the editor map
+  if (!ready) return;
+  const on = !!ov, c = on && corners(ov), url = on && (photos.has(ov.url) ? (blobUrls.get(ov.url) || blobUrls.set(ov.url, URL.createObjectURL(photos.get(ov.url))).get(ov.url)) : ov.url);
+  if (!map.getSource("ovedit")) {
+    if (!on) return;
+    map.addSource("ovedit", { type:"image", url, coordinates:c });
+    map.addLayer({ id:"ovedit", type:"raster", source:"ovedit", paint:{ "raster-opacity":0.6 } }, "cnty");
+  } else if (on) map.getSource("ovedit").updateImage({ url, coordinates:c });
+  if (map.getLayer("ovedit")) map.setLayoutProperty("ovedit", "visibility", on ? "visible" : "none");
+}
+function drawOv() {
+  const list = $("#olist"), box = $("#odet"); list.textContent = ""; box.textContent = "";
+  (S.overlays || []).forEach(o => list.append(el("div", { className:o === ov ? "on" : "", textContent:o.label, onclick:() => { ov = o; ovBase = ovSnap(o); setMode(null); const c = corners(o); map.fitBounds(bboxOf({ coordinates:[c] }), { padding:40 }); } })));
+  if (!ov) return;
+  const lab = el("input", { value:ov.label, onchange:() => { ov.label = lab.value.trim() || ov.label; touch("settings"); drawOv(); } });
+  box.append(el("label", { textContent:"Name Shown to Visitors" }), lab,
+    el("div", { className:"row" }, [
+      el("button", { className:"go", textContent:"Position on Map", onclick:() => setMode("ovpos", ovHint()) }),
+      el("button", { textContent:"Reset Map", onclick:() => {
+        if (!ovBase) return; ov.controlPoints = JSON.parse(JSON.stringify(ovBase.controlPoints));
+        if (ovBase.corners) ov.corners = JSON.parse(JSON.stringify(ovBase.corners)); else delete ov.corners;
+        touch("settings"); refresh(); } }),
+      el("button", { textContent:"Hide Preview", onclick:() => { ov = null; setMode(null); refresh(); } }),
+      el("button", { className:"bad", textContent:"Remove", onclick:() => {
+        if (!confirm("Remove \"" + ov.label + "\" from the map? The picture file stays in your repository.")) return;
+        photos.delete(ov.url); S.overlays = S.overlays.filter(x => x !== ov); ov = null; touch("settings"); refresh(); } })]),
+    el("label", { textContent:"When I Drag a White Square" }),
+    el("select", { onchange:e => { ovMode = e.target.value; setMode("ovpos", ovHint()); } }, [["free", "Move Only That Corner (the Others Stay Put)"], ["pivot", "Turn and Resize Around the Opposite Corner"]].map(([v, t]) => el("option", { value:v, textContent:t, selected:ovMode === v }))),
+    el("small", { textContent:"The old map shows half see-through here so you can line it up with the aerial photo." }));
+}
+$("#oadd").onclick = () => $("#ofile").click();
+$("#ofile").onchange = async e => {
+  const file = e.target.files[0]; e.target.value = ""; if (!file) return;
+  try {
+    const bmp = await createImageBitmap(file), label = prompt("Name for this old map (for example: 1895 Union County Map)", file.name.replace(/\.[^.]+$/, "")); if (!label) return;
+    const slug = label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "overlay";
+    let id = slug + "-layer", n = 2; while ((S.overlays || []).some(x => x.id === id)) id = slug + "-" + n++ + "-layer";
+    const ext = (file.name.match(/\.(jpe?g|png|webp|gif)$/i) || ["", "jpg"])[1].toLowerCase(), path = "overlays/" + id.replace("-layer", "") + "." + ext;
+    const b = map.getBounds(), cx = map.getCenter(), wDeg = (b.getEast() - b.getWest()) * 0.6, hDeg = wDeg * Math.cos(cx.lat * Math.PI / 180) * bmp.height / bmp.width;
+    const o = { id, label, url:path, width:bmp.width, height:bmp.height, controlPoints:[] };
+    setCorners(o, [cx.lng - wDeg / 2, cx.lat + hDeg / 2], [cx.lng + wDeg / 2, cx.lat + hDeg / 2], [cx.lng - wDeg / 2, cx.lat - hDeg / 2]);
+    (S.overlays = S.overlays || []).push(o); photos.set(path, file); blobUrls.delete(path); ov = o; ovBase = ovSnap(o);
+    touch("settings"); touch("photos"); setMode("ovpos", ovHint());
+    if (file.size > 25e6) say("That picture is large (" + Math.round(file.size / 1e6) + " MB). It will be slow for visitors; consider shrinking it.");
+  } catch (err) { say("Couldn't read that picture: " + err.message); }
+};
+
+// ---------- guides: grave symbols and monument forms shown to visitors ----------
+const guideOpen = new Set();   // which groups are expanded, kept across redraws
+function drawGuide() {
+  const box = $("#gui"); box.textContent = "";
+  if (!guide) { box.append(el("small", { textContent:"Open the map files first." })); return; }
+  const chg = () => touch("guide");
+  box.append(el("small", { textContent:"These explanations appear in the visitor guide on the map page. A section holds groups, and a group holds entries." }),
+    el("label", { textContent:"Introduction" }), el("textarea", { value:guide.intro || "", onchange:e => { guide.intro = e.target.value; chg(); } }));
+  guide.sections.forEach((sec, si) => {
+    const sb = el("div", { className:"box" });
+    sb.append(el("label", { textContent:"Section Title" }), el("input", { value:sec.title || "", onchange:e => { sec.title = e.target.value; chg(); } }));
+    (sec.groups = sec.groups || []).forEach((g, gi) => {
+      const k = si + "/" + gi, d = el("details", {}, [el("summary", { textContent:(g.name || "(Entries)") + " (" + (g.items || []).length + ")" })]);
+      d.open = guideOpen.has(k); d.ontoggle = () => { if (d.open) guideOpen.add(k); else guideOpen.delete(k); };
+      d.append(el("label", { textContent:"Group Name (Leave Blank for None)" }), el("input", { value:g.name || "", onchange:e => { g.name = e.target.value; chg(); drawGuide(); } }));
+      (g.items = g.items || []).forEach((it, ii) => d.append(el("div", { className:"box" }, [
+        el("input", { value:it.name || "", placeholder:"Name", onchange:e => { it.name = e.target.value; chg(); } }),
+        el("textarea", { value:it.meaning || "", placeholder:"What it means", onchange:e => { it.meaning = e.target.value; chg(); } }),
+        el("button", { className:"bad", textContent:"Delete Entry", onclick:() => { g.items.splice(ii, 1); chg(); drawGuide(); } })])));
+      d.append(el("div", { className:"row" }, [
+        el("button", { textContent:"+ Add Entry", onclick:() => { guideOpen.add(k); g.items.push({ name:"New Entry", meaning:"" }); chg(); drawGuide(); } }),
+        el("button", { className:"bad", textContent:"Delete Group", onclick:() => { if (confirm("Delete this whole group?")) { sec.groups.splice(gi, 1); chg(); drawGuide(); } } })]));
+      sb.append(d);
+    });
+    sb.append(el("div", { className:"row" }, [
+      el("button", { textContent:"+ Add Group", onclick:() => { sec.groups.push({ name:"New Group", items:[] }); chg(); drawGuide(); } }),
+      el("button", { className:"bad", textContent:"Delete Section", onclick:() => { if (confirm("Delete this whole section?")) { guide.sections.splice(si, 1); chg(); drawGuide(); } } })]));
+    box.append(sb);
+  });
+  box.append(el("div", { className:"row" }, [
+    el("button", { className:"go", textContent:"+ Add Section", onclick:() => { guide.sections.push({ title:"New Section", groups:[{ name:"", items:[] }] }); chg(); drawGuide(); } }),
+    el("button", { textContent:"Load Guide File…", onclick:() => $("#gfile").click() })]));
+}
+$("#gfile").onchange = async e => {
+  try {
+    const j = JSON.parse((await e.target.files[0].text()).replace(/^\uFEFF/, "")); if (!Array.isArray(j.sections)) throw new Error("that isn't a guide file");
+    guide = j; touch("guide"); drawGuide();
+  } catch (err) { say("Couldn't load that guide: " + err.message); }
+  e.target.value = "";
+};
+
+// ---------- Map (settings) tab ----------
+COL.forEach(([k, label]) => $("#cols").append(el("div", { className:"row" }, [
+  el("input", { type:"color", id:"col-" + k, oninput:e => { S.colors[k] = e.target.value; touch("settings"); applyColors(); } }), label])));
+["sname:name", "sshort:shortName", "spre:idPrefix"].forEach(s => { const [id, k] = s.split(":"); $("#" + id).oninput = e => { S[k] = e.target.value; touch("settings"); }; });
+function drawSet() {
+  $("#sname").value = S.name; $("#sshort").value = S.shortName; $("#spre").value = S.idPrefix;
+  COL.forEach(([k]) => $("#col-" + k).value = S.colors[k] || COLOR_DEF[k]);
+  $("#viewtxt").textContent = S.center ? "Saved view: " + S.center[1].toFixed(4) + ", " + S.center[0].toFixed(4) + " at zoom " + S.zoom.toFixed(1) : "No Starting View saved yet.";
+}
+$("#setview").onclick = () => { const c = map.getCenter(); S.center = fix([c.lng, c.lat]); S.zoom = +map.getZoom().toFixed(2); touch("settings"); drawSet(); };
+$("#cedit").onclick = () => { if (!ringOf(county)) return say("Load a county outline file first."); setMode("county", "Drag the White Squares to reshape. Click the map to add a point. Double-click a White Square to delete it."); };
+$("#cload").onclick = () => $("#cfile").click();
+$("#cfile").onchange = async e => {
+  try { newOutline(pickCounty(JSON.parse((await e.target.files[0].text()).replace(/^\uFEFF/, "")))); }
+  catch (err) { say("That file isn't a county outline: " + err.message); }
+};
+function pickCounty(j) {
+  const f = j.type === "FeatureCollection" ? j.features[0] : j.type === "Feature" ? j : { type:"Feature", properties:{}, geometry:j };
+  if (!ringOf(f)) throw new Error("no polygon found");
+  return f;
+}
+const bboxOf = g => { const b = new maplibregl.LngLatBounds(); (function w(c) { typeof c[0] === "number" ? b.extend(c) : c.forEach(w); })(g.coordinates); return b; };
+function fitCounty() { if (county && county.geometry) map.fitBounds(bboxOf(county.geometry), { padding:30, animate:false }); }
+function areaFromCounty() { const b = bboxOf(county.geometry), m = 0.05; S.maxBounds = [[+(b.getWest() - m).toFixed(4), +(b.getSouth() - m).toFixed(4)], [+(b.getEast() + m).toFixed(4), +(b.getNorth() + m).toFixed(4)]]; }
+function newOutline(f) {
+  const rd = c => typeof c[0] === "number" ? [+c[0].toFixed(5), +c[1].toFixed(5)] : c.map(rd);
+  county = { type:"Feature", properties:{ NAME:(f.properties || {}).NAME || "" }, geometry:{ type:f.geometry.type, coordinates:rd(f.geometry.coordinates) } };
+  areaFromCounty(); fitCounty();
+  const c = map.getCenter(); S.center = fix([c.lng, c.lat]); S.zoom = +map.getZoom().toFixed(2);
+  touch("county"); touch("settings"); drawSet(); refresh();
+}
+$("#sgo").onclick = async () => {
+  const k = $("#stype").value, st = $("#sstate").value, nm = $("#sname2").value.trim(), box = $("#schoose");
+  box.hidden = true;
+  if (!nm || (k !== "STATE" && !st)) return say("Type a name and choose a state.");
+  say("Searching the Census database…");
+  try {
+    const where = "UPPER(BASENAME) LIKE '%" + nm.replace(/'/g, "''").toUpperCase() + "%'" + (k === "STATE" ? "" : " AND STATE='" + st + "'");
+    const r = await fetch("https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Current/MapServer/" + { COUNTY:82, PLACE:28, STATE:80 }[k] + "/query?where=" + encodeURIComponent(where) + "&outFields=*&returnGeometry=true&f=geojson");
+    const list = ((await r.json()).features || []).filter(f => f.geometry).sort((a, b) => (+b.properties.POP100 || 0) - (+a.properties.POP100 || 0));
+    if (!list.length) return say("No match. Check the spelling and the state.");
+    const use = f => { box.hidden = true; newOutline(f); say("Outline loaded: " + f.properties.NAME + ". Save or publish when you're happy."); };
+    if (list.length === 1) return use(list[0]);
+    box.textContent = ""; box.hidden = false; say("Several matches: pick one.");
+    list.forEach(f => box.append(el("div", { textContent:f.properties.NAME + (f.properties.POP100 ? " · pop " + (+f.properties.POP100).toLocaleString() : ""), onclick:() => use(f) })));
+  } catch (e) { say("Search failed: " + e.message); }
+};
+$("#aedit").onclick = () => { if (!S.maxBounds) return say("Find an outline first, or press “Use screen”."); setMode("area", "Drag the two white squares to resize the allowed area."); };
+$("#afit").onclick = () => { if (!county) return say("Find an outline first."); areaFromCounty(); touch("settings"); refresh(); };
+$("#aview").onclick = () => { const b = map.getBounds(); S.maxBounds = [[+b.getWest().toFixed(4), +b.getSouth().toFixed(4)], [+b.getEast().toFixed(4), +b.getNorth().toFixed(4)]]; touch("settings"); refresh(); };
+
+// ---------- tabs ----------
+let curTab = "set";
+function tab(t) {
+  curTab = t; if (ready) setTimeout(refresh, 0);
+  document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.t === t));
+  document.querySelectorAll(".pane").forEach(p => p.classList.toggle("on", p.id === t));
+}
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => tab(b.dataset.t));
+
+// ---------- opening files ----------
+async function load(files) {
+  blank(); const got = [];
+  for (const f of files) {
+    const text = (await f.text()).replace(/^\uFEFF/, ""), n = f.name;
+    if (/\.csv$/i.test(n)) {
+      const p = Papa.parse(text, { header:true, skipEmptyLines:true, transformHeader:h => h.trim() }), F = p.meta.fields || [];
+      if (F.includes("CEMETERY_ID")) { ints = p.data; intF = F; S.files.interments = n; got.push(n); }
+      else if (F.includes("ID") && F.includes("NAME")) { cems = p.data; cemF = F; S.files.cemeteries = n; got.push(n); }
+    } else {
+      let j; try { j = JSON.parse(text); } catch (e) { continue; }
+      if (Array.isArray(j.sections)) { guide = j; S.files.motifs = n; got.push(n); }
+      else if (j.colors || j.files) { S = Object.assign(S, j); S.colors = Object.assign({}, COLOR_DEF, j.colors); S.files = Object.assign({}, FILES_DEF, j.files); hadSettings = true; got.push(n); }
+      else if (j.type === "FeatureCollection" && (!j.features.length || j.features.some(x => x.properties && x.properties.CEMETERY_ID))) { bounds = j; S.files.boundaries = n; got.push(n); }
+      else if (j.type === "Feature" || j.type === "FeatureCollection") { try { county = pickCounty(j); S.files.county = n; got.push(n); } catch (e) { } }
+    }
+  }
+  if (!cems.length) return say("I couldn't find the cemetery list (a .csv with ID and NAME columns). Open the whole map folder.");
+  if (S.center) map.jumpTo({ center:S.center, zoom:S.zoom }); else fitCounty();
+  $("#save").disabled = true; $("#save").className = "";
+  tab(cems.length ? "cem" : "set"); drawSet(); refresh();
+  if (!guide) guide = { intro:"", sections:[] };
+  drawGuide();
+  if (!S.overlays) S.overlays = [];
+  ov = null;
+  takeSnap();
+  const fixed = fixBlankIds();
+  say("Opened " + cems.length + " cemeteries and " + ints.length + " graves." + (fixed ? " " + fixed + " cemeteries had no ID, so they were given one. Publish to keep it." : ""));
+}
+$("#open").onclick = async () => {
+  if (!window.showDirectoryPicker) return $("#files").click();
+  try {
+    dir = await showDirectoryPicker({ mode:"readwrite" }); const fs = [];
+    for await (const [n, h] of dir.entries()) if (h.kind === "file" && /\.(csv|json|geojson)$/i.test(n)) fs.push(await h.getFile());
+    await load(fs);
+  } catch (e) { if (e.name !== "AbortError") say("Couldn't open the folder: " + e.message); }
+};
+$("#files").onchange = e => { dir = null; load([...e.target.files]); };
+$("#new").onclick = () => {
+  const n = prompt("Name of the new map (for example: Fayette County Cemeteries)"); if (!n) return;
+  blank(); S.name = n; S.overlays = []; guide = { intro:"", sections:[] }; drawGuide(); dir = null; tab("set"); drawSet(); refresh();
+  say("New map started. Next, on the Map tab, search for your county or town outline.");
+};
+
+// ---------- merge with GitHub before publishing ----------
+// Other people may have published since you opened the editor. Before publishing, each changed file is compared
+// record by record: what you didn't touch is taken from GitHub, what they didn't touch is kept from you.
+let snap = { cem:new Map(), ints:new Map(), bnd:new Map() };   // what the files looked like when you opened them
+const kCem = r => r.ID;
+const kInt = r => r.CEMETERY_ID + "|" + (r.PERSON_ID || r.MARKER_ID || JSON.stringify(r));
+const kBnd = f => { const p = f.properties || {}; return p.CEMETERY_ID && !(p.TYPE && p.TYPE !== "BOUNDARY") ? p.CEMETERY_ID : JSON.stringify(f); };
+const toMap = (arr, k) => { const m = new Map(); arr.forEach(x => m.set(k(x), x)); return m; };
+function takeSnap() {
+  const c = x => JSON.parse(JSON.stringify(x));
+  snap = { cem:toMap(cems.filter(r => String(r.ID || "").trim()).map(c), kCem), ints:toMap(ints.map(c), kInt), bnd:toMap(bounds.features.map(c), kBnd) };
+}
+function merge3(B, M, T, sig, label) {
+  const out = [], clash = [];
+  new Set([...B.keys(), ...M.keys(), ...T.keys()]).forEach(k => {
+    const b = B.get(k), m = M.get(k), t = T.get(k), sb = b && sig(b), sm = m && sig(m), st = t && sig(t);
+    let pick;
+    if (sm === sb) pick = t;                                   // you didn't touch it: take theirs (or their delete)
+    else if (st === sb || sm === st) pick = m;                 // they didn't touch it, or we agree: keep yours
+    else if (!b) { pick = t; clash.push(m); }                  // both of you made a NEW record with the same ID
+    else pick = confirm(label(m || t) + "\n\nYou and someone else both changed this.\n\nOK = keep YOUR version\nCancel = keep THEIR version") ? m : t;
+    if (pick) out.push(pick);
+  });
+  return { out, clash };
+}
+function renumberCem(m) {
+  const old = m.ID, n = Math.max(0, ...cems.map(r => parseInt(String(r.ID).replace(/\D/g, ""), 10) || 0)) + 1;
+  m.ID = S.idPrefix + String(n).padStart(3, "0");
+  ints.forEach(r => { if (r.CEMETERY_ID === old) r.CEMETERY_ID = m.ID; });
+  bounds.features.forEach(f => { if ((f.properties || {}).CEMETERY_ID === old) f.properties.CEMETERY_ID = m.ID; });
+  [...photos.keys()].forEach(k => {
+    const pd = photoDir("cemeteries"), x = k.replace(pd + old + ".", pd + m.ID + ".").replace(pd + old + "-", pd + m.ID + "-");
+    if (x !== k) { photos.set(x, photos.get(k)); photos.delete(k); }
+  });
+  if (sel === old) sel = m.ID;
+  cems.push(m); dirty.add("cem"); dirty.add("ints"); dirty.add("bounds");
+}
+function renumberStone(cid, old, movers) {
+  const digits = (cid.replace(/\D/g, "") || "0").slice(-3).padStart(3, "0"); let n = 1, id;
+  do { id = "M-" + digits + "-" + String(n++).padStart(3, "0"); } while (ints.some(x => x.MARKER_ID === id));
+  movers.forEach(r => {
+    r.PERSON_ID = String(r.PERSON_ID || "").startsWith(old) ? id + r.PERSON_ID.slice(old.length) : id;
+    r.MARKER_ID = id; if (!ints.includes(r)) ints.push(r);
+  });
+  const k = photoDir("graves") + old + "-1.jpg";
+  if (photos.has(k)) { photos.set(photoDir("graves") + id + "-1.jpg", photos.get(k)); photos.delete(k); }
+}
+async function syncFromGitHub() {
+  const head = await GHPublish.rebase();
+  const get = async name => { const t = await GHPublish.read(name, head); return t == null ? null : t.replace(/^\uFEFF/, ""); };
+  const parse = t => Papa.parse(t, { header:true, skipEmptyLines:true, transformHeader:h => h.trim() });
+  const sigOf = F => r => JSON.stringify(F.map(f => String(r[f] == null ? "" : r[f]).trim()));
+  if (dirty.has("cem")) {
+    const t = await get(S.files.cemeteries);
+    if (t) {
+      const p = parse(t), F = [...new Set([...cemF, ...p.meta.fields])];
+      const { out, clash } = merge3(snap.cem, toMap(cems, kCem), toMap(p.data.filter(r => String(r.ID || "").trim()), kCem), sigOf(F), r => r.NAME || r.ID);
+      cems = out; cemF = F; clash.forEach(renumberCem);
+    }
+  }
+  if (dirty.has("ints")) {
+    const t = await get(S.files.interments);
+    if (t) {
+      const p = parse(t), F = [...new Set([...intF, ...p.meta.fields])], mine = ints.slice();
+      const { out, clash } = merge3(snap.ints, toMap(mine, kInt), toMap(p.data, kInt), sigOf(F), r => ((r["FIRST NAME"] || "") + " " + (r["LAST NAME"] || "")).trim() || r.PERSON_ID);
+      ints = out; intF = F; const done = new Set();
+      clash.forEach(c => {
+        const g = c.CEMETERY_ID + "|" + c.MARKER_ID; if (done.has(g)) return; done.add(g);
+        renumberStone(c.CEMETERY_ID, c.MARKER_ID, mine.filter(r => r.CEMETERY_ID === c.CEMETERY_ID && r.MARKER_ID === c.MARKER_ID));
+      });
+    }
+  }
+  if (dirty.has("bounds")) {
+    const t = await get(S.files.boundaries);
+    if (t) {
+      const j = JSON.parse(t), sig = f => JSON.stringify([f.geometry, f.properties]);
+      bounds.features = merge3(snap.bnd, toMap(bounds.features, kBnd), toMap(j.features || [], kBnd), sig, f => (f.properties || {}).NAME || (f.properties || {}).CEMETERY_ID).out;
+    }
+  }
+  if (sel && !cems.some(r => r.ID === sel)) sel = null;
+  if (selG && !ints.includes(selG)) selG = null;
+  refresh(); say("Checked the published map and merged other people's changes with yours.");
+}
+
+// Cemeteries with no ID can't be edited or merged, so they get one when the files are opened
+function fixBlankIds() {
+  const blanks = cems.filter(r => !String(r.ID || "").trim()); if (!blanks.length) return 0;
+  let n = Math.max(0, ...cems.map(r => parseInt(String(r.ID).replace(/\D/g, ""), 10) || 0));
+  blanks.forEach(r => r.ID = S.idPrefix + String(++n).padStart(3, "0"));
+  touch("cem"); return blanks.length;
+}
+
+// ---------- saving ----------
+function outFiles() {
+  if (!S.center) { const c = map.getCenter(); S.center = fix([c.lng, c.lat]); S.zoom = +map.getZoom().toFixed(2); }
+  if (!S.maxBounds && county) areaFromCounty();
+  const o = [];
+  if (dirty.has("settings") || !hadSettings) o.push(["settings.json", JSON.stringify(S, null, 2)]);   // not re-sent unless you changed it, so you never overwrite someone else's settings
+  if (dirty.has("cem")) o.push([S.files.cemeteries, Papa.unparse(cems, { columns:cemF })]);
+  if (dirty.has("ints")) o.push([S.files.interments, Papa.unparse(ints, { columns:intF })]);
+  if (dirty.has("bounds")) o.push([S.files.boundaries, JSON.stringify(bounds, null, 1)]);
+  if (dirty.has("county") && county) o.push([S.files.county, JSON.stringify(county, null, 1)]);
+  if (dirty.has("guide") && guide) o.push([S.files.motifs || "motifs.json", JSON.stringify(guide, null, 1)]);
+  photos.forEach((blob, path) => o.push([path, blob]));
+  return o;
+}
+const dl = (n, t) => { const a = el("a", { href:URL.createObjectURL(new Blob([t])), download:n }); document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 60000); };
+function clean() { dirty.clear(); photos.clear(); $("#save").disabled = true; $("#save").className = ""; }
+async function put(name, text) {
+  if (dir) { let d = dir; const parts = name.split("/"); for (const q of parts.slice(0, -1)) d = await d.getDirectoryHandle(q, { create:true }); const w = await (await d.getFileHandle(parts.pop(), { create:true })).createWritable(); await w.write(text); await w.close(); }
+  else { dl(name.split("/").pop(), text); await new Promise(r => setTimeout(r, 400)); }
+}
+$("#save").onclick = async () => {
+  try {
+    if (!dir && window.showDirectoryPicker && confirm("Choose the folder to save into (your map folder).")) dir = await showDirectoryPicker({ mode:"readwrite" });
+    for (const [n, t] of outFiles()) await put(n, t);
+    clean();
+    say(dir ? "Saved into your folder." : "Saved. Your browser put the files in Downloads: copy them into your map folder (cemetery photos go in " + photoDir("cemeteries") + ", grave photos in " + photoDir("graves") + ").");
+  } catch (e) { if (e.name !== "AbortError") say("Save failed: " + e.message); }
+};
+// Hidden button: the GitHub publisher "presses" it to collect the files (see publish.js)
+$("#dlBtn").onclick = () => { if (cems.length) outFiles().forEach(([n, t]) => dl(n, t)); };
+window.onbeforeunload = e => { if (dirty.size) { e.preventDefault(); return ""; } };
+// ---------- opening the map files from the site, or straight from the GitHub repository ----------
+async function filesFrom(get) {   // get(name) returns a File, or null when the file doesn't exist
+  const set = await get("settings.json");
+  let names = FILES_DEF;
+  if (set) { try { names = Object.assign({}, FILES_DEF, JSON.parse(await set.text()).files || {}); } catch (e) {} }
+  return (await Promise.all([set].concat(Object.values(names).map(get)))).filter(Boolean);
+}
+async function loadFromSite() {   // when this page is served from a website
+  if (!/^https?:/.test(location.protocol)) return;
+  const files = await filesFrom(async n => { try { const r = await fetch(new URL(n, document.baseURI).href, { cache:"no-store" }); return r.ok ? new File([await r.text()], n) : null; } catch (e) { return null; } });
+  if (files.length > 1) { say("Reading the map files from this site…"); await load(files); }
+}
+async function loadFromGitHub() {   // works from a file on your computer, and with private repositories
+  if (!window.GHPublish) return say("publish.js is missing. Put it in the same folder as editor.html.");
+  try {
+    say("Reading the published map…");
+    const head = await GHPublish.rebase();
+    const files = await filesFrom(async n => { const t = await GHPublish.read(n, head); return t == null ? null : new File([t], n); });
+    if (files.length < 2) return say("I couldn't find the map files there. Check the publish destination in the ⚙ settings next to Publish.");
+    dir = null; await load(files);
+  } catch (e) { say("Couldn't read the published map: " + e.message + " Check the ⚙ settings next to Publish."); }
+}
+$("#gopen").onclick = loadFromGitHub;
+loadFromSite();
+</script>
+<script src="media.js"></script>
+<script src="inbox-tab.js"></script>
+<script src="questions-tab.js"></script>
+<script src="publish.js"></script>
+<script>window.GHPublish ? GHPublish.attach({ buttons:["dlBtn"], label:"Publish", route:n => n, prepare:syncFromGitHub, onPublished:() => { takeSnap(); clean(); say(GHPublish.isServer() ? "Published." : "Published. The live site updates in about a minute."); } }) : say("publish.js is missing. Put it in the same folder as editor.html to turn on publishing.");</script>
+<script src="shell.js"></script>
+<script src="export-tools.js"></script>
+<script src="data-check.js"></script>
+</body>
+</html>

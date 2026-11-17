@@ -1,0 +1,415 @@
+/* stories.js - "Stories and memories" on the grave and cemetery cards, and the "Share a story" form.
+   Loaded by the map page (index.html) after its own script. It does not change the map; it only adds to the cards.
+
+   - Approved stories come from stories.csv (or settings.json files.stories). Columns:
+       STORY_ID, TARGET_TYPE (marker | cemetery), TARGET_ID, CEMETERY_ID, PERSON, TEXT, QUOTE, TOLD_BY, CONNECTION,
+       DATE_TOLD, TAG (Family account | Personal memory | Documented), SOURCE, PHOTO,
+       MEDIA (video or audio: links or files, separated by " | "; see media.js)
+     The editor writes this file when the lead approves a story. A missing file just means no stories yet.
+   - Shared stories go to the county inbox (settings.json "inbox") and wait there for the lead.
+   - The map page tells this file what a card shows by setting infoContent.dataset.storyFor just before it draws the card. */
+(function () {
+  "use strict";
+  if (typeof infoContent === "undefined") return;
+  const SETTINGS = (typeof SET !== "undefined" && SET) || {};
+  const AREA = String(SETTINGS.idPrefix || SETTINGS.shortName || "").toUpperCase();
+  const INBOX = String(SETTINGS.inbox || "").replace(/\/+$/, "");
+  const FILE = (SETTINGS.files && SETTINGS.files.stories) || "stories.csv";
+  const H = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const key = s => String(s == null ? "" : s).trim().toLowerCase();
+
+  /* ---------- styles ---------- */
+  const css = document.createElement("style");
+  css.textContent = `
+  html,body,button,input,select,textarea{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+  .st-sec{margin:14px 0 6px;padding-top:10px;border-top:1px solid #d8d2c6}
+  .st-svy{margin:12px 0 4px}.st-svy button{width:100%;min-height:44px;padding:8px 14px;border-radius:8px;border:0;background:var(--accent,#01796F)!important;color:#fff!important;font:inherit;font-weight:600;cursor:pointer}
+  .st-svy small{display:block;margin-top:4px;color:#5b6470;font-size:12.5px}
+  .st-sec h3{margin:0 0 8px}
+  .st-quote{font:italic 1.15em/1.45 Georgia,"Times New Roman",serif;margin:4px 0 12px;padding-left:12px;border-left:3px solid var(--accent,#01796F)}
+  .st-item{margin:0 0 12px}
+  .st-item p{margin:0 0 4px;white-space:pre-wrap}
+  .st-meta{font-size:.85em;color:#5f574c}
+  .st-tag{display:inline-block;font-size:.75em;padding:1px 8px;border-radius:999px;background:#eee7da;color:#5f574c;margin-left:4px}
+  .st-item img{max-width:100%;border-radius:8px;margin:4px 0}
+  .st-share{min-height:44px;padding:8px 14px;border-radius:8px;border:1px solid var(--accent,#01796F);background:#fff;color:var(--accent,#01796F);font:inherit;font-weight:600;cursor:pointer}
+  .stm{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center}
+  .stm[hidden]{display:none}
+  .stm .box{background:#fff;color:#1f1b16;width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:14px 14px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
+  @media(min-width:700px){.stm{align-items:center}.stm .box{border-radius:14px}}
+  .stm h2{margin:0 0 4px;font-size:1.2em}
+  .stm label{display:block;font-weight:600;margin:12px 0 4px}
+  .stm input[type=text],.stm input[type=email],.stm textarea,.stm select{width:100%;box-sizing:border-box;font:inherit;padding:10px;border:1px solid #b9b1a3;border-radius:8px}
+  .stm textarea{min-height:140px;resize:vertical}
+  .stm .hint{font-size:.85em;color:#5f574c;font-weight:400;margin:2px 0 0}
+  .stm .chk{display:flex;gap:8px;align-items:flex-start;font-weight:400;margin-top:14px}
+  .stm .chk input{margin-top:4px;width:20px;height:20px;flex:none}
+  .stm .row{display:flex;gap:8px;margin-top:16px}
+  .stm .box,.stm .box *{text-shadow:none}
+  .stm input,.stm textarea,.stm select{color:#1f1b16!important;background:#fff!important}
+  .stm .row button{flex:1;min-height:48px;border-radius:10px;font:inherit;font-weight:600;cursor:pointer;border:1px solid #8a8174!important;background:#fff!important;color:#1f1b16!important;box-shadow:none!important;text-transform:none;letter-spacing:normal}
+  .stm .row button.go{background:var(--accent,#01796F)!important;border-color:var(--accent,#01796F)!important;color:#fff!important}
+  .stm .row button:disabled{opacity:.55}
+  #lead-badge[hidden]{display:none!important}
+  .stm .ok{color:#1d6b3a}.stm hr{border:0;border-top:1px solid #e5dfd3;margin:16px 0}
+  .st-share{background:#fff!important;color:var(--accent,#01796F)!important;border:1px solid var(--accent,#01796F)!important}
+  .stm .msg{margin-top:10px;font-size:.95em}
+  .stm .msg.err{color:#9b1c1c}
+  .stm .thumb{max-width:120px;border-radius:8px;display:block;margin-top:6px}`;
+  document.head.append(css);
+
+  /* ---------- signing in on the map: volunteers type their invite code, leads type the lead key ---------- */
+  const store = { get: k => { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } }, set: (k, v) => { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch (e) {} } };
+  const inviteKey = "invite:" + AREA, leadKeyName = "leadKey:" + AREA;
+  const invite = () => { try { return JSON.parse(store.get(inviteKey) || "null"); } catch (e) { return null; } };
+  /* a block at the top of the map menu, so volunteers and the lead can find it:
+       not signed in:  ○ Volunteer / Lead Sign-In (Not Signed In)   ○ Want to help with the surveys? Tap here!
+       lead signed in: ⦿ Sign-In  ⦿ Invite Volunteers  ⦿ Review Changes and Additions
+       signed in:      ⦿ Volunteer / Lead Sign-In (Signed In)       ⦿ Survey / Make Changes (as Name)   ⦿ Review Changes and Additions (lead only) */
+  const panel = document.getElementById("menu-panel");
+  const group = document.createElement("div"); group.id = "vol-group";
+  const gcss = document.createElement("style");
+  gcss.textContent = "#vol-group{margin:10px 0 12px;padding:8px;border:2px solid var(--accent,#01796F);border-radius:10px;background:#fff}" +
+    "#vol-group a{display:flex!important;align-items:center;gap:10px;min-height:44px;padding:4px 6px;color:var(--accent,#01796F);font-weight:600;text-decoration:none;border-radius:6px}" +
+    "#vol-group a:hover{background:#f1efe8}#vol-group a+a{border-top:1px solid #ebe6da}" +
+    "#vol-group .dot{flex:none;width:16px;height:16px;border-radius:50%;border:2px solid currentColor;box-sizing:border-box}" +
+    "#vol-group .dot.on{background:radial-gradient(circle,currentColor 0 4px,transparent 5px)}" +
+    "#vol-group small{display:block;font-weight:400;color:#5f574c;font-size:12px}";
+  document.head.append(gcss);
+  function helpTarget() {
+    const c = SETTINGS.contact || {};
+    if (c.form) return { href: c.form, how: "Fill in the volunteer form" };
+    if (c.email) return { href: "mailto:" + c.email + "?subject=" + encodeURIComponent("Helping with the " + (SETTINGS.name || "cemetery") + " survey"), how: "Email " + (c.name || c.email) };
+    if (c.phone) return { href: "tel:" + String(c.phone).replace(/[^0-9+]/g, ""), how: "Call " + (c.name || c.phone) };
+    return { href: "survey.html", how: "Find out how to get an invite" };
+  }
+  function link(text, sub, href, on, onclick) {
+    const a = document.createElement("a"); a.href = href;
+    a.innerHTML = '<span class="dot' + (on ? " on" : "") + '" aria-hidden="true"></span><span>' + H(text) + (sub ? "<small>" + H(sub) + "</small>" : "") + "</span>";
+    if (onclick) a.addEventListener("click", e => { e.preventDefault(); onclick(); });
+    if (/^(https?:|mailto:|tel:)/.test(href)) { a.target = "_blank"; a.rel = "noopener"; }
+    group.append(a);
+  }
+  // "Signed in as Sam (Lead)". The role and name come from the inbox (/whoami) and are remembered on this device.
+  const whoKey = "leadWho:" + AREA;
+  function signedAs(inv, lead) {
+    if (lead) {
+      let w = null; try { w = JSON.parse(store.get(whoKey) || "null"); } catch (e) {}
+      if (w && w.role === "owner") return "Signed in as a Manager";
+      if (w && w.name) return "Signed in as " + w.name + " (Lead)";
+      return "Signed in as a Lead";
+    }
+    if (inv) return "Signed in as " + (inv.name || "a surveyor") + " (Volunteer)";
+    return "Not signed in";
+  }
+  function learnWho(key) {
+    if (!key || !INBOX || !AREA) return;
+    fetch(INBOX + "/" + AREA + "/whoami", { headers: { "X-Lead-Key": key } }).then(r => r.ok ? r.json() : null).then(j => {
+      if (j && j.ok) { store.set(whoKey, JSON.stringify({ role: j.role, name: j.name || "" })); menu(); const h = document.querySelector("#si-lead h3"); if (h && store.get(leadKeyName)) h.textContent = signedAs(null, store.get(leadKeyName)); }
+    }).catch(() => {});
+  }
+  // Leads and managers survey too. The survey works with invites, so the first time a lead starts one,
+  // an invite in their own name is made quietly and kept on this device (it shows in the Surveyors list).
+  async function ensureInvite() {
+    const inv = invite(); if (inv && inv.code) return true;
+    const lead = store.get(leadKeyName); if (!lead || !INBOX || !AREA) return false;
+    let w = null; try { w = JSON.parse(store.get(whoKey) || "null"); } catch (e) {}
+    const name = (w && w.role === "lead" && w.name) ? w.name + " (lead)" : "Manager";
+    try {
+      const r = await fetch(INBOX + "/" + AREA + "/invites", { method: "POST", headers: { "Content-Type": "application/json", "X-Lead-Key": lead }, body: JSON.stringify({ name }) }), j = await r.json();
+      if (!j.ok || !j.code) { alert(j.error || "Couldn't start the survey. Try again."); return false; }
+      store.set(inviteKey, JSON.stringify({ code: j.code, name: j.name || name })); return true;
+    } catch (e) { alert("Couldn't reach the inbox. Check your connection."); return false; }
+  }
+  async function goSurvey(params) {
+    if (!(await ensureInvite())) return;
+    location.href = "survey.html" + (params ? "?" + new URLSearchParams(params).toString() : "");
+  }
+  function menu() {
+    if (!panel) return;
+    const inv = invite(), lead = store.get(leadKeyName), signed = !!(inv || lead);
+    group.textContent = "";
+    link("Volunteer / Lead Sign-In", signedAs(inv, lead), "#", signed, openSignIn);
+    if (inv || lead) link("Start a Survey", "Record cemeteries and graves, or update one from its card", "survey.html", true, () => goSurvey());
+    if (lead) link("Invite Volunteers", "Show a QR code to sign someone up", "#", true, openSignIn);   // a lead doesn't need the "how to help" link
+    if (!inv && !lead) { const h = helpTarget(); link("Want to help with the surveys? Tap here!", h.how, h.href, false); }
+    if (lead) link("Review Changes and Additions", "Opens the editor", "editor.html", true);
+    if (!group.parentNode) { const title = panel.querySelector(".menu-title"); title ? title.after(group) : panel.prepend(group); }
+  }
+  if (INBOX && AREA) menu();
+
+  /* the lead's red badge: only in a browser where the lead key is saved */
+  const badge = document.createElement("a");
+  badge.href = "editor.html"; badge.id = "lead-badge"; badge.hidden = true;
+  badge.style.cssText = "position:fixed;z-index:9998;left:10px;top:calc(70px + env(safe-area-inset-top));background:#c62828;color:#fff;padding:8px 12px;border-radius:999px;font:600 14px system-ui,sans-serif;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,.3)";
+  badge.title = "Only you see this, because your lead key is saved in this browser.";
+  document.body.append(badge);
+  function checkBadge() {
+    const key = store.get(leadKeyName); if (!key || !INBOX || !AREA) { badge.hidden = true; return; }
+    fetch(INBOX + "/" + AREA + "/count", { headers: { "X-Lead-Key": key } }).then(r => r.ok ? r.json() : null).then(j => {
+      if (!j || !j.ok) { badge.hidden = true; return; }
+      badge.textContent = "\u25CF " + j.total + " new for review"; badge.hidden = !j.total;
+    }).catch(() => {});
+  }
+  checkBadge(); if (store.get(leadKeyName) && !store.get(whoKey)) learnWho(store.get(leadKeyName)); setInterval(() => { if (!document.hidden) checkBadge(); }, 300000);
+
+  const si = document.createElement("div");
+  si.id = "si-modal"; si.className = "stm"; si.hidden = true; si.setAttribute("role", "dialog"); si.setAttribute("aria-modal", "true"); si.setAttribute("aria-labelledby", "si-title");
+  si.innerHTML = `<div class="box"><h2 id="si-title">Volunteer & Lead Sign-In</h2>
+    <p class="hint">For people helping record the cemeteries. Visitors don't need to sign in.</p>
+    <div id="si-vol"></div><hr id="si-sep"><div id="si-lead"></div>
+    <div class="row"><button type="button" id="si-close">Close</button></div></div>`;
+  document.body.append(si);
+  si.addEventListener("click", e => { if (e.target === si) si.hidden = true; });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !si.hidden) si.hidden = true; });
+  si.querySelector("#si-close").addEventListener("click", () => { si.hidden = true; });
+  function section(box, html) { box.innerHTML = html; return id => box.querySelector("#" + id); }
+  function drawSignIn() {
+    const inv = invite(), lead = store.get(leadKeyName);
+    // a signed-in lead or manager only sees their own section, so "Invite" can't be mistaken for anything else
+    si.querySelector("#si-vol").hidden = !!lead; si.querySelector("#si-sep").hidden = !!lead;
+    const v = section(si.querySelector("#si-vol"), inv
+      ? '<h3>Volunteer</h3><p class="ok">Signed in' + (inv.name ? " as " + H(inv.name) : "") + ' on this device.</p><div class="row"><button type="button" class="go" id="si-go">Open the survey</button><button type="button" id="si-out">Sign out</button></div>'
+      : '<h3>Volunteer</h3><p class="hint">Have a QR code? Open your phone\'s camera, point it at the code, and tap the link that appears.</p><label for="si-code">Invite code</label><input type="text" id="si-code" autocomplete="off" autocapitalize="characters" placeholder="K7Q2-M9XD"><p class="hint">Or type the code from your invite link (the part after invite=).</p><div class="row"><button type="button" class="go" id="si-in">Sign in</button></div><div class="msg" id="si-vmsg" role="status"></div>');
+    if (inv) { v("si-go").onclick = () => { location.href = "survey.html"; }; v("si-out").onclick = () => { if (confirm("Sign out of surveying on this device? Surveys not yet sent stay saved on it.")) { store.set(inviteKey, ""); drawSignIn(); menu(); } }; }
+    else v("si-in").onclick = async () => {
+      const code = v("si-code").value.trim().toUpperCase().replace(/^.*INVITE=/, ""), m = v("si-vmsg");
+      if (!code) { m.textContent = "Type your invite code."; m.className = "msg err"; return; }
+      m.textContent = "Checking…"; m.className = "msg";
+      try { const r = await fetch(INBOX + "/" + AREA + "/check", { headers: { "X-Invite": code } }), j = await r.json();
+        if (!j.ok) { m.textContent = j.error || "That code didn't work."; m.className = "msg err"; return; }
+        store.set(inviteKey, JSON.stringify({ code, name: j.name })); drawSignIn(); menu();
+      } catch (e) { m.textContent = "Couldn't reach the inbox. Check your connection."; m.className = "msg err"; }
+    };
+    const l = section(si.querySelector("#si-lead"), lead
+      ? '<h3>' + H(signedAs(null, lead)) + '</h3><p class="ok">New additions show as a red badge on the map.</p>' +
+        '<div class="row"><button type="button" class="go" id="si-svy">Start a Survey</button></div>' +
+        '<h3 style="margin-top:18px">Invite a new volunteer</h3><p class="hint">Type the volunteer\'s name, then let them scan the QR code with their phone\'s camera.</p>' +
+        '<label for="si-new">Volunteer\'s name</label><input type="text" id="si-new" placeholder="Their name" autocomplete="off"><div class="row"><button type="button" class="go" id="si-inv">Invite and show QR code</button></div><div class="msg" id="si-imsg" role="status"></div>' +
+        '<div class="row"><button type="button" id="si-ed">Open the editor</button><button type="button" id="si-lout">Sign out</button></div>'
+      : '<h3>Lead or manager</h3><label for="si-key">Lead or manager key</label><input type="password" id="si-key" autocomplete="off"><div class="row"><button type="button" class="go" id="si-lin">Sign in</button></div><div class="msg" id="si-lmsg" role="status"></div>');
+    if (lead) {
+      l("si-ed").onclick = () => { location.href = "editor.html"; };
+      l("si-svy").onclick = () => goSurvey();
+      l("si-lout").onclick = () => { store.set(leadKeyName, ""); store.set(whoKey, ""); drawSignIn(); menu(); checkBadge(); };
+      const invite1 = async () => {
+        const name = l("si-new").value.trim(), m = l("si-imsg");
+        if (!name) { m.textContent = "Type their name first."; m.className = "msg err"; l("si-new").focus(); return; }
+        m.textContent = "Making the invite…"; m.className = "msg";
+        try {
+          const r = await fetch(INBOX + "/" + AREA + "/invites", { method: "POST", headers: { "Content-Type": "application/json", "X-Lead-Key": lead }, body: JSON.stringify({ name }) }), j = await r.json();
+          if (!j.ok) { m.textContent = j.error || "That didn't work."; m.className = "msg err"; return; }
+          await needQR();
+          l("si-new").value = ""; m.textContent = "Invited " + j.name + "."; m.className = "msg ok";
+          QR.show({ title: "Welcome, " + j.name + "!", sub: "Scan with your phone's camera to start surveying", link: new URL("survey.html?invite=" + encodeURIComponent(j.code), document.baseURI).href, onNext: () => { l("si-new").focus(); } });
+        } catch (e) { m.textContent = "Couldn't reach the inbox. Check your connection."; m.className = "msg err"; }
+      };
+      l("si-inv").onclick = invite1;
+      l("si-new").addEventListener("keydown", e => { if (e.key === "Enter") invite1(); });
+    }
+    else l("si-lin").onclick = async () => {
+      const key = l("si-key").value.trim(), m = l("si-lmsg");
+      if (!key) { m.textContent = "Type the lead key."; m.className = "msg err"; return; }
+      m.textContent = "Checking…"; m.className = "msg";
+      try { const r = await fetch(INBOX + "/" + AREA + "/count", { headers: { "X-Lead-Key": key } });
+        if (r.status === 403) { m.textContent = "That lead key isn't right."; m.className = "msg err"; return; }
+        const j = await r.json(); if (!j.ok) { m.textContent = j.error || "That didn't work."; m.className = "msg err"; return; }
+        store.set(leadKeyName, key); store.set(whoKey, ""); drawSignIn(); menu(); checkBadge(); learnWho(key);
+      } catch (e) { m.textContent = "Couldn't reach the inbox. Check your connection."; m.className = "msg err"; }
+    };
+  }
+  let qrReady = null;
+  const needQR = () => qrReady || (qrReady = window.QR ? Promise.resolve() : new Promise((ok, bad) => { const sc = document.createElement("script"); sc.src = "qr.js"; sc.onload = ok; sc.onerror = () => bad(new Error("qr.js missing")); document.head.append(sc); }));
+  function openSignIn() { drawSignIn(); si.hidden = false; const f = si.querySelector("input"); if (f) f.focus(); }
+
+  /* ---------- approved stories ---------- */
+  let STORIES = [];
+  function parseCsv(text) {
+    if (window.Papa) return Papa.parse(text.replace(/^﻿/, ""), { header: true, skipEmptyLines: "greedy" }).data;
+    return [];
+  }
+  const ready = fetch(new URL(FILE, document.baseURI).href, { cache: "no-cache" })
+    .then(r => r.ok ? r.text() : "").then(t => { STORIES = t ? parseCsv(t) : []; }).catch(() => { STORIES = []; });
+
+  function storiesFor(t) {
+    return STORIES.filter(s => key(s.TARGET_TYPE) === key(t.type) && key(s.TARGET_ID) === key(t.id) && String(s.TEXT || "").trim());
+  }
+  function sectionHtml(t, list) {
+    const featured = list.find(s => String(s.QUOTE || "").trim());
+    let h = '<div class="st-sec" data-st="1"><h3>Stories and memories' + (list.length ? " (" + list.length + ")" : "") + "</h3>";
+    if (featured) h += '<blockquote class="st-quote">“' + H(featured.QUOTE) + "”</blockquote>";
+    list.forEach(s => {
+      const who = [s.TOLD_BY, s.CONNECTION].filter(x => String(x || "").trim()).join(", ");
+      h += '<div class="st-item">' + (s.PERSON && t.type === "marker" ? '<div class="st-meta"><b>About ' + H(s.PERSON) + "</b></div>" : "") +
+        "<p>" + H(s.TEXT) + "</p>" +
+        (s.PHOTO ? '<img src="' + H(typeof photoUrl === "function" ? photoUrl(s.PHOTO) : s.PHOTO) + '" alt="Photo shared with this story" loading="lazy">' : "") +
+        (s.MEDIA && window.StoryMedia ? StoryMedia.html(s.MEDIA) : "") +
+        '<div class="st-meta">' + (who ? "Shared by " + H(who) : "Shared anonymously") + (s.DATE_TOLD ? " · " + H(s.DATE_TOLD) : "") +
+        (s.TAG ? '<span class="st-tag">' + H(s.TAG) + "</span>" : "") + (s.SOURCE ? "<br>Source: " + H(s.SOURCE) : "") + "</div></div>";
+    });
+    if (!list.length) h += '<p class="st-meta">No stories yet. Do you know something about ' + (t.type === "cemetery" ? "this place" : "this person") + "?</p>";
+    if (INBOX && AREA) h += '<button type="button" class="st-share">Share a story or memory</button> <button type="button" class="st-share st-fix">Suggest a correction</button>';
+    return h + "</div>";
+  }
+
+  /* add the section whenever a card that asked for it is drawn */
+  let adding = false, lastTarget = null;
+  new MutationObserver(function () {
+    if (adding) return;
+    const raw = infoContent.dataset.storyFor;
+    if (!raw) { lastTarget = null; return; }
+    delete infoContent.dataset.storyFor;                 // one card, one section
+    let t; try { t = JSON.parse(raw); } catch (e) { return; }
+    if (!t || !t.id) return;
+    lastTarget = t;
+    ready.then(function () {
+      if (lastTarget !== t || infoContent.querySelector('[data-st="1"]')) return;
+      adding = true;
+      if ((invite() || store.get(leadKeyName)) && t.id && (t.type === "cemetery" || t.cemetery)) {
+        const isCem = t.type === "cemetery";
+        infoContent.insertAdjacentHTML("beforeend", '<div class="st-svy"><button type="button">' + (isCem ? "Edit This Cemetery" : "Edit This Grave") +
+          '</button><small>' + (isCem ? "Details, hazards, boundary and entrances. Changes are reviewed before they appear." : "Names, dates, condition, photo, or drag it to the right spot. Changes are reviewed before they appear.") + "</small></div>");
+        infoContent.querySelector(".st-svy button").addEventListener("click", function () { goSurvey(isCem ? { cemetery: t.id } : { cemetery: t.cemetery, marker: t.id }); });
+      }
+      infoContent.insertAdjacentHTML("beforeend", sectionHtml(t, storiesFor(t)));
+      const b = infoContent.querySelector(".st-share:not(.st-fix)"); if (b) b.addEventListener("click", function () { openForm(t); });
+      const fx = infoContent.querySelector(".st-fix"); if (fx) fx.addEventListener("click", function () { openFix(t); });
+      setTimeout(function () { adding = false; }, 0);
+    });
+  }).observe(infoContent, { childList: true });
+
+  /* ---------- the Share a Story form ---------- */
+  const modal = document.createElement("div");
+  modal.id = "st-modal"; modal.className = "stm"; modal.hidden = true; modal.setAttribute("role", "dialog"); modal.setAttribute("aria-modal", "true"); modal.setAttribute("aria-labelledby", "st-title");
+  modal.innerHTML = `<div class="box">
+    <h2 id="st-title">Share a story or memory</h2><p class="hint" id="st-about"></p>
+    <label for="st-text">Your story, memory or information <span aria-hidden="true">*</span></label>
+    <textarea id="st-text" maxlength="8000" placeholder="She kept bees behind the house on the old Liberty road..."></textarea>
+    <label for="st-type">What kind is it?</label>
+    <select id="st-type"><option>Family story</option><option>Personal memory</option><option>Documented (from a record or newspaper)</option></select>
+    <div id="st-srcwrap" hidden><label for="st-src">Where is it from?</label><input type="text" id="st-src" maxlength="300" placeholder="Liberty Herald, June 3, 1901"></div>
+    <label for="st-name">Your name</label><input type="text" id="st-name" maxlength="120" autocomplete="name"><p class="hint">Shown with the story. Leave blank to share anonymously.</p>
+    <label for="st-conn">Your connection</label><input type="text" id="st-conn" maxlength="120" placeholder="Great-granddaughter, neighbor, historian…">
+    <label for="st-teller">Who told it, if not you</label><input type="text" id="st-teller" maxlength="120">
+    <label for="st-photo">A photo (optional)</label><input type="file" id="st-photo" accept="image/*"><img id="st-thumb" class="thumb" alt="" hidden>
+    <label for="st-audio">A recording (optional)</label><input type="file" id="st-audio" accept="audio/*"><p class="hint" id="st-audiohint">A short voice recording, up to about 2 minutes. For anything longer, or for video, use the link box below.</p>
+    <label for="st-link">A link to a video or recording (optional)</label><input type="text" id="st-link" maxlength="300" inputmode="url" autocapitalize="off" autocomplete="off" placeholder="https://www.youtube.com/watch?v=…"><p class="hint">YouTube, Vimeo, or a link to an audio or video file.</p>
+    <label for="st-contact">Email or phone (optional)</label><input type="text" id="st-contact" maxlength="160" autocomplete="email"><p class="hint">Only the county's reviewer sees this, in case they have a question. It is never shown.</p>
+    <label class="chk"><input type="checkbox" id="st-consent"><span>I have the right to share this, including permission from anyone recorded or quoted, and I agree it may be shown on this site and kept in the county archive.</span></label>
+    <p class="hint">A volunteer reviews every story before it appears. Stories about living people, or with private details, may be kept in the archive without being shown.</p>
+    <div class="row"><button type="button" id="st-cancel">Cancel</button><button type="button" class="go" id="st-send">Send</button></div>
+    <div class="msg" id="st-msg" role="status" aria-live="polite"></div></div>`;
+  document.body.append(modal);
+  const $ = id => document.getElementById(id);
+  let target = null, photoData = null, audioData = null, lastFocus = null;
+  const AUDIO_OK = /^audio\/(webm|mp4|mpeg|ogg|aac|x-m4a)$/, AUDIO_MAX = 1400000;   // what the inbox accepts
+  $("st-audio").addEventListener("change", function () {
+    const f = this.files && this.files[0]; audioData = null; if (!f) return;
+    const mime = String(f.type || "").split(";")[0].toLowerCase();
+    if (!AUDIO_OK.test(mime)) { this.value = ""; return say("That kind of recording can't be sent here. Try an .mp3 or .m4a file, or put it online and paste the link below.", true); }
+    if (f.size > AUDIO_MAX) { this.value = ""; return say("That recording is too long to send here (the limit is about 2 minutes). Put it on YouTube or another site and paste the link below.", true); }
+    const r = new FileReader();
+    r.onload = function () { const m = /^data:[^,]*;base64,(.*)$/.exec(String(r.result)); if (m) { audioData = { mime: mime, data: m[1] }; say(""); } };
+    r.onerror = function () { say("That recording couldn't be read.", true); };
+    r.readAsDataURL(f);
+  });
+
+  $("st-type").addEventListener("change", function () { $("st-srcwrap").hidden = !/^Documented/.test(this.value); });
+  $("st-cancel").addEventListener("click", closeForm);
+  modal.addEventListener("click", function (e) { if (e.target === modal) closeForm(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !modal.hidden) closeForm(); });
+  $("st-photo").addEventListener("change", async function () {
+    const f = this.files && this.files[0]; photoData = null; $("st-thumb").hidden = true;
+    if (!f) return;
+    try { photoData = await shrink(f, 1600); $("st-thumb").src = photoData; $("st-thumb").hidden = false; } catch (e) { say(e.message, true); }
+  });
+
+  function shrink(file, max) {
+    return new Promise(function (ok, bad) {
+      const url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        const s = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight)), c = document.createElement("canvas");
+        c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+        let q = 0.82, out = c.toDataURL("image/jpeg", q); while (out.length > 1800000 && q > 0.4) { q -= 0.12; out = c.toDataURL("image/jpeg", q); }
+        ok(out);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); bad(new Error("That photo couldn't be read.")); };
+      img.src = url;
+    });
+  }
+  function say(t, err) { const m = $("st-msg"); m.textContent = t; m.className = "msg" + (err ? " err" : ""); }
+  function draftKey() { return "story-draft:" + AREA + ":" + (target ? target.type + ":" + target.id : ""); }
+  function openForm(t) {
+    target = t; lastFocus = document.activeElement; photoData = null; audioData = null; $("st-audio").value = "";
+    $("st-about").textContent = "About: " + (t.label || t.id);
+    let d = {}; try { d = JSON.parse(localStorage.getItem(draftKey()) || "{}"); } catch (e) {}
+    $("st-text").value = d.text || ""; $("st-name").value = d.name || ""; $("st-conn").value = d.connection || ""; $("st-teller").value = d.teller || "";
+    $("st-contact").value = d.contact || ""; $("st-src").value = d.source || ""; $("st-link").value = d.link || ""; $("st-consent").checked = false; $("st-photo").value = ""; $("st-thumb").hidden = true;
+    $("st-type").value = d.type || "Family story"; $("st-srcwrap").hidden = !/^Documented/.test($("st-type").value);
+    $("st-send").disabled = false; say("");
+    modal.hidden = false; $("st-text").focus();
+  }
+  function closeForm() { saveDraft(); modal.hidden = true; if (lastFocus && lastFocus.focus) lastFocus.focus(); }
+  function fields() { return { text: $("st-text").value.trim(), type: $("st-type").value, source: $("st-src").value.trim(), name: $("st-name").value.trim(), connection: $("st-conn").value.trim(), teller: $("st-teller").value.trim(), link: $("st-link").value.trim(), contact: $("st-contact").value.trim() }; }
+  function saveDraft() { try { const f = fields(); if (f.text) localStorage.setItem(draftKey(), JSON.stringify(f)); } catch (e) {} }
+  ["st-text", "st-name", "st-conn", "st-teller", "st-contact", "st-src", "st-link"].forEach(id => $(id).addEventListener("input", saveDraft));
+
+  $("st-send").addEventListener("click", async function () {
+    const f = fields();
+    if (!f.text) { say("Please write the story or memory first.", true); $("st-text").focus(); return; }
+    if (f.link && window.StoryMedia) { const c = StoryMedia.check(f.link); if (c.bad.length || !c.ok.length) { say("That link doesn't look right. It should start with https://, like a YouTube address.", true); $("st-link").focus(); return; } }
+    if (!$("st-consent").checked) { say("Please tick the permission box.", true); $("st-consent").focus(); return; }
+    if (!navigator.onLine) { saveDraft(); say("You're offline. Your story is saved on this device. Open this form again when you have signal and press Send.", true); return; }
+    const id = (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2, 12));
+    const media = [], data = Object.assign({}, f, { consent: true, cemetery: target.cemetery || (target.type === "cemetery" ? target.id : ""), person: target.person || "", label: target.label || "", page: location.href.split("?")[0] });
+    if (photoData) { const m = /^data:([^;]+);base64,(.*)$/.exec(photoData); if (m) { media.push({ mime: m[1], data: m[2] }); data.photo = "media:0"; } }
+    if (audioData) { media.push(audioData); data.audio = "media:" + (media.length - 1); }
+    $("st-send").disabled = true; say("Sending…");
+    try {
+      const r = await fetch(INBOX + "/" + AREA + "/story", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, kind: "story", target: { type: target.type, id: target.id }, data, media, created: new Date().toISOString(), submitter: f.name }) });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok && j.ok) { try { localStorage.removeItem(draftKey()); } catch (e) {} say("Thank you! A volunteer will review your story before it appears."); setTimeout(function () { modal.hidden = true; }, 2600); }
+      else { $("st-send").disabled = false; say(j.error || "The story couldn't be sent. Please try again.", true); }
+    } catch (e) { $("st-send").disabled = false; saveDraft(); say("No connection to the inbox. Your story is saved on this device; try again in a moment.", true); }
+  });
+
+  /* ---------- Suggest a correction: anyone can point out a mistake; a lead checks it and fixes the record ---------- */
+  const fix = document.createElement("div");
+  fix.id = "cr-modal"; fix.className = "stm"; fix.hidden = true; fix.setAttribute("role", "dialog"); fix.setAttribute("aria-modal", "true");
+  fix.innerHTML = '<div class="box"><h2>Suggest a correction</h2><p class="sub" id="cr-for"></p>' +
+    '<label for="cr-what">What is wrong?</label><textarea id="cr-what" maxlength="1000" placeholder="For example: the death year says 1856"></textarea>' +
+    '<label for="cr-should">What should it say?</label><textarea id="cr-should" maxlength="1000" placeholder="For example: 1858"></textarea>' +
+    '<label for="cr-how">How do you know? *</label><textarea id="cr-how" maxlength="1500" placeholder="For example: I read the stone in 2025, or it is in the family Bible, or the death certificate says so"></textarea>' +
+    '<label for="cr-name">Your name *</label><input type="text" id="cr-name" maxlength="100">' +
+    '<label for="cr-contact">Email or phone (optional, only the reviewer sees it)</label><input type="text" id="cr-contact" maxlength="150">' +
+    '<div class="msg" id="cr-msg" role="status"></div><div class="row"><button type="button" id="cr-cancel">Cancel</button><button type="button" class="go" id="cr-send">Send</button></div></div>';
+  document.body.appendChild(fix);
+  const cf = id => document.getElementById(id);
+  let fixTarget = null;
+  function openFix(t) {
+    fixTarget = t; ["cr-what", "cr-should", "cr-how", "cr-msg"].forEach(id => { const e = cf(id); if (e.tagName === "DIV") e.textContent = ""; else e.value = ""; });
+    cf("cr-for").textContent = "About: " + (t.label || t.id) + ". A volunteer checks every correction before anything changes.";
+    try { cf("cr-name").value = localStorage.getItem("story:name") || cf("cr-name").value; } catch (e) {}
+    fix.hidden = false; cf("cr-send").disabled = false; cf("cr-what").focus();
+  }
+  cf("cr-cancel").onclick = () => { fix.hidden = true; };
+  cf("cr-send").onclick = async () => {
+    const what = cf("cr-what").value.trim(), should = cf("cr-should").value.trim(), how = cf("cr-how").value.trim(), name = cf("cr-name").value.trim(), m = cf("cr-msg");
+    const err = t => { m.textContent = t; m.className = "msg err"; };
+    if (!what && !should) return err("Say what is wrong, or what it should say.");
+    if (!how) { cf("cr-how").focus(); return err("Please say how you know. It helps the reviewer check it."); }
+    if (!name) { cf("cr-name").focus(); return err("Please add your name."); }
+    const t = fixTarget, id = (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2, 12));
+    const data = { type: "correction", what, should, how, name, contact: cf("cr-contact").value.trim(), consent: true,
+      text: "Correction: " + (what || "") + (should ? " \u2192 " + should : "") + ". How they know: " + how,
+      cemetery: t.cemetery || (t.type === "cemetery" ? t.id : ""), person: t.person || "", label: t.label || "", page: location.href.split("?")[0] };
+    cf("cr-send").disabled = true; m.textContent = "Sending\u2026"; m.className = "msg";
+    try {
+      const r = await fetch(INBOX + "/" + AREA + "/story", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, kind: "story", target: { type: t.type, id: t.id }, data, media: [], created: new Date().toISOString(), submitter: name }) });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok && j.ok) { m.textContent = "Thank you! A volunteer will check it."; m.className = "msg ok"; setTimeout(() => { fix.hidden = true; }, 2200); }
+      else { cf("cr-send").disabled = false; err(j.error || "It couldn't be sent. Please try again."); }
+    } catch (e) { cf("cr-send").disabled = false; err("No connection right now. Please try again in a moment."); }
+  };
+})();
