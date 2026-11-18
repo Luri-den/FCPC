@@ -489,8 +489,8 @@
     }
 
     .map-hover-popup .maplibregl-popup-content { border-radius: 8px; }
-    .cem-status { margin: 6px 0; padding: 8px 10px; border-left: 4px solid #2563eb; background: #eff6ff; border-radius: 4px; }
-    .cem-moved { margin: 4px 0 8px; } .cem-moved ul { max-height: 180px; overflow: auto; margin: 6px 0 0 18px; padding: 0; }
+    .cem-status { margin: 6px 0 14px; padding: 8px 10px; border-left: 4px solid #2563eb; background: #eff6ff; border-radius: 4px; }
+    .cem-moved { margin: -6px 0 14px; } .cem-moved ul { max-height: 180px; overflow: auto; margin: 6px 0 0 18px; padding: 0; }
     .map-hover-popup .hover-detail { margin-top: 2px; font-size: 12px; font-weight: normal; color: var(--text-muted); white-space: pre-line; }
     /* ---------- ACCESSIBILITY LEGEND ---------- */
     #accessibility-legend {
@@ -2102,12 +2102,10 @@ function makeAccessMark(kind) {
         else if (kind === "private") {
             ctx.moveTo(c - r, c - r); ctx.lineTo(c + r, c + r);
         }
-        else if (kind === "waves") {            // relocated because of water: a lake, a reservoir, a river
-            [-6, 6].forEach(function (dy) {
-                ctx.moveTo(c - r, c + dy);
-                ctx.bezierCurveTo(c - r / 2, c + dy - 7, c - r / 2, c + dy + 7, c, c + dy);
-                ctx.bezierCurveTo(c + r / 2, c + dy - 7, c + r / 2, c + dy + 7, c + r, c + dy);
-            });
+        else if (kind === "waves") {            // relocated because of water: one wave across the middle
+            ctx.moveTo(c - r, c);
+            ctx.bezierCurveTo(c - r / 2, c - 9, c - r / 2, c + 9, c, c);
+            ctx.bezierCurveTo(c + r / 2, c - 9, c + r / 2, c + 9, c + r, c);
         }
         else if (kind === "arrow") {            // relocated for any other reason
             ctx.moveTo(c - r, c); ctx.lineTo(c + r, c);

@@ -309,7 +309,7 @@ function applyColors() {
 function refresh() {
   if (!ready) return;
   applyColors();
-  src("cems", fc(cems.filter(ll).map(r => ({ type:"Feature", properties:{ id:r.ID, a:r.ACCESS === "" || r.ACCESS == null ? -1 : +r.ACCESS }, geometry:{ type:"Point", coordinates:ll(r) } }))));
+  src("cems", fc(cems.filter(ll).map(cemFeature)));
   const bf = () => fc(bounds.features.filter(f => f.geometry));
   src("bnd", bf());
   const cf = () => fc(county ? [county] : []);
@@ -321,14 +321,15 @@ function refresh() {
   if (sel) ints.forEach((r, i) => {
     const c = ll(r); if (r.CEMETERY_ID !== sel || !c) return;
     const k = (r.MARKER_ID || "#" + i) + "|" + c; let f = seen.get(k);
-    if (!f) { f = { type:"Feature", properties:{ i, v:0, p:0, m:0 }, geometry:{ type:"Point", coordinates:c } }; seen.set(k, f); g.push(f); }
+    if (!f) { f = { type:"Feature", properties:{ i, v:0, p:0, m:0, n:0 }, geometry:{ type:"Point", coordinates:c } }; seen.set(k, f); g.push(f); }
+    f.properties.n++;
     if (r.VETERAN === "1") f.properties.v = 1; if (r.PIONEER === "1") f.properties.p = 1; if (r.MAUS === "1") f.properties.m = 1;
   });
   src("gr", fc(g));
 
   tmp.forEach(m => m.remove()); tmp = [];
   const r = cem();
-  if (r && ll(r)) drag(ll(r), "pin cem", p => { r.LAT = p[1]; r.LONG = p[0]; touch("cem"); drawCem(); src("cems", fc(cems.filter(ll).map(x => ({ type:"Feature", properties:{ id:x.ID, a:x.ACCESS === "" ? -1 : +x.ACCESS }, geometry:{ type:"Point", coordinates:ll(x) } })))); }, r.NAME + " (drag to move)");
+  if (r && ll(r)) drag(ll(r), "pin cem", p => { r.LAT = p[1]; r.LONG = p[0]; touch("cem"); drawCem(); src("cems", fc(cems.filter(ll).map(cemFeature))); }, r.NAME + " (drag to move)");
   const f = r && holder(sel);
   if (f) (f.properties.ENTRANCES || []).forEach(en => drag(en.coords, "pin " + (en.size || "primary"), p => { en.coords = p; touch("bounds"); }, en.label + " (drag to move)"));
   if (mode === "bound" && ringOf(f)) vertexMarkers(ringOf(f), "bounds", "bnd", bf);
@@ -488,6 +489,10 @@ function photoBox(box, path, label) {
 }
 
 // ---------- Cemeteries tab ----------
+// a cemetery as a map point: access (for its color and mark), and whether it was relocated (blue, with a wave or an arrow)
+function cemFeature(r) {
+  return { type:"Feature", properties:{ id:r.ID, a:r.ACCESS === "" || r.ACCESS == null ? -1 : +r.ACCESS, s:r.SITE_STATUS === "Relocated" ? 1 : 0, w:/^(lake|river)/i.test(r.RELOCATION_REASON || "") ? 1 : 0 }, geometry:{ type:"Point", coordinates:ll(r) } };
+}
 function pick(id) {
   sel = id; selG = null; setMode(null); refresh();
   const r = cem(); if (r && ll(r)) map.flyTo({ center:ll(r), zoom:Math.max(map.getZoom(), 15) });
@@ -972,6 +977,7 @@ loadFromSite();
 <script src="export-tools.js"></script>
 <script src="data-check.js"></script>
 <script src="name-search.js"></script>
+<script src="map-symbols.js"></script>
 <script src="editor-tools.js"></script>
 </body>
 </html>

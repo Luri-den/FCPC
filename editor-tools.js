@@ -144,4 +144,32 @@
     say("Imported " + added + " relocated cemeteries" + (skipped ? " (" + skipped + " were already there)" : "") + ". The old lake marker is turned off. Check them on the Cemeteries tab, then Publish. " + file + " can be deleted after publishing.");
   }
   if (fileMenu) { const b = mk("button", { type: "button", textContent: "Import Lost Cemeteries", onclick: importLost }); b.append(mk("small", { textContent: "Turn an old lake file (lakecems.csv) into relocated cemeteries" })); fileMenu.append(b); }
+
+  /* ---------- the live map's icons in the editor ---------- */
+  if (typeof map !== "undefined" && window.MapSymbols) {
+    const C = () => Object.assign({ inaccessible: "#8B0000", private: "#D2691E", permission: "#C9A227", public: "#01796F", unknown: "#777777", grave: "#3f3528" }, (S && S.colors) || {});
+    const paint = () => {
+      if (!map.getLayer("cems")) return;
+      const c = C();
+      map.setPaintProperty("cems", "circle-color", ["case", ["==", ["get", "s"], 1], "#2563eb", ["match", ["get", "a"], 0, c.inaccessible, 1, c.private, 2, c.permission, 3, c.public, c.unknown]]);
+    };
+    const setup = () => {
+      if (!map.getLayer("gr") || map.getLayer("gr-sym")) return;
+      MapSymbols.register(map, C().grave);
+      // graves: the same drawings as the live map; the old dots stay underneath, invisible, so clicking and hovering still work
+      map.setPaintProperty("gr", "circle-opacity", 0); map.setPaintProperty("gr", "circle-stroke-opacity", 0);
+      map.addLayer({ id: "gr-sym", type: "symbol", source: "gr", layout: {
+        "icon-image": ["concat", ["case", ["==", ["get", "m"], 1], "grave-square", "grave-circle"], ["case", [">", ["get", "n"], 1], "-dot", ""], ["case", ["==", ["get", "v"], 1], "-vet", ""], ["case", ["==", ["get", "p"], 1], "-pio", ""]],
+        "icon-allow-overlap": true, "icon-ignore-placement": true } });
+      // cemeteries: the access marks, and a wave or an arrow on relocated ones
+      map.addLayer({ id: "cems-mark", type: "symbol", source: "cems",
+        filter: ["any", ["==", ["get", "s"], 1], ["in", ["get", "a"], ["literal", [0, 1, 2]]]],
+        layout: { "icon-image": ["case", ["==", ["get", "s"], 1], ["case", ["==", ["get", "w"], 1], "access-mark-waves", "access-mark-arrow"],
+          ["match", ["get", "a"], 0, "access-mark-inaccessible", 1, "access-mark-private", "access-mark-permission"]], "icon-size": 0.45, "icon-allow-overlap": true, "icon-ignore-placement": true } });
+      paint();
+    };
+    const _refresh2 = window.refresh;
+    if (typeof _refresh2 === "function") window.refresh = refresh = function () { const r = _refresh2.apply(this, arguments); try { setup(); paint(); } catch (e) {} return r; };
+    map.on("load", setup); map.on("idle", setup);
+  }
 })();
