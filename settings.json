@@ -1,28 +1,146 @@
 {
-"name": "Franklin County",
+  "name": "Franklin County",
   "shortName": "FC",
-"idPrefix": "FC",
-  "inbox": "https://survey-inbox.cemetery-surveys.workers.dev",
-  "files": {
-    "boundaries": "test-cemetery.geojson",
-    "county": "franklin-county.geojson"
-  },
-  "maxBounds": [[-85.50, 39.10], [-84.65, 39.70]],
-  "center": [-85.0626, 39.3992],
+  "idPrefix": "FC",
+  "center": [
+    -85.0626,
+    39.3992
+  ],
   "zoom": 11,
-  "lostSites": {
-    "file": "lakecems.csv",
-    "location": [-84.99056446430546, 39.471294950413316],
-    "title": "Historic Fairfield Cemeteries",
-    "intro": "Cemeteries affected by the construction of Brookville Lake."
+  "colors": {
+    "accent": "#01796F",
+    "public": "#01796F",
+    "permission": "#C9A227",
+    "private": "#D2691E",
+    "inaccessible": "#8B0000",
+    "unknown": "#777777",
+    "boundary": "#01796F",
+    "county": "#555555",
+    "grave": "#3f3528"
   },
-  "publish": { "target": "github", "owner": "Luri-den", "repo": "FCPC", "branch": "" },
+  "files": {
+    "cemeteries": "cemlist.csv",
+    "interments": "interments.csv",
+    "boundaries": "test-cemetery.geojson",
+    "county": "franklin-county.geojson",
+    "motifs": "motifs.json"
+  },
+  "inbox": "https://survey-inbox.cemetery-surveys.workers.dev",
+  "maxBounds": [
+    [
+      -85.5,
+      39.1
+    ],
+    [
+      -84.65,
+      39.7
+    ]
+  ],
+  "publish": {
+    "target": "github",
+    "owner": "Luri-den",
+    "repo": "FCPC",
+    "branch": ""
+  },
   "overlays": [
-    { "id": "franklin-1882-layer", "label": "1882 Franklin Co. Map", "url": "https://raw.githubusercontent.com/Luri-den/FCPC/main/cropped-franklin-1882.jpg", "width": 3497, "height": 2926,
-      "controlPoints": [[475, 850, -85.298653, 39.525454], [3105, 825, -84.810676, 39.521903], [3080, 2310, -84.815210, 39.309328], [465, 2610, -85.299317, 39.267088]] },
-    { "id": "franklin-1910-layer", "label": "1910 Franklin Co. Map", "url": "https://raw.githubusercontent.com/Luri-den/FCPC/main/franklin-1910.jpg", "width": 11556, "height": 9198,
-      "controlPoints": [[1221, 2525, -85.298653, 39.525454], [8876, 2577, -84.810676, 39.521903], [8902, 7159, -84.815210, 39.309328], [1334, 8000, -85.299317, 39.267088]] },
-    { "id": "franklin-1936-layer", "label": "1936 Franklin Co. Map", "url": "https://raw.githubusercontent.com/Luri-den/FCPC/main/franklin-1936.jpg", "width": 12811, "height": 10791,
-      "controlPoints": [[2721, 1624, -85.298653, 39.525454], [10390, 1686, -84.810676, 39.521903], [10390, 6190, -84.815210, 39.309328], [2750, 6940, -85.299317, 39.267088]] }
+    {
+      "id": "franklin-1882-layer",
+      "label": "1882 Franklin Co. Map",
+      "url": "https://raw.githubusercontent.com/Luri-den/FCPC/main/cropped-franklin-1882.jpg",
+      "width": 3497,
+      "height": 2926,
+      "controlPoints": [
+        [
+          475,
+          850,
+          -85.298653,
+          39.525454
+        ],
+        [
+          3105,
+          825,
+          -84.810676,
+          39.521903
+        ],
+        [
+          3080,
+          2310,
+          -84.81521,
+          39.309328
+        ],
+        [
+          465,
+          2610,
+          -85.299317,
+          39.267088
+        ]
+      ]
+    },
+    {
+      "id": "franklin-1910-layer",
+      "label": "1910 Franklin Co. Map",
+      "url": "https://raw.githubusercontent.com/Luri-den/FCPC/main/franklin-1910.jpg",
+      "width": 11556,
+      "height": 9198,
+      "controlPoints": [
+        [
+          1221,
+          2525,
+          -85.298653,
+          39.525454
+        ],
+        [
+          8876,
+          2577,
+          -84.810676,
+          39.521903
+        ],
+        [
+          8902,
+          7159,
+          -84.81521,
+          39.309328
+        ],
+        [
+          1334,
+          8000,
+          -85.299317,
+          39.267088
+        ]
+      ]
+    },
+    {
+      "id": "franklin-1936-layer",
+      "label": "1936 Franklin Co. Map",
+      "url": "https://raw.githubusercontent.com/Luri-den/FCPC/main/franklin-1936.jpg",
+      "width": 12811,
+      "height": 10791,
+      "controlPoints": [
+        [
+          2721,
+          1624,
+          -85.298653,
+          39.525454
+        ],
+        [
+          10390,
+          1686,
+          -84.810676,
+          39.521903
+        ],
+        [
+          10390,
+          6190,
+          -84.81521,
+          39.309328
+        ],
+        [
+          2750,
+          6940,
+          -85.299317,
+          39.267088
+        ]
+      ]
+    }
   ]
 }
