@@ -135,13 +135,21 @@ const fix = p => [+p[0].toFixed(7), +p[1].toFixed(7)];
 
 const ACC = [["3","public","Public"],["2","permission","With permission"],["1","private","Private land"],["0","inaccessible","Inaccessible"]];
 const YN = [["","Unknown"],["1","Yes"],["0","No"]];
-const CEMF = [["NAME","Name"],["OTHER_NAMES","Other names"],["TOWNSHIP","Township"],["PLSS","Section, Township, Range (for example S34, T12N, R12E)"],["ESTABLISHED","Year established"],
+// Why a cemetery was relocated: one fixed list, so the cards and reports stay consistent
+const REASONS = ["Lake / Reservoir Construction","River / Creek Movement","Road / Highway Construction","Development / Construction","Mining / Quarry","Railroad Construction","Family Request","Other / Unknown"];
+const isRel = r => r.SITE_STATUS === "Relocated";
+const CEMF = [["NAME","Name"],["OTHER_NAMES","Other names"],
+  ["SITE_STATUS","Status","sel",[["","Active / in place"],["Abandoned","Abandoned (no one looks after it)"],["Lost","Lost (exact location unknown: draw the suspected area as its boundary)"],["Relocated","Relocated (the graves were moved)"]]],
+  ["RELOCATION_REASON","Why it was relocated","sel",[["","Not recorded"]].concat(REASONS.map(x => [x, x])),isRel],
+  ["RELOCATED_TO","Graves moved to","sel",row => [["","Not known / not recorded"]].concat(cems.filter(c => c.ID !== row.ID).map(c => [c.ID, (c.NAME || c.ID) + " (" + c.ID + ")"])),isRel],
+  ["RELOCATION_YEAR","Year relocated","",null,isRel],["TOWNSHIP","Township"],["PLSS","Section, Township, Range (for example S34, T12N, R12E)"],["ESTABLISHED","Year established"],
   ["ACCESS","Can visitors get in?","sel",[["","Unknown"]].concat(ACC.map(a => [a[0], a[2]]))],
   ["ACTIVE","Still in use?","sel",YN],["VETERANS","Veterans buried here?","sel",YN],["PIONEERS","Pioneers buried here?","sel",YN],
   ["CONDITION","Condition","sel",[["","Not recorded"],["Unknown","Unknown"],["3","Good"],["2","Fair"],["1","Poor"],["0","Extreme damage or lost"]]],
   ["GRAVES_ESTIMATE","Estimated grave count"],["GRAVE_RECORDED","Official grave count (stones recorded)"],["SHAARD_ID","SHAARD ID"],
   ["SIZE","Size"],["PUBLIC_NOTES","Notes shown to visitors","area"],["LOCATION_DETAILS","How to find it","area"]];
 const GRF = [["FIRST NAME","First name"],["LAST NAME","Last name"],["BIRTH","Born"],["DEATH","Died"],
+  ["ORIGINAL CEMETERY ID","Originally buried at (if moved here)","sel",row => [["","Here (not moved)"]].concat(cems.filter(c => c.ID !== row.CEMETERY_ID).map(c => [c.ID, (c.NAME || c.ID) + " (" + c.ID + ")" + (c.SITE_STATUS === "Relocated" ? " \u2013 relocated" : "")]))],
   ["SEX","Sex","sel",[["","Unknown"],["F","Female"],["M","Male"]]],["WAR","War"],["VET DETAILS","Veteran details"],
   ["STONE_TYPE","Stone Type","sel",[["","Not Recorded"],["Flush With Ground","Flush With Ground"],["Flat Tablet / Slab","Flat Tablet / Slab"],["Obelisk / Column / Monument","Obelisk / Column / Monument"],["Standing (Vertical) Block / Arch / Slab","Standing (Vertical) Block / Arch / Slab"],["Military Marker (Official)","Military Marker (Official)"],["Boulder / Rock","Boulder / Rock"],["Above Ground (Single Interment)","Above Ground (Single Interment)"],["Above Ground Structure (Mausoleum, etc.)","Above Ground Structure (Mausoleum, etc.)"]]],
   ["ROW","Row"],["PLOT","Plot"],["ADDITIONAL INFORMATION ON STONE","Writing on the stone","area"]];
@@ -340,7 +348,9 @@ function refresh() {
 
 // ---------- forms ----------
 function form(box, row, desc, key, F) {
-  desc.forEach(([f, label, type, opts]) => {
+  desc.forEach(([f, label, type, opts, showIf]) => {
+    if (showIf && !showIf(row)) return;                       // only shown when it applies (Reason only for Relocated)
+    if (typeof opts === "function") opts = opts(row);        // lists that depend on the data (other cemeteries)
     const i = type === "sel" ? el("select", {}, opts.map(o => el("option", { value:o[0], textContent:o[1] })))
       : el(type === "area" ? "textarea" : "input", {});
     i.value = row[f] || "";
@@ -351,6 +361,7 @@ function form(box, row, desc, key, F) {
         if (/^Above Ground/.test(i.value)) { sameStone(row).forEach(x => x.MAUS = "1"); if (!intF.includes("MAUS")) intF.push("MAUS"); }
         touch(key); refresh(); return;
       }
+      if (key === "cem" && f === "SITE_STATUS") { touch(key); refresh(); return; }   // show or hide the relocation questions
       touch(key); listCem();
     };
     box.append(el("label", { textContent:label }), i);
@@ -960,5 +971,7 @@ loadFromSite();
 <script src="shell.js"></script>
 <script src="export-tools.js"></script>
 <script src="data-check.js"></script>
+<script src="name-search.js"></script>
+<script src="editor-tools.js"></script>
 </body>
 </html>

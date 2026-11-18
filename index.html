@@ -489,6 +489,8 @@
     }
 
     .map-hover-popup .maplibregl-popup-content { border-radius: 8px; }
+    .cem-status { margin: 6px 0; padding: 8px 10px; border-left: 4px solid #2563eb; background: #eff6ff; border-radius: 4px; }
+    .cem-moved { margin: 4px 0 8px; } .cem-moved ul { max-height: 180px; overflow: auto; margin: 6px 0 0 18px; padding: 0; }
     .map-hover-popup .hover-detail { margin-top: 2px; font-size: 12px; font-weight: normal; color: var(--text-muted); white-space: pre-line; }
     /* ---------- ACCESSIBILITY LEGEND ---------- */
     #accessibility-legend {
@@ -1459,7 +1461,7 @@ function showHoverLabel(text, coordinates, detail) {
         className: "map-hover-popup"
     });
    
-    const html = "<div>" + escapeHtml(text) + "</div>" +
+    const html = "<div><b>" + escapeHtml(text) + "</b></div>" +
         (detail ? '<div class="hover-detail">' + escapeHtml(detail) + "</div>" : "");
 
     hoverPopup.setLngLat(coordinates).setHTML(html).addTo(map);
@@ -2100,6 +2102,17 @@ function makeAccessMark(kind) {
         else if (kind === "private") {
             ctx.moveTo(c - r, c - r); ctx.lineTo(c + r, c + r);
         }
+        else if (kind === "waves") {            // relocated because of water: a lake, a reservoir, a river
+            [-6, 6].forEach(function (dy) {
+                ctx.moveTo(c - r, c + dy);
+                ctx.bezierCurveTo(c - r / 2, c + dy - 7, c - r / 2, c + dy + 7, c, c + dy);
+                ctx.bezierCurveTo(c + r / 2, c + dy - 7, c + r / 2, c + dy + 7, c + r, c + dy);
+            });
+        }
+        else if (kind === "arrow") {            // relocated for any other reason
+            ctx.moveTo(c - r, c); ctx.lineTo(c + r, c);
+            ctx.moveTo(c + r - 8, c - 8); ctx.lineTo(c + r, c); ctx.lineTo(c + r - 8, c + 8);
+        }
         else {
             ctx.moveTo(c - r, c); ctx.lineTo(c + r, c);
         }
@@ -2126,7 +2139,7 @@ function makeAccessMark(kind) {
 }
 
 function registerAccessMarks() {
-    ["inaccessible", "private", "permission"].forEach(function (kind) {
+    ["inaccessible", "private", "permission", "waves", "arrow"].forEach(function (kind) {
 
         const name = "access-mark-" + kind;
 
@@ -3014,6 +3027,7 @@ function enterCemeteryMode(feature) {
 
     updateCemeteryBoundary();
     updateCemeteryFeatures();
+    updateRelocationLines();
     updateCemeteryGraves();
     applyCemeteryMarkerFilters();
     fitSelectedCemetery();
@@ -3032,6 +3046,7 @@ function exitCemeteryMode() {
 
     updateCemeteryBoundary();
     updateCemeteryFeatures();
+    updateRelocationLines();
     updateCemeteryGraves();
     applyCemeteryMarkerFilters();
 
@@ -3492,6 +3507,59 @@ function handleCemeteryClick(event) {
     showCemeteryPanel(event.features[0]);
 }
 
+// Abandoned, lost or relocated: one plain sentence, plus links both ways between a relocated cemetery and its new home
+function siteStatusHTML(props) {
+    const id = cleanString(props.Cemetery_ID), st = props.Site_Status, out = [];
+    const link = function (cid) { const f = findCemetery(cid); return '<a href="#" class="cem-goto" data-cem="' + escapeHtml(cid) + '">' + escapeHtml(f ? f.properties.Cemetery_Name : cid) + "</a>"; };
+    if (st === "Abandoned") { out.push("<p class=\"cem-status\">Appears to be abandoned.</p>"); }
+    if (st === "Lost") { out.push("<p class=\"cem-status\"><b>Exact location unknown.</b> It is believed to be within the area outlined on the map.</p>"); }
+    if (st === "Relocated") {
+        const why = [props.Relocation_Reason, props.Relocation_Year].filter(Boolean).join(", ");
+        out.push("<p class=\"cem-status\"><b>This cemetery was relocated" + (props.Relocated_To ? " to " + link(props.Relocated_To) : "") + ".</b>" + (why ? " (" + escapeHtml(why) + ")" : "") + "</p>");
+        const moved = movedPeopleByOrigin[id] || [];
+        if (moved.length) {
+            out.push("<details class=\"cem-moved\"><summary>" + moved.length + " " + (moved.length === 1 ? "person was" : "people were") + " moved from here</summary><ul>" +
+                moved.slice(0, 300).map(function (m) {
+                const p = m.person || {}, nm = ((p.firstName || "") + " " + (p.lastName || "")).trim() || "Name unknown";
+                const yrs = [p.birth, p.death].map(function (v) { const x = String(v || "").match(/\b(1[5-9]\d\d|20\d\d)\b/); return x ? x[1] : ""; });
+                const now = cleanString(m.cemeteryID) !== cleanString(props.Relocated_To) && m.cemeteryID ? " \u2192 " + link(m.cemeteryID) : "";
+                return "<li>" + escapeHtml(nm) + (yrs[0] || yrs[1] ? " (" + (yrs[0] || "?") + "\u2013" + (yrs[1] || "?") + ")" : "") + now + "</li>";
+            }).join("") + "</ul></details>");
+        }
+        if (props.Relocated_To && findCemetery(props.Relocated_To)) { out.push('<p><button type="button" class="cem-goto-btn" data-cem="' + escapeHtml(props.Relocated_To) + '">Show the new location</button></p>'); }
+    }
+    // a cemetery that took in graves from relocated ones
+    const sources = cemeteryFeatures.filter(function (f) { return f.properties.Site_Status === "Relocated" && cleanString(f.properties.Relocated_To) === id; });
+    if (sources.length) {
+        out.push("<p class=\"cem-status\"><b>Graves moved here from:</b> " + sources.map(function (f) {
+            const n = (movedPeopleByOrigin[cleanString(f.properties.Cemetery_ID)] || []).length;
+            return link(f.properties.Cemetery_ID) + (n ? " (" + n + ")" : "");
+        }).join(", ") + "</p>");
+    }
+    return out.join("");
+}
+document.addEventListener("click", function (e) {
+    const a = e.target.closest && e.target.closest(".cem-goto, .cem-goto-btn");
+    if (!a) { return; }
+    e.preventDefault();
+    const f = findCemetery(a.getAttribute("data-cem"));
+    if (f) { showCemeteryPanel(f); }
+});
+// While a card is open: a dashed line from a relocated cemetery to its new home, or from a cemetery to the ones whose graves it took in
+function updateRelocationLines() {
+    const source = map.getSource("relocation-lines");
+    if (!source) { return; }
+    const lines = [];
+    const sel = selectedCemeteryFeature;
+    if (sel) {
+        const id = cleanString(sel.properties.Cemetery_ID), here = sel.geometry && sel.geometry.coordinates;
+        const add = function (a, b) { if (a && b) { lines.push({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: [a, b] } }); } };
+        if (sel.properties.Site_Status === "Relocated") { const to = findCemetery(sel.properties.Relocated_To); if (to) { add(here, to.geometry.coordinates); } }
+        cemeteryFeatures.forEach(function (f) { if (f.properties.Site_Status === "Relocated" && cleanString(f.properties.Relocated_To) === id) { add(f.geometry.coordinates, here); } });
+    }
+    source.setData({ type: "FeatureCollection", features: lines });
+}
+
 function showCemeteryPanel(feature) {
 
     const props = feature.properties;
@@ -3530,6 +3598,7 @@ function showCemeteryPanel(feature) {
             <div class="cem-icons">${cemeteryIconsHTML(props, hasHazards)}</div>
             <p class="cem-tip" id="cem-tip" role="status" hidden></p>
         </div>
+        ${siteStatusHTML(props)}
         <p class="cem-row2"><b>Also known as:</b> ${escapeHtml(props.Other_Names || "None Known")}</p>
         <p class="cem-row3"><b>Established:</b> ${establishedText}</p>
 
@@ -5111,9 +5180,9 @@ map.on("load", function () {
         }
     });
 
-    const CSV_PATH = new URL(SET_FILES.cemeteries, document.baseURI).href + "?v=" + Date.now();
-    const INTERMENTS_CSV_PATH = new URL(SET_FILES.interments, document.baseURI).href + "?v=" + Date.now();
+    const CSV_PATH = new URL(SET_FILES.cemeteries, document.baseURI).href;
     const LAKE_CSV_PATH = LOST_SITES ? new URL(LOST_SITES.file, document.baseURI).href : "";
+    const INTERMENTS_CSV_PATH = new URL(SET_FILES.interments, document.baseURI).href;
 
     // ---- County or town outline ----
     map.addSource("county-area", {
@@ -5178,6 +5247,9 @@ map.on("load", function () {
         type: "geojson",
         data: EMPTY_COLLECTION
     });
+    map.addSource("relocation-lines", { type: "geojson", data: EMPTY_COLLECTION });
+    map.addLayer({ id: "relocation-lines-layer", type: "line", source: "relocation-lines",
+        paint: { "line-color": "#2563eb", "line-width": 2.5, "line-dasharray": [2, 2], "line-opacity": 0.85 } });
     // Labels get their own copy of the data: if the label font fails to load, only the words are lost,
     // never the entrance icons (a shared source would drop both).
     map.addSource("cemetery-features-labels", {
@@ -5297,6 +5369,11 @@ map.on("load", function () {
                         Fence_Types: row.FENCE_TYPES || "",
                         Hide_Location: parseInt(row.HIDE, 10) === 1,
                         Location_Details: row.LOCATION_DETAILS || "",
+                        Site_Status: (function (v) { v = String(v || "").trim().toLowerCase(); return v === "relocated" ? "Relocated" : v === "lost" ? "Lost" : v === "abandoned" ? "Abandoned" : ""; })(row.SITE_STATUS),
+                        Relocation_Reason: row.RELOCATION_REASON || "",
+                        Relocated_To: row.RELOCATED_TO || "",
+                        Relocation_Year: row.RELOCATION_YEAR || "",
+                        Relocation_Water: /^(lake|river)/i.test(row.RELOCATION_REASON || "") ? 1 : 0,
                         Search_Match: false,
                         Search_Active: false
                     },
@@ -5327,14 +5404,14 @@ map.on("load", function () {
                         8,
                         ["step", ["get", "Grave_Count"], 6, 25, 8, 100, 11, 250, 14, 500, 18]
                     ],
-                    "circle-color": [
+                    "circle-color": ["case", ["==", ["get", "Site_Status"], "Relocated"], "#2563eb", [
                         "match", ["get", "Access"],
                         0, SET_COLORS.inaccessible,
                         1, SET_COLORS.private,
                         2, SET_COLORS.permission,
                         3, SET_COLORS.public,
                         SET_COLORS.unknown
-                    ],
+                    ]],
                     "circle-stroke-width": 2,
                     "circle-stroke-color": "#ffffff"
                 }
@@ -5345,14 +5422,16 @@ map.on("load", function () {
                 id: "cemeteries-marks-layer",
                 type: "symbol",
                 source: "cemeteries-data",
-                filter: ACCESS_MARK_FILTER,
+                filter: ["any", ["==", ["get", "Site_Status"], "Relocated"], ACCESS_MARK_FILTER],
                 layout: {
                     "symbol-sort-key": ["-", ["get", "Grave_Count"]],
-                    "icon-image": [
-                        "match", ["get", "Access"],
-                        0, "access-mark-inaccessible",
-                        1, "access-mark-private",
-                        "access-mark-permission"
+                    "icon-image": ["case",
+                        ["==", ["get", "Site_Status"], "Relocated"], ["case", ["==", ["get", "Relocation_Water"], 1], "access-mark-waves", "access-mark-arrow"],
+                        ["match", ["get", "Access"],
+                            0, "access-mark-inaccessible",
+                            1, "access-mark-private",
+                            "access-mark-permission"
+                        ]
                     ],
                     "icon-size": [
                         "case",
@@ -5549,29 +5628,24 @@ map.on("load", function () {
             }
 
 
-           function cemeteryHoverDetail(props) {
-
-    const parts = [];
-
-    if (Number(props.Established_Year) > 0) {
-        parts.push("Established " + props.Established_Year);
-    }
+function cemeteryHoverDetail(props) {
+    // Line 1: other names. Line 2: (Est. YEAR · Last Burial: YEAR). Lines with nothing known are left out.
+    const lines = [];
+    const other = String(props.Other_Names || "").trim();
+    if (other && !/^none( known)?$/i.test(other)) { lines.push(other); }
 
     const rows = (intermentsByCemetery[cleanString(props.Cemetery_ID)] || {}).rows || [];
-    const years = [];
-
+    let last = 0;
     rows.forEach(function (person) {
         const match = String(person.death || "").match(/\b(1[5-9]\d\d|20\d\d)\b/);
-        if (match) { years.push(Number(match[1])); }
+        if (match && Number(match[1]) > last) { last = Number(match[1]); }
     });
+    const facts = [];
+    if (Number(props.Established_Year) > 0) { facts.push("Est. " + props.Established_Year); }
+    if (last) { facts.push("Last Burial: " + last); }
+    if (facts.length) { lines.push("(" + facts.join(" · ") + ")"); }
 
-    if (years.length) {
-        const first = Math.min.apply(null, years);
-        const last = Math.max.apply(null, years);
-        parts.push(first === last ? "Burial: " + first : "Burials: " + first + "–" + last);
-    }
-
-    return parts.join(" · ");
+    return lines.join("\n");
 }
 
             map.on("mouseenter", "graves-tap-layer", function (event) {

@@ -76,11 +76,26 @@
       else if (centre && metres([lon, lat], centre) > CLUSTER_KM * 1000) add("look", "cem", r, t, dist(metres([lon, lat], centre)) + " from the rest of the cemeteries; latitude and longitude may be swapped or mistyped");
     });
 
+    // relocated and lost cemeteries
+    cems.forEach(r => {
+      const t = cemTitle(r), st = String(r.SITE_STATUS || "");
+      if (st === "Relocated") {
+        if (!String(r.RELOCATED_TO || "").trim()) add("look", "cem", r, t, "Relocated, but where the graves went isn't recorded");
+        else if (r.RELOCATED_TO === r.ID) add("fix", "cem", r, t, "Relocated to itself");
+        else if (!cemIds.has(r.RELOCATED_TO)) add("fix", "cem", r, t, "Relocated to " + r.RELOCATED_TO + ", which isn't in the cemetery list");
+        if (!r.RELOCATION_REASON) add("info", "cem", r, t, "Relocated, reason not recorded");
+      }
+      if (st === "Lost" && !(bounds.features || []).some(f => (f.properties || {}).CEMETERY_ID === r.ID && f.geometry)) add("look", "cem", r, t, "Lost, but no suspected area is drawn (draw it as the boundary)");
+    });
+    const relocated = new Set(cems.filter(r => r.SITE_STATUS === "Relocated").map(r => r.ID));
     const seenPid = new Map(), seenPerson = new Map(), noDates = [], noName = [], noSpot = [];
     ints.forEach(r => {
       const cid = String(r.CEMETERY_ID || "").trim(), name = [r["FIRST NAME"], r["LAST NAME"]].map(x => String(x || "").trim()).filter(Boolean).join(" ");
       const t = (name || "(no name)") + (r.MARKER_ID ? " · " + r.MARKER_ID : "") + (cid ? " · " + cid : "");
       if (!cid || !cemIds.has(cid)) add("fix", "grv", r, t, cid ? "Its cemetery (" + cid + ") isn't in the cemetery list" : "Not linked to any cemetery");
+      const orig = String(r["ORIGINAL CEMETERY ID"] || "").trim();
+      if (orig && !cemIds.has(orig)) add("fix", "grv", r, t, "Originally buried at " + orig + ", which isn't in the cemetery list");
+      if (relocated.has(cid)) add("info", "grv", r, t, "Still listed at a relocated cemetery: left behind, or should it be moved?");
       const pid = String(r.PERSON_ID || "").trim();
       if (pid) { const k = cid + "|" + pid; if (seenPid.has(k)) add("fix", "grv", r, t, "Same person ID as another record (" + pid + ")"); else seenPid.set(k, r); }
       person({ birth: r.BIRTH, death: r.DEATH }).forEach(p => add(p.level, "grv", r, t, p.text));
