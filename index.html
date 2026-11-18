@@ -59,6 +59,8 @@
 
     /* ---------- SEARCH TOGGLES ---------- */
     #search-toggles { display: flex; gap: 4px; align-items: center; }
+    #relocation-lines-wrap { margin-top: 8px; }
+    #relocation-lines-wrap .search-toggle { width: 100%; }
 
     .search-toggle {
         padding: 8px 11px; border: 1px solid #aaa; border-radius: 4px;
@@ -256,6 +258,7 @@
     body.cemetery-mode #controls > #filters-btn { display: block; }
     body.cemetery-mode #search-toggles,
     body.cemetery-mode #year-filter-container,
+    body.cemetery-mode #relocation-lines-wrap,
     body.cemetery-mode #export-all-btn { display: none !important; }
 
     /* ---------- DETAILS CARD: drag handle (phones only) ---------- */
@@ -818,6 +821,9 @@ body.cemetery-mode #county-filters{display:none}
     </div>
         <span id="year-value">All</span>
     </div>
+            <div id="relocation-lines-wrap" hidden>
+                <button type="button" class="search-toggle" id="relocation-lines-toggle" aria-pressed="false" title="Draw a dashed line from every relocated cemetery to where it was moved">Show Relocation Lines</button>
+            </div>
         </div>
 
         <div class="menu-actions">
@@ -3549,18 +3555,48 @@ document.addEventListener("click", function (e) {
     if (f) { showCemeteryPanel(f); }
 });
 // While a card is open: a dashed line from a relocated cemetery to its new home, or from a cemetery to the ones whose graves it took in
+// Dashed lines from a relocated cemetery to where it was moved.
+// Shown for the open card, for the marker under the mouse (desktop), or for all of them
+// when "Relocation Lines" is switched on in the menu.
+let relocationHover = null;
+let relocationShowAll = false;
+
 function updateRelocationLines() {
     const source = map.getSource("relocation-lines");
     if (!source) { return; }
-    const lines = [];
-    const sel = selectedCemeteryFeature;
-    if (sel) {
-        const id = cleanString(sel.properties.Cemetery_ID), here = sel.geometry && sel.geometry.coordinates;
-        const add = function (a, b) { if (a && b) { lines.push({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: [a, b] } }); } };
-        if (sel.properties.Site_Status === "Relocated") { const to = findCemetery(sel.properties.Relocated_To); if (to) { add(here, to.geometry.coordinates); } }
-        cemeteryFeatures.forEach(function (f) { if (f.properties.Site_Status === "Relocated" && cleanString(f.properties.Relocated_To) === id) { add(f.geometry.coordinates, here); } });
+    const lines = [], seen = {};
+    const add = function (a, b) {
+        if (!a || !b) { return; }
+        const k = a.join() + ">" + b.join();
+        if (seen[k]) { return; }
+        seen[k] = 1;
+        lines.push({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: [a, b] } });
+    };
+    const linesFor = function (f) {
+        if (!f || !f.properties) { return; }
+        const id = cleanString(f.properties.Cemetery_ID), here = f.geometry && f.geometry.coordinates;
+        if (f.properties.Site_Status === "Relocated") { const to = findCemetery(f.properties.Relocated_To); if (to) { add(here, to.geometry.coordinates); } }
+        cemeteryFeatures.forEach(function (g) { if (g.properties.Site_Status === "Relocated" && cleanString(g.properties.Relocated_To) === id) { add(g.geometry.coordinates, here); } });
+    };
+    if (relocationShowAll) {
+        cemeteryFeatures.forEach(function (f) { if (f.properties.Site_Status === "Relocated") { linesFor(f); } });
     }
+    linesFor(selectedCemeteryFeature);
+    if (relocationHover) { linesFor(findCemetery(relocationHover)); }
     source.setData({ type: "FeatureCollection", features: lines });
+}
+
+function setupRelocationToggle() {
+    const btn = document.getElementById("relocation-lines-toggle");
+    if (!btn) { return; }
+    const any = cemeteryFeatures.some(function (f) { return f.properties.Site_Status === "Relocated"; });
+    document.getElementById("relocation-lines-wrap").hidden = !any;
+    btn.onclick = function () {
+        relocationShowAll = !relocationShowAll;
+        btn.classList.toggle("active", relocationShowAll);
+        btn.setAttribute("aria-pressed", String(relocationShowAll));
+        updateRelocationLines();
+    };
 }
 
 function showCemeteryPanel(feature) {
@@ -5388,6 +5424,7 @@ map.on("load", function () {
             cemeteryFields = (results.meta && results.meta.fields) || [];
 
             cemeteryFeatures = mapFeatures;
+            setupRelocationToggle();
 
             map.addSource("cemeteries-data", {
                 type: "geojson",
@@ -5398,15 +5435,8 @@ map.on("load", function () {
                 id: "cemeteries-layer",
                 type: "circle",
                 source: "cemeteries-data",
-                // Smaller circles are drawn on top of larger ones so they aren't hidden
-                layout: { "circle-sort-key": ["-", ["get", "Grave_Count"]] },
                 paint: {
-                    "circle-radius": [
-                        "case",
-                        ["<", ["get", "Grave_Count"], 0],
-                        8,
-                        ["step", ["get", "Grave_Count"], 6, 25, 8, 100, 11, 250, 14, 500, 18]
-                    ],
+                    "circle-radius": 9,          // every cemetery the same size (size never depends on grave count)
                     "circle-color": ["case", ["==", ["get", "Site_Status"], "Relocated"], "#2563eb", [
                         "match", ["get", "Access"],
                         0, SET_COLORS.inaccessible,
@@ -5420,14 +5450,13 @@ map.on("load", function () {
                 }
             });
 
-            // Access marks: same sizes as the circles, so they scale with grave count
+            // Access marks: drawn on top of the circles, one size for all
             map.addLayer({
                 id: "cemeteries-marks-layer",
                 type: "symbol",
                 source: "cemeteries-data",
                 filter: MARK_FILTER,
                 layout: {
-                    "symbol-sort-key": ["-", ["get", "Grave_Count"]],
                     "icon-image": ["case",
                         ["==", ["get", "Site_Status"], "Relocated"], ["case", ["==", ["get", "Relocation_Water"], 1], "access-mark-waves", "access-mark-arrow"],
                         ["match", ["get", "Access"],
@@ -5436,12 +5465,7 @@ map.on("load", function () {
                             "access-mark-permission"
                         ]
                     ],
-                    "icon-size": [
-                        "case",
-                        ["<", ["get", "Grave_Count"], 0],
-                        0.49,
-                        ["step", ["get", "Grave_Count"], 0.37, 25, 0.49, 100, 0.67, 250, 0.86, 500, 1.1]
-                    ],
+                    "icon-size": 0.55,
                     "icon-allow-overlap": true,
                     "icon-ignore-placement": true
                 }
@@ -5593,6 +5617,8 @@ map.on("load", function () {
     const feature = event.features && event.features[0];
 
     if (feature) {
+        const hid = cleanString(feature.properties.Cemetery_ID);
+        if (hid !== relocationHover) { relocationHover = hid; updateRelocationLines(); }
         showHoverLabel(
             feature.properties.Cemetery_Name || "Unnamed Cemetery",
             event.lngLat,
@@ -5610,6 +5636,7 @@ map.on("load", function () {
             map.on("mouseleave", "cemeteries-layer", function () {
                 map.getCanvas().style.cursor = "";
                 removeHoverLabel();
+                if (relocationHover) { relocationHover = null; updateRelocationLines(); }
             });
 
             // ---------------- HOVER: graves (single, non-mausoleum) ----------------
