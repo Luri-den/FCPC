@@ -21,8 +21,8 @@
   "files": {
     "cemeteries": "cemlist.csv",
     "interments": "interments.csv",
-    "boundaries": "test-cemetery.geojson",
-    "county": "franklin-county.geojson",
+    "boundaries": "cemetery-boundaries.geojson",
+    "county": "county.geojson",
     "motifs": "motifs.json"
   },
   "inbox": "https://survey-inbox.cemetery-surveys.workers.dev",
