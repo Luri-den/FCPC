@@ -95,8 +95,8 @@ function makeAccessMark(kind) {
         }
         else if (kind === "waves") {            // relocated because of water: one wave across the middle
             ctx.moveTo(c - r, c);
-            ctx.bezierCurveTo(c - r / 2, c - 9, c - r / 2, c + 9, c, c);
-            ctx.bezierCurveTo(c + r / 2, c - 9, c + r / 2, c + 9, c + r, c);
+            ctx.bezierCurveTo(c - r / 2, c - 18, c - r / 2, c + 18, c, c);
+            ctx.bezierCurveTo(c + r / 2, c - 18, c + r / 2, c + 18, c + r, c);
         }
         else if (kind === "arrow") {            // relocated for any other reason
             ctx.moveTo(c - r, c); ctx.lineTo(c + r, c);
@@ -110,13 +110,15 @@ function makeAccessMark(kind) {
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
+    const wave = kind === "waves";              // thinner line so the wave's curve stays visible when small
+
     ctx.strokeStyle = "rgba(0, 0, 0, 0.75)";
-    ctx.lineWidth = 12;
+    ctx.lineWidth = wave ? 9 : 12;
     tracePath();
     ctx.stroke();
 
     ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 7.5;
+    ctx.lineWidth = wave ? 5.5 : 7.5;
     tracePath();
     ctx.stroke();
 
