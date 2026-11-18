@@ -2081,6 +2081,9 @@ const ACCESS_MARK_FILTER = [
     ["==", ["get", "Access"], 2]
 ];
 
+// Relocated cemeteries always get a mark (wave or arrow), whatever their access.
+const MARK_FILTER = ["any", ["==", ["get", "Site_Status"], "Relocated"], ACCESS_MARK_FILTER];
+
 function makeAccessMark(kind) {
 
     const size = 64;
@@ -4157,7 +4160,7 @@ function applyCemeteryMarkerFilters() {
     if (map.getLayer("cemeteries-marks-layer")) {
         map.setFilter(
             "cemeteries-marks-layer",
-            ["all", ACCESS_MARK_FILTER].concat(activeFilters.slice(1))
+            ["all", MARK_FILTER].concat(activeFilters.slice(1))
         );
     }
 
@@ -5420,7 +5423,7 @@ map.on("load", function () {
                 id: "cemeteries-marks-layer",
                 type: "symbol",
                 source: "cemeteries-data",
-                filter: ["any", ["==", ["get", "Site_Status"], "Relocated"], ACCESS_MARK_FILTER],
+                filter: MARK_FILTER,
                 layout: {
                     "symbol-sort-key": ["-", ["get", "Grave_Count"]],
                     "icon-image": ["case",
