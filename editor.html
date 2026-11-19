@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="icon" href="icon-192.png">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cemetery Map Editor</title>
@@ -133,7 +134,7 @@ const EMPTY = { type: "FeatureCollection", features: [] };
 const ll = r => { const a = parseFloat(r.LONG), b = parseFloat(r.LAT); return isNaN(a) || isNaN(b) ? null : [a, b]; };
 const fix = p => [+p[0].toFixed(7), +p[1].toFixed(7)];
 
-const ACC = [["3","public","Public"],["2","permission","With permission"],["1","private","Private land"],["0","inaccessible","Inaccessible"]];
+const ACC = [["3","public","Public Access"],["2","permission","Permission Needed"],["1","private","Private"],["0","inaccessible","Inaccessible"]];
 const YN = [["","Unknown"],["1","Yes"],["0","No"]];
 // Why a cemetery was relocated: one fixed list, so the cards and reports stay consistent
 const REASONS = ["Lake / Reservoir Construction","River / Creek Movement","Road / Highway Construction","Development / Construction","Mining / Quarry","Railroad Construction","Family Request","Other / Unknown"];
@@ -473,7 +474,14 @@ async function shrink(file, max = 1600) {
   c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
   return new Promise(r => c.toBlob(r, "image/jpeg", 0.85));
 }
-function photoBox(box, path, label) {
+// Keeps the cemetery's PHOTOS column in step with the photos saved for it, so the map never has to guess file names
+function notePhoto(r, path) {
+  const name = path.split("/").pop(), list = String(r.PHOTOS || "").split(/[;|]/).map(n => n.trim()).filter(Boolean);
+  if (!list.includes(name)) list.push(name);
+  const num = n => { const m = /-(\d+)\.[a-z]+$/i.exec(n); return m ? +m[1] : 1; };
+  r.PHOTOS = list.sort((a, b) => num(a) - num(b)).join("; "); touch("cem");
+}
+function photoBox(box, path, label, onSaved) {
   const b = el("div", { className:"box" }, [el("b", { textContent:label })]), exts = ["jpg", "jpeg", "png", "webp", "gif"];
   const img = el("img", { style:"max-width:100%;max-height:160px;display:block;margin:6px 0" }); let k = 0;
   const show = () => { img.hidden = false; img.src = photos.has(path) ? URL.createObjectURL(photos.get(path)) : photoUrl(path.replace(/\.jpg$/, "." + exts[k])); };
@@ -481,7 +489,7 @@ function photoBox(box, path, label) {
   show();
   const f = el("input", { type:"file", accept:"image/*", hidden:true, onchange:async e => {
     const file = e.target.files[0]; if (!file) return;
-    try { photos.set(path, await shrink(file)); touch("photos"); k = 0; show(); say("Photo Ready. It goes up with Publish or Save."); }
+    try { photos.set(path, await shrink(file)); touch("photos"); if (onSaved) onSaved(path); k = 0; show(); say("Photo Ready. It goes up with Publish or Save."); }
     catch (err) { say("Couldn't Read That Picture: " + err.message); } } });
   b.append(img, f, el("button", { textContent:"Choose Photo…", onclick:() => f.click() }),
     el("div", {}, [el("small", { textContent:"Saved as " + path + ". New Photos Replace Old Ones." })]));
@@ -517,7 +525,7 @@ function drawCem() {
   hazardBox(box, r);
   fenceBox(box, r);
   [["", "Entrance photo (shown first)"], ["-2", "Photo 2"], ["-3", "Photo 3"]].forEach(([sfx, label], i) => {
-    photoBox(box, photoDir("cemeteries") + r.ID + sfx + ".jpg", label);
+    photoBox(box, photoDir("cemeteries") + r.ID + sfx + ".jpg", label, path => notePhoto(r, path));
     form(box.lastChild, r, [["PHOTO" + (i + 1) + "_CAPTION", "Caption (optional)"]], "cem", cemF);
   });
 
@@ -662,16 +670,19 @@ $("#oadd").onclick = () => $("#ofile").click();
 $("#ofile").onchange = async e => {
   const file = e.target.files[0]; e.target.value = ""; if (!file) return;
   try {
-    const bmp = await createImageBitmap(file), label = prompt("Name for this old map (for example: 1895 Union County Map)", file.name.replace(/\.[^.]+$/, "")); if (!label) return;
+    const bmp = await createImageBitmap(file), label = prompt("Name for this old map (for example: 1895 County Map)", file.name.replace(/\.[^.]+$/, "")); if (!label) return;
     const slug = label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "overlay";
     let id = slug + "-layer", n = 2; while ((S.overlays || []).some(x => x.id === id)) id = slug + "-" + n++ + "-layer";
-    const ext = (file.name.match(/\.(jpe?g|png|webp|gif)$/i) || ["", "jpg"])[1].toLowerCase(), path = "overlays/" + id.replace("-layer", "") + "." + ext;
+    // Phones can't show a picture much over 4096 pixels across, so bigger old maps are shrunk before they go up
+    let pic = file, W = bmp.width, H = bmp.height;
+    if (Math.max(W, H) > 4096) { pic = await shrink(file, 4096); const k = 4096 / Math.max(W, H); W = Math.round(W * k); H = Math.round(H * k); }
+    const ext = pic !== file ? "jpg" : (file.name.match(/\.(jpe?g|png|webp|gif)$/i) || ["", "jpg"])[1].toLowerCase(), path = "overlays/" + id.replace("-layer", "") + "." + ext;
     const b = map.getBounds(), cx = map.getCenter(), wDeg = (b.getEast() - b.getWest()) * 0.6, hDeg = wDeg * Math.cos(cx.lat * Math.PI / 180) * bmp.height / bmp.width;
-    const o = { id, label, url:path, width:bmp.width, height:bmp.height, controlPoints:[] };
+    const o = { id, label, url:path, width:W, height:H, controlPoints:[] };
     setCorners(o, [cx.lng - wDeg / 2, cx.lat + hDeg / 2], [cx.lng + wDeg / 2, cx.lat + hDeg / 2], [cx.lng - wDeg / 2, cx.lat - hDeg / 2]);
-    (S.overlays = S.overlays || []).push(o); photos.set(path, file); blobUrls.delete(path); ov = o; ovBase = ovSnap(o);
+    (S.overlays = S.overlays || []).push(o); photos.set(path, pic); blobUrls.delete(path); ov = o; ovBase = ovSnap(o);
     touch("settings"); touch("photos"); setMode("ovpos", ovHint());
-    if (file.size > 25e6) say("That picture is large (" + Math.round(file.size / 1e6) + " MB). It will be slow for visitors; consider shrinking it.");
+    if (pic.size > 6e6) say("That picture is still large (" + Math.round(pic.size / 1e6) + " MB). It will be slow for visitors on phones.");
   } catch (err) { say("Couldn't read that picture: " + err.message); }
 };
 

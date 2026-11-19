@@ -46,31 +46,31 @@
     {
       "id": "franklin-1882-layer",
       "label": "1882 Franklin Co. Map",
-      "url": "https://raw.githubusercontent.com/Luri-den/FCPC/main/cropped-franklin-1882.jpg",
+      "url": "overlays/franklin-1882.jpg",
       "width": 3497,
       "height": 2926,
       "controlPoints": [
         [
-          475,
-          850,
+          475.0,
+          850.0,
           -85.298653,
           39.525454
         ],
         [
-          3105,
-          825,
+          3105.0,
+          825.0,
           -84.810676,
           39.521903
         ],
         [
-          3080,
-          2310,
+          3080.0,
+          2310.0,
           -84.81521,
           39.309328
         ],
         [
-          465,
-          2610,
+          465.0,
+          2610.0,
           -85.299317,
           39.267088
         ]
@@ -79,31 +79,31 @@
     {
       "id": "franklin-1910-layer",
       "label": "1910 Franklin Co. Map",
-      "url": "https://raw.githubusercontent.com/Luri-den/FCPC/main/franklin-1910.jpg",
-      "width": 11556,
-      "height": 9198,
+      "url": "overlays/franklin-1910.jpg",
+      "width": 4096,
+      "height": 3260,
       "controlPoints": [
         [
-          1221,
-          2525,
+          432.8,
+          894.9,
           -85.298653,
           39.525454
         ],
         [
-          8876,
-          2577,
+          3146.1,
+          913.4,
           -84.810676,
           39.521903
         ],
         [
-          8902,
-          7159,
+          3155.3,
+          2537.3,
           -84.81521,
           39.309328
         ],
         [
-          1334,
-          8000,
+          472.8,
+          2835.4,
           -85.299317,
           39.267088
         ]
@@ -112,31 +112,31 @@
     {
       "id": "franklin-1936-layer",
       "label": "1936 Franklin Co. Map",
-      "url": "https://raw.githubusercontent.com/Luri-den/FCPC/main/franklin-1936.jpg",
-      "width": 12811,
-      "height": 10791,
+      "url": "overlays/franklin-1936.jpg",
+      "width": 4096,
+      "height": 3450,
       "controlPoints": [
         [
-          2721,
-          1624,
+          870.0,
+          519.2,
           -85.298653,
           39.525454
         ],
         [
-          10390,
-          1686,
+          3321.9,
+          539.0,
           -84.810676,
           39.521903
         ],
         [
-          10390,
-          6190,
+          3321.9,
+          1979.0,
           -84.81521,
           39.309328
         ],
         [
-          2750,
-          6940,
+          879.2,
+          2218.8,
           -85.299317,
           39.267088
         ]

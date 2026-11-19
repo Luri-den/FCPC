@@ -21,7 +21,6 @@
                        A manager can do everything a lead can, and also adds and removes leads. Whoever runs this Cloudflare account
                        (the owner) sets and changes manager keys here.
                        Each lead gets their own key (made in the editor), so one can be removed without touching the others.
-                       JSON, one key per county, e.g. {"UC":"a-long-random-phrase","FC":"another-one"}
      TURNSTILE_SECRET  optional; when set, public stories must pass Cloudflare's free spam check
      NTFY_TOPIC        optional; a private topic name on ntfy.sh. The lead gets a phone notification when something new arrives
                        (at most one every 10 minutes per county, and it only says how many, never names or story text)

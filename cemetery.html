@@ -3,6 +3,7 @@
 <html lang="en">
 
 <head>
+<link rel="icon" href="icon-192.png">
 
 <meta charset="UTF-8">
 
@@ -792,13 +793,7 @@ function loadPhotos() {
 // etc.
 // --------------------------------------------------------
 
-const extensions = [
-    "jpg",
-    "jpeg",
-    "png",
-    "webp",
-    "gif"
-];
+const extensions = ["jpg"];   // the editor always saves .jpg; other names belong in the PHOTOS column
 
 
 // Photos are looked for one at a time: .jpg first (what the editor saves), the other types only if .jpg is missing,
@@ -819,6 +814,13 @@ function probe(path) {
     });
 }
 (async function findPhotos() {
+    // The PHOTOS column (filled in by the editor) names the real files: use it and don't guess
+    const listed = String((window.cemeteryRow || {}).PHOTOS || "").split(/[;|]/).map(function (n) { return n.trim(); }).filter(Boolean);
+    if (listed.length) {
+        listed.slice(0, MAX_PHOTOS).forEach(function (n) { validPhotos.push(SET_PATHS.base + SET_PATHS.cemeteries + n); });
+        displayPhotos();
+        return;
+    }
     for (let i = 0; i < MAX_PHOTOS; i++) {
         let found = null;
         for (const ext of extensions) {

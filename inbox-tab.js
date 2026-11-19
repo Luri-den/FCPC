@@ -489,7 +489,7 @@
           }
           if (on("pics") && kept.length) {
             let n = 0; const taken = p => photos.has(p);
-            for (const p of kept) { const b = await mediaBlob(it, p.ref); if (!b) continue; let path; do { path = photoDir("cemeteries") + c.ID + (n ? "-" + (n + 1) : "") + ".jpg"; n++; } while (taken(path)); photos.set(path, b); }
+            for (const p of kept) { const b = await mediaBlob(it, p.ref); if (!b) continue; let path; do { path = photoDir("cemeteries") + c.ID + (n ? "-" + (n + 1) : "") + ".jpg"; n++; } while (taken(path)); photos.set(path, b); if (typeof notePhoto === "function") notePhoto(c, path); }
             touch("photos");
           }
         }

@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<link rel="icon" href="data:,">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="robots" content="noindex">   <!-- remove this line when the site goes public -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#01796F">
    <!-- Mobile app breakout support -->
@@ -821,6 +823,7 @@ body.cemetery-mode #county-filters{display:none}
     </div>
         <span id="year-value">All</span>
     </div>
+            <p id="year-note" hidden style="margin:2px 0 8px;font-size:12px;color:#666">Cemeteries with no known year are hidden while this is set.</p>
             <div id="relocation-lines-wrap" hidden>
                 <button type="button" class="search-toggle" id="relocation-lines-toggle" aria-pressed="false" title="Draw a dashed line from every relocated cemetery to where it was moved">Show Relocation Lines</button>
             </div>
@@ -864,11 +867,12 @@ body.cemetery-mode #county-filters{display:none}
             <div id="historical-toggle-container" style="padding: 2px 4px 6px 4px;"></div>
 
             <div class="legend-title" style="margin-top: 12px;">ACCESSIBILITY</div>
-            <div class="legend-item"><span class="legend-circle" style="background-color: #01796F;"></span><span>Public</span></div>
-            <div class="legend-item"><span class="legend-circle" style="background-color: #C9A227;"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M4 7H10" stroke="rgba(0,0,0,0.75)" stroke-width="2.6" stroke-linecap="round"/><path d="M4 7H10" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></span><span>With Permission</span></div>
-            <div class="legend-item"><span class="legend-circle" style="background-color: #D2691E;"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M4.4 4.4L9.6 9.6" stroke="rgba(0,0,0,0.75)" stroke-width="2.6" stroke-linecap="round"/><path d="M4.4 4.4L9.6 9.6" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></span><span>Private Land</span></div>
+            <div class="legend-item"><span class="legend-circle" style="background-color: #01796F;"></span><span>Public Access</span></div>
+            <div class="legend-item"><span class="legend-circle" style="background-color: #C9A227;"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M4 7H10" stroke="rgba(0,0,0,0.75)" stroke-width="2.6" stroke-linecap="round"/><path d="M4 7H10" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></span><span>Permission Needed</span></div>
+            <div class="legend-item"><span class="legend-circle" style="background-color: #D2691E;"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M4.4 4.4L9.6 9.6" stroke="rgba(0,0,0,0.75)" stroke-width="2.6" stroke-linecap="round"/><path d="M4.4 4.4L9.6 9.6" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></span><span>Private</span></div>
             <div class="legend-item"><span class="legend-circle" style="background-color: #8B0000;"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M4.4 4.4L9.6 9.6M9.6 4.4L4.4 9.6" stroke="rgba(0,0,0,0.75)" stroke-width="2.6" stroke-linecap="round"/><path d="M4.4 4.4L9.6 9.6M9.6 4.4L4.4 9.6" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></span><span>Inaccessible</span></div>
             <div class="legend-item"><span class="legend-circle" style="background-color: #777777;"></span><span>Unknown</span></div>
+            <div class="legend-item" id="legend-relocated" hidden><span class="legend-circle" style="background-color: #2563eb;"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M4 7H10M7.5 4.5L10 7L7.5 9.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></span><span>Relocated (Graves Moved)</span></div>
 
             <div class="legend-title" style="margin-top: 12px;">GRAVE MARKERS</div>
             <div id="marker-legend"></div>
@@ -887,7 +891,7 @@ body.cemetery-mode #county-filters{display:none}
         <button id="close-info" title="Close Panel" aria-label="Close Panel">&times;</button>
         <div id="info-content">
             <div class="placeholder">
-                Click a cemetery marker on the map to inspect historic records and notes.
+                Tap or click a cemetery on the map to see its records and notes.
             </div>
         </div>
     </div>
@@ -980,8 +984,8 @@ body.cemetery-mode #county-filters{display:none}
         <p>
             A cemetery's appearance on this map, no matter the rating assigned,
             does not give anyone the right to enter it. Many of these sites
-            are on private land, those land owners control access. Mistakes can
-            happen with labels, so always obtain the landowner's permission before
+            are on private land, and the landowner controls access. Mistakes can
+            happen with labels, so always get the landowner's permission before
             entering.
         </p>
 
@@ -994,13 +998,16 @@ body.cemetery-mode #county-filters{display:none}
         </p>
         <p>
             If you find human remains, or think you may have found human remains,
-            leave them undisturbed and report them immediately to the County Coroner.
+            leave them undisturbed and report them right away to the County Coroner,
+            the DNR Division of Law Enforcement, and the DNR Division of Historic
+            Preservation &amp; Archaeology. Indiana law (IC 14-21-1-27) requires the DNR
+            to be notified within two business days.
         </p>
 
         <h3>About This Information</h3>
         <p>
-            This is a work in progress. Records come from ongoing and historical
-            surveys both, and as such they may be incomplete or contain errors.
+            This is a work in progress. Records come from both historical and ongoing
+            surveys, so they may be incomplete or contain errors.
             Locations should always be taken as approximate and must not be used for legal,
             boundary, or property purposes. Contact information and correction information
             will be added when the site is published.
@@ -1077,7 +1084,7 @@ const MAP_BOUNDS = SET.maxBounds || null;   // null = the visitor can pan anywhe
     if (theme) { theme.setAttribute("content", SET_COLORS.accent); }
 
     if (SET.name) {
-        document.title = SET.name;
+        document.title = /cemeter/i.test(SET.name) ? SET.name : SET.name + " Cemeteries";
         const menuTitle = document.querySelector(".menu-title");
         const srName = document.querySelector(".brand .sr-only");
         if (menuTitle) { menuTitle.textContent = SET.name; }
@@ -1193,7 +1200,6 @@ let intermentRows = [];
 let intermentFields = [];
 
 const BOUNDARY_FILE = SET_FILES.boundaries;
-const BOUNDARY_ID_ALIASES = { TEST001: "FCTEST1" };
 
 let boundaryData = null;
 let selectedCemeteryFeature = null;
@@ -1483,7 +1489,7 @@ function removeHoverLabel() {
 function showDefaultInfo() {
     infoContent.innerHTML = `
         <div class="placeholder">
-            Click a cemetery marker on the map to inspect historic records and notes.
+            Tap or click a cemetery on the map to see its records and notes.
         </div>`;
 }
 
@@ -2436,6 +2442,9 @@ document.addEventListener("keydown", function (event) {
 // LEGAL / ACCESS NOTICES
 // ============================================================
 
+// One key per site, so several county sites on the same address don't share the answer
+const NOTICE_KEY = "noticesAccepted:" + new URL(".", document.baseURI).pathname;
+
 function openNotices() {
     openDialog(noticesOverlay, document.getElementById("close-notices"));
 }
@@ -2443,7 +2452,7 @@ function openNotices() {
 function closeNotices() {
     closeDialog(noticesOverlay);
     try {
-        localStorage.setItem("noticesAccepted", "1");
+        localStorage.setItem(NOTICE_KEY, "1");
     }
     catch (error) {
         // Ignore: the notice will simply show again next visit.
@@ -2539,7 +2548,7 @@ document.addEventListener("keydown", function (event) {
         return;
     }
     if (noticesOverlay.style.display === "flex") {
-        closeNotices();
+        closeDialog(noticesOverlay);   // Escape only closes it; it is not the same as "I Understand"
     }
     else if (searchResultsOpen) {
         closeSearchResults();
@@ -2547,7 +2556,7 @@ document.addEventListener("keydown", function (event) {
 });
 
 try {
-    if (!localStorage.getItem("noticesAccepted")) {
+    if (!localStorage.getItem(NOTICE_KEY)) {
         openNotices();
     }
 }
@@ -2676,8 +2685,7 @@ infoContent.addEventListener("click", function (event) {
 // ============================================================
 
 function boundaryIDOf(feature) {
-    const id = cleanString(feature.properties && feature.properties.CEMETERY_ID);
-    return BOUNDARY_ID_ALIASES[id] || id;
+    return cleanString(feature.properties && feature.properties.CEMETERY_ID);
 }
 
 function boundaryFeaturesFor(cemeteryID) {
@@ -3418,7 +3426,7 @@ function handleSharedMarkerClick(event) {
 // CEMETERY MARKER CLICK HANDLER
 // ============================================================
 
-const ACCESS_LABELS = { 0: "Inaccessible", 1: "Private Land", 2: "With Permission", 3: "Public" };
+const ACCESS_LABELS = { 0: "Inaccessible", 1: "Private", 2: "Permission Needed", 3: "Public Access" };
 const STATUS_LABELS = { 1: "Inactive", 2: "Active" };
 const VETS_LABELS = { 1: "Yes", 2: "No" };
 // 1450 -> "1,450"
@@ -3426,7 +3434,7 @@ function formatCount(n) {
     return Number(n).toLocaleString("en-US");
 }
 
-const CONDITION_LABELS = { 3: "Good", 2: "Fair", 1: "Poor", 0: "Lost" };
+const CONDITION_LABELS = { 3: "Good", 2: "Fair", 1: "Poor", 0: "Extreme Damage or Lost" };
 
 // Translates a row of the cemetery list into the names the rest of the page reads.
 // Understands the new layout (OTHER_NAMES, ESTABLISHED, PLSS, PUBLIC_NOTES, GRAVES_ESTIMATE,
@@ -3591,6 +3599,7 @@ function setupRelocationToggle() {
     if (!btn) { return; }
     const any = cemeteryFeatures.some(function (f) { return f.properties.Site_Status === "Relocated"; });
     document.getElementById("relocation-lines-wrap").hidden = !any;
+    document.getElementById("legend-relocated").hidden = !any;
     btn.onclick = function () {
         relocationShowAll = !relocationShowAll;
         btn.classList.toggle("active", relocationShowAll);
@@ -3641,16 +3650,10 @@ function showCemeteryPanel(feature) {
         <p class="cem-row2"><b>Also known as:</b> ${escapeHtml(props.Other_Names || "None Known")}</p>
         <p class="cem-row3"><b>Established:</b> ${establishedText}</p>
 
-       <img
-    src="${escapeHtml(photoUrl(SET_PATHS.cemeteries + encodeURIComponent(props.Cemetery_ID) + ".jpg"))}"
-    alt="${escapeHtml(props.Cemetery_Name || "Cemetery")}"
-    class="cemetery-popup-photo"
-    data-cemetery-photo-id="${escapeHtml(props.Cemetery_ID)}"
-    onerror="tryNextCemeteryPopupPhoto(this);"
->
+        ${cemeteryPhotoHTML(props)}
         <h3>Location Metadata</h3>
         ${popupField("Township", props.Township || "Unlisted")}
-        ${popupField("Map Location/Grid", props.Grid_Index || "N/A")}
+        ${popupField("Section, Township, Range", props.Grid_Index || "Not Recorded")}
 
         <h3>Cemetery Information</h3>
         ${popupField("Recorded Graves", recordedText)}
@@ -3660,13 +3663,12 @@ function showCemeteryPanel(feature) {
         ${popupField("Accessibility", accessText)}
         ${popupField("Veterans", vetsText)}
         ${popupField("Pioneers", pioneersText)}
+        ${popupField("Condition", props.Condition_Notes || "Unknown")}
         ${String(props.Fence) === "1" ? popupField("Fence", props.Fence_Types || "Yes") : ""}
 
-        <h3>Condition Status</h3>
-        <p>${escapeHtml(props.Condition_Notes || "No condition information on file.")}</p>
         ${props.Hazards === true || props.Hazards === "true" ? "<p><strong>Caution:</strong> Hazards have been noted at this cemetery" + (props.Hazard_Details ? ": " + escapeHtml(props.Hazard_Details) : "") + ". Use care.</p>" : ""}
 
-        <h3>Location Notes</h3>
+        <h3>Notes</h3>
         <p>${escapeHtml(props.General_Notes || "No notes currently recorded.")}</p>
         ${(props.Location_Details && !(props.Hide_Location === true || props.Hide_Location === "true"))
             ? "<h3>How to Get There</h3><p>" + escapeHtml(props.Location_Details) + "</p>" : ""}
@@ -3677,19 +3679,19 @@ function showCemeteryPanel(feature) {
                 type="button"
                 class="see-more-button"
                 data-cemetery-id="${escapeHtml(props.Cemetery_ID)}"
-            >SEE MORE</button>
+            >See More</button>
 
             <button
                 type="button"
                 class="export-button export-cemetery-button"
                 data-export-cemetery-id="${escapeHtml(props.Cemetery_ID)}"
-            >EXPORT THIS CEMETERY (CSV)</button>
+            >Export This Cemetery (CSV)</button>
 
             <button
                 type="button"
                 class="export-button copy-link-button"
                 data-copy-cemetery-id="${escapeHtml(props.Cemetery_ID)}"
-            >COPY LINK</button>
+            >Copy Link</button>
         </p>
     `;
 
@@ -3704,10 +3706,10 @@ function showCemeteryPanel(feature) {
 
 // ---- Small icons on the cemetery card header (same marks and colors as the map legend) ----
 const CEM_ACCESS = {
-    3: { color: "#01796F", mark: "",                         label: "Public Access" },
-    2: { color: "#C9A227", mark: "M4 7H10",                  label: "Permission Needed" },
-    1: { color: "#D2691E", mark: "M4.4 4.4L9.6 9.6",         label: "Private" },
-    0: { color: "#8B0000", mark: "M4.4 4.4L9.6 9.6M9.6 4.4L4.4 9.6", label: "Inaccessible" }
+    3: { color: SET_COLORS.public,       mark: "",                         label: "Public Access" },
+    2: { color: SET_COLORS.permission,   mark: "M4 7H10",                  label: "Permission Needed" },
+    1: { color: SET_COLORS.private,      mark: "M4.4 4.4L9.6 9.6",         label: "Private" },
+    0: { color: SET_COLORS.inaccessible, mark: "M4.4 4.4L9.6 9.6M9.6 4.4L4.4 9.6", label: "Inaccessible" }
 };
 
 function cemeteryIconsHTML(props, hasHazards) {
@@ -3716,7 +3718,7 @@ function cemeteryIconsHTML(props, hasHazards) {
         return '<button type="button" class="cem-icon" data-tip="' + label + '" aria-label="' + label + '">' + svg + '</button>';
     }
 
-    const access = CEM_ACCESS[Number(props.Access)] || { color: "#777777", mark: "", label: "Access Unknown" };
+    const access = CEM_ACCESS[Number(props.Access)] || { color: SET_COLORS.unknown, mark: "", label: "Access Unknown" };
     const markSvg = access.mark
         ? '<path d="' + access.mark + '" stroke="rgba(0,0,0,0.75)" stroke-width="2.6" stroke-linecap="round" fill="none"/>' +
           '<path d="' + access.mark + '" stroke="#fff" stroke-width="1.5" stroke-linecap="round" fill="none"/>'
@@ -4229,6 +4231,7 @@ function processMapFilters() {
 
     clearSearch.style.display = searchBox.value !== "" ? "block" : "none";
     yearVal.innerText = filterYear < 1900 ? filterYear : "All";
+    document.getElementById("year-note").hidden = !(filterYear < 1900);
     yearSlider.setAttribute("aria-valuetext", filterYear < 1900 ? "Established before " + filterYear : "All years");
 
     cemeteryFeatures.forEach(function (feature) {
@@ -4481,7 +4484,15 @@ function exportCemeteryData(onlyCemeteryID) {
             base["CEMETERY " + f] = cem[f] == null ? "" : cem[f];
         });
 
-        const people = sortPeople(peopleByCemetery[id] || []);
+        // HIDE = 1: the download leaves out where it is (the card already does)
+        const hidden = parseInt(cem.HIDE, 10) === 1;
+        if (hidden) {
+            ["LAT", "LONG", "LOCATION_DETAILS", "PLSS", "MAP LOCATION"].forEach(function (f) { if (("CEMETERY " + f) in base) { base["CEMETERY " + f] = ""; } });
+        }
+
+        const people = sortPeople(peopleByCemetery[id] || []).map(function (person) {
+            return hidden ? Object.assign({}, person, { LAT: "", LONG: "" }) : person;
+        });
 
         if (!people.length) {
             outputRows.push(base);
@@ -5247,7 +5258,7 @@ map.on("load", function () {
 
         map.addSource(sourceId, {
             type: "image",
-            url: overlay.url,
+            url: photoUrl(overlay.url),
             coordinates: buildOverlayCorners(overlay)
         });
 
@@ -5407,6 +5418,8 @@ map.on("load", function () {
                         Fence: row.FENCE || "",
                         Fence_Types: row.FENCE_TYPES || "",
                         Hide_Location: parseInt(row.HIDE, 10) === 1,
+                        Photos: row.PHOTOS || "",
+                        Photos_Listed: false,   // set below: true once any row uses the PHOTOS column
                         Location_Details: row.LOCATION_DETAILS || "",
                         Site_Status: (function (v) { v = String(v || "").trim().toLowerCase(); return v === "relocated" ? "Relocated" : v === "lost" ? "Lost" : v === "abandoned" ? "Abandoned" : ""; })(row.SITE_STATUS),
                         Relocation_Reason: row.RELOCATION_REASON || "",
@@ -5419,6 +5432,10 @@ map.on("load", function () {
                     geometry: { type: "Point", coordinates: [lon, lat] }
                 });
             });
+
+            // If anyone has filled in PHOTOS, the column is in use: an empty one then means "no photos", so the page doesn't guess
+            const photosInUse = results.data.some(function (r) { return String(r.PHOTOS || "").trim() !== ""; });
+            mapFeatures.forEach(function (f) { f.properties.Photos_Listed = photosInUse; });
 
             cemeteryRows = results.data;
             cemeteryFields = (results.meta && results.meta.fields) || [];
@@ -6080,7 +6097,20 @@ gravePhotoLightbox.addEventListener(
     }
 );
 
-   function tryNextCemeteryPopupPhoto(image) {
+// The card's photo. The PHOTOS column lists the real file names (the editor fills it in), so nothing is guessed.
+// A cemetery with an empty PHOTOS column gets one try at ID.jpg (the name the editor saves), never five.
+function cemeteryPhotoList(props) {
+    return String(props.Photos || "").split(/[;|]/).map(function (n) { return n.trim(); }).filter(Boolean);
+}
+function cemeteryPhotoHTML(props) {
+    const list = cemeteryPhotoList(props);
+    if (!list.length && props.Photos_Listed) { return ""; }   // the column is there and says: no photos
+    const file = list.length ? list[0] : encodeURIComponent(props.Cemetery_ID) + ".jpg";
+    return '<img src="' + escapeHtml(photoUrl(SET_PATHS.cemeteries + file)) + '" alt="' + escapeHtml(props.Cemetery_Name || "Cemetery") +
+        '" class="cemetery-popup-photo" onerror="this.remove();">';
+}
+
+   function tryNextCemeteryPopupPhoto(image) {   // no longer used by the card; kept so older saved pages don't break
 
     const extensions = [
         "jpg",

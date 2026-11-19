@@ -9,10 +9,13 @@
    With a working signal nobody is shown an old page; the kept copy is only used when the site does not answer within a few seconds.
    To clear everything it has kept, change VERSION and publish.
 */
-const VERSION = "v1";
-const SITE = "site-" + VERSION, LIBS = "libs-" + VERSION, TILES = "tiles-" + VERSION;
+const VERSION = "v2";
+// Every name starts with this site's own folder (e.g. /FCPC/), so county sites that share one address
+// (like you.github.io/FCPC and you.github.io/UCPC) never clear each other's offline copies.
+const SCOPE = new URL(self.registration.scope).pathname;
+const SITE = SCOPE + "site-" + VERSION, LIBS = SCOPE + "libs-" + VERSION, TILES = SCOPE + "tiles-" + VERSION;
 const MAX_TILES = 2500, WAIT_MS = 4000;
-const CORE = ["./", "index.html", "survey.html", "list.html", "cemetery.html", "settings.json", "survey.json", "manifest.json", "survey-manifest.json", "stories.js", "media.js", "qr.js", "stories.csv"];
+const CORE = ["./", "index.html", "survey.html", "list.html", "cemetery.html", "settings.json", "survey.json", "manifest.json", "survey-manifest.json", "stories.js", "media.js", "qr.js", "stories.csv", "name-search.js", "icon-192.png", "icon-512.png"];
 const LIB_URLS = ["https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js", "https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css", "https://unpkg.com/papaparse@5.4.1/papaparse.min.js"];
 const LIB_HOSTS = ["unpkg.com", "cdn.jsdelivr.net"];
 const isTile = u => /\/\d+\/\d+\/\d+(\.[a-z0-9]+)?$/i.test(u.pathname) || /bbox=/i.test(u.search) || /\/tile\//i.test(u.pathname);
@@ -35,7 +38,10 @@ self.addEventListener("install", event => {
 });
 self.addEventListener("activate", event => {
   event.waitUntil((async () => {
-    for (const n of await caches.keys()) if (![SITE, LIBS, TILES].includes(n)) await caches.delete(n);
+    for (const n of await caches.keys()) {
+      const mine = n.startsWith(SCOPE) || /^(site|libs|tiles)-v\d+$/.test(n);   // this site's old copies, plus the old unprefixed ones
+      if (mine && ![SITE, LIBS, TILES].includes(n)) await caches.delete(n);
+    }
     await self.clients.claim();
   })());
 });
